@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput.addEventListener('input', function() {
             const value = this.value.trim().toLowerCase();
             if (value === 'astren') {
+                console.log('🎯 Trigger secreto detectado: "astren" - redirigiendo a ia-secreta.html');
                 window.location.href = '../secreto_ia/frontend/ia-secreta.html';
             }
         });
