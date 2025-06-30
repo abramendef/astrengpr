@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - astren</title>
+    <meta name="description" content="Inicia sesión en astren para gestionar tu productividad y construir tu reputación profesional.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+    <!-- Header Navigation -->
+    <header class="header" id="header">
+        <nav class="nav container">
+            <div class="nav__logo">
+                <img src="images/Astren_logo_hor.svg" alt="Astren" class="nav__logo-img">
+            </div>
+            
+            <div class="nav__actions">
+                <a href="../index.html" class="button button--ghost">
+                    <i class="fas fa-arrow-left"></i>
+                    Volver al inicio
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Login Section -->
+        <section class="login section">
+            <div class="login__container container">
+                <div class="login__content grid">
+                    <!-- Left side - Welcome -->
+                    <div class="login__welcome">
+                        <div class="login__welcome-content">
+                            <h1 class="login__title">
+                                ¡Bienvenido de vuelta!
+                            </h1>
+                            <p class="login__subtitle">
+                                Continúa construyendo tu reputación profesional
+                            </p>
+                            
+                            <div class="login__features">
+                                <div class="login__feature">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Sigue tu progreso</span>
+                                </div>
+                                <div class="login__feature">
+                                    <i class="fas fa-trophy"></i>
+                                    <span>Mejora tu reputación</span>
+                                </div>
+                                <div class="login__feature">
+                                    <i class="fas fa-users"></i>
+                                    <span>Colabora con tu equipo</span>
+                                </div>
+                            </div>
+                            
+                            <div class="login__illustration">
+                                <i class="fas fa-user-circle login__icon login__icon--1"></i>
+                                <i class="fas fa-tasks login__icon login__icon--2"></i>
+                                <i class="fas fa-star login__icon login__icon--3"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right side - Form -->
+                    <div class="login__form-container">
+                        <div class="login__form-wrapper">
+                            <div class="login__form-header">
+                                <h2 class="login__form-title">Iniciar Sesión</h2>
+                                <p class="login__form-subtitle">
+                                    Accede a tu cuenta para continuar
+                                </p>
+                            </div>
+                            
+                            <form class="login__form" id="loginForm">
+                                <div class="form__group">
+                                    <label for="email" class="form__label">
+                                        <i class="fas fa-envelope"></i>
+                                        Correo electrónico
+                                    </label>
+                                    <input 
+                                        type="email" 
+                                        id="email" 
+                                        name="email" 
+                                        class="form__input" 
+                                        placeholder="tu@email.com"
+                                        required
+                                    >
+                                    <span class="form__error" id="emailError"></span>
+                                </div>
+                                
+                                <div class="form__group">
+                                    <label for="password" class="form__label">
+                                        <i class="fas fa-lock"></i>
+                                        Contraseña
+                                    </label>
+                                    <div class="form__input-wrapper">
+                                        <input 
+                                            type="password" 
+                                            id="password" 
+                                            name="password" 
+                                            class="form__input" 
+                                            placeholder="Tu contraseña"
+                                            required
+                                        >
+                                        <button type="button" class="form__toggle-password" id="togglePassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <span class="form__error" id="passwordError"></span>
+                                </div>
+                                
+                                <div class="form__options">
+                                    <label class="form__checkbox">
+                                        <input type="checkbox" id="rememberMe" name="rememberMe">
+                                        <span class="form__checkmark"></span>
+                                        Recordarme
+                                    </label>
+                                    
+                                    <a href="#" class="form__link">
+                                        ¿Olvidaste tu contraseña?
+                                    </a>
+                                </div>
+                                
+                                <button type="submit" class="button button--primary button--large login__submit">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    Iniciar Sesión
+                                </button>
+                                
+                                <div class="form__register">
+                                    <p>¿No tienes una cuenta? 
+                                        <a href="register.html" class="form__link form__link--primary">
+                                            Regístrate aquí
+                                        </a>
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/scripts.js"></script>
+    <script src="js/login.js"></script>
+
+    <canvas data-v-63ac2129="" id="js-maker-canvas" class="maker-canvas lower-canvas" width="467.5" height="373.75" style="position: absolute; width: 374px; height: 299px; left: 0px; top: 0px; touch-action: none; user-select: none;"></canvas>
+</body>
+</html>

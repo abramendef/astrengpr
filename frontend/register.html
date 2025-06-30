@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrarse - astren</title>
+    <meta name="description" content="Crea tu cuenta en astren y comienza a construir tu reputación profesional.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/register.css">
+</head>
+<body>
+    <!-- Header Navigation -->
+    <header class="header" id="header">
+        <nav class="nav container">
+            <div class="nav__logo">
+                <img src="images/Astren_logo_hor.svg" alt="Astren" class="nav__logo-img">
+            </div>
+            
+            <div class="nav__actions">
+                <a href="../index.html" class="button button--ghost">
+                    <i class="fas fa-arrow-left"></i>
+                    Volver al inicio
+                </a>
+                <a href="login.html" class="button button--secondary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Iniciar Sesión
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Register Section -->
+        <section class="login section register">
+            <div class="login__container container">
+                <div class="login__content grid">
+                    <!-- Left side - Welcome -->
+                    <div class="login__welcome">
+                        <div class="login__welcome-content">
+                            <h1 class="login__title">
+                                ¡Únete a astren!
+                            </h1>
+                            <p class="login__subtitle">
+                                Comienza a construir tu reputación profesional hoy
+                            </p>
+                            
+                            <div class="login__features">
+                                <div class="login__feature">
+                                    <i class="fas fa-rocket"></i>
+                                    <span>Inicio rápido y fácil</span>
+                                </div>
+                                <div class="login__feature">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Datos seguros y protegidos</span>
+                                </div>
+                                <div class="login__feature">
+                                    <i class="fas fa-star"></i>
+                                    <span>Construye tu reputación</span>
+                                </div>
+                                <div class="login__feature">
+                                    <i class="fas fa-users"></i>
+                                    <span>Colabora con equipos</span>
+                                </div>
+                            </div>
+                            
+                            <div class="login__illustration">
+                                <i class="fas fa-user-plus login__icon login__icon--1"></i>
+                                <i class="fas fa-chart-bar login__icon login__icon--2"></i>
+                                <i class="fas fa-trophy login__icon login__icon--3"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right side - Form -->
+                    <div class="login__form-container">
+                        <div class="login__form-wrapper">
+                            <div class="login__form-header">
+                                <h2 class="login__form-title">Crear Cuenta</h2>
+                                <p class="login__form-subtitle">
+                                    Completa el formulario para empezar
+                                </p>
+                            </div>
+                            
+                            <form class="login__form register__form" id="registerForm">
+                                <div class="form__row">
+                                    <div class="form__group">
+                                        <label for="firstName" class="form__label">
+                                            <i class="fas fa-user"></i>
+                                            Nombre
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            id="firstName" 
+                                            name="firstName" 
+                                            class="form__input" 
+                                            placeholder="Tu nombre"
+                                            required
+                                        >
+                                        <span class="form__error" id="firstNameError"></span>
+                                    </div>
+                                    
+                                    <div class="form__group">
+                                        <label for="lastName" class="form__label">
+                                            <i class="fas fa-user"></i>
+                                            Apellido
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            id="lastName" 
+                                            name="lastName" 
+                                            class="form__input" 
+                                            placeholder="Tu apellido"
+                                            required
+                                        >
+                                        <span class="form__error" id="lastNameError"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="form__group">
+                                    <label for="email" class="form__label">
+                                        <i class="fas fa-envelope"></i>
+                                        Correo electrónico
+                                    </label>
+                                    <input 
+                                        type="email" 
+                                        id="email" 
+                                        name="email" 
+                                        class="form__input" 
+                                        placeholder="tu@email.com"
+                                        required
+                                    >
+                                    <span class="form__error" id="emailError"></span>
+                                </div>
+                                
+                                <div class="form__group">
+                                    <label for="password" class="form__label">
+                                        <i class="fas fa-lock"></i>
+                                        Contraseña
+                                    </label>
+                                    <div class="form__input-wrapper">
+                                        <input 
+                                            type="password" 
+                                            id="password" 
+                                            name="password" 
+                                            class="form__input" 
+                                            placeholder="Mínimo 8 caracteres"
+                                            required
+                                        >
+                                        <button type="button" class="form__toggle-password" id="togglePassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="password__strength" id="passwordStrength">
+                                        <div class="password__strength-bar">
+                                            <div class="password__strength-fill"></div>
+                                        </div>
+                                        <span class="password__strength-text">Seguridad de contraseña</span>
+                                    </div>
+                                    <span class="form__error" id="passwordError"></span>
+                                </div>
+                                
+                                <div class="form__group">
+                                    <label for="confirmPassword" class="form__label">
+                                        <i class="fas fa-lock"></i>
+                                        Confirmar contraseña
+                                    </label>
+                                    <div class="form__input-wrapper">
+                                        <input 
+                                            type="password" 
+                                            id="confirmPassword" 
+                                            name="confirmPassword" 
+                                            class="form__input" 
+                                            placeholder="Confirma tu contraseña"
+                                            required
+                                        >
+                                        <button type="button" class="form__toggle-password" id="toggleConfirmPassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <span class="form__error" id="confirmPasswordError"></span>
+                                </div>
+                                
+                                <div class="form__group">
+                                    <label for="userType" class="form__label">
+                                        <i class="fas fa-briefcase"></i>
+                                        Tipo de usuario
+                                    </label>
+                                    <select id="userType" name="userType" class="form__input form__select" required>
+                                        <option value="">Selecciona una opción</option>
+                                        <option value="individual">Individual / Freelancer</option>
+                                        <option value="team-member">Miembro de equipo</option>
+                                        <option value="team-leader">Líder de equipo</option>
+                                        <option value="company">Empresa</option>
+                                    </select>
+                                    <span class="form__error" id="userTypeError"></span>
+                                </div>
+                                
+                                <div class="form__options">
+                                    <label class="form__checkbox">
+                                        <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
+                                        <span class="form__checkmark"></span>
+                                        Acepto los <a href="#" class="form__link">Términos y Condiciones</a>
+                                    </label>
+                                    
+                                    <label class="form__checkbox">
+                                        <input type="checkbox" id="agreeNewsletter" name="agreeNewsletter">
+                                        <span class="form__checkmark"></span>
+                                        Quiero recibir noticias y actualizaciones
+                                    </label>
+                                </div>
+                                
+                                <button type="submit" class="button button--primary button--large login__submit">
+                                    <i class="fas fa-user-plus"></i>
+                                    Crear Cuenta
+                                </button>
+                                
+                                <div class="form__register">
+                                    <p>¿Ya tienes una cuenta? 
+                                        <a href="login.html" class="form__link form__link--primary">
+                                            Inicia sesión aquí
+                                        </a>
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/scripts.js"></script>
+    <script src="js/register.js"></script>
+</body>
+</html>
