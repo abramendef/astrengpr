@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración - Astren</title>
+    <meta name="description" content="Configuración y preferencias de tu cuenta en Astren">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/settings.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard">
+        <!-- El sidebar será inyectado dinámicamente por sidebar-new.js -->
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard__header">
+                <div class="header__container">
+                    <div class="header__left">
+                        <button class="mobile-menu-btn" id="mobileMenuBtn">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h1 class="header__title">Configuración</h1>
+                    </div>
+
+                    <div class="header__right">
+                        <div class="header__search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Buscar..." class="search__input">
+                        </div>
+
+                        <button class="header__notification">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification__badge">3</span>
+                        </button>
+
+                        <div class="header__profile">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%233366FF'%3E%3Cpath fill-rule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="Avatar">
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Settings Content -->
+            <div class="dashboard__content">
+                <div class="settings-grid">
+                    <!-- General Settings -->
+                    <section class="settings-card">
+                        <div class="settings-header">
+                            <h3 class="settings-title">
+                                <i class="fas fa-cog"></i>
+                                Configuración General
+                            </h3>
+                        </div>
+                        <div class="settings-content">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Idioma</h4>
+                                    <p>Selecciona tu idioma preferido</p>
+                                </div>
+                                <div class="setting-control">
+                                    <select id="languageSelect" class="setting-select">
+                                        <option value="es" selected>Español</option>
+                                        <option value="en">English</option>
+                                        <option value="fr">Français</option>
+                                        <option value="de">Deutsch</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Zona Horaria</h4>
+                                    <p>Tu zona horaria actual</p>
+                                </div>
+                                <div class="setting-control">
+                                    <select id="timezoneSelect" class="setting-select">
+                                        <option value="America/Mexico_City" selected>México (GMT-6)</option>
+                                        <option value="America/New_York">Nueva York (GMT-5)</option>
+                                        <option value="Europe/Madrid">Madrid (GMT+1)</option>
+                                        <option value="Asia/Tokyo">Tokio (GMT+9)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Tema</h4>
+                                    <p>Apariencia de la aplicación</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="theme-selector">
+                                        <input type="radio" id="lightTheme" name="theme" value="light" checked>
+                                        <label for="lightTheme" class="theme-option">
+                                            <i class="fas fa-sun"></i>
+                                            Claro
+                                        </label>
+                                        
+                                        <input type="radio" id="darkTheme" name="theme" value="dark">
+                                        <label for="darkTheme" class="theme-option">
+                                            <i class="fas fa-moon"></i>
+                                            Oscuro
+                                        </label>
+                                        
+                                        <input type="radio" id="autoTheme" name="theme" value="auto">
+                                        <label for="autoTheme" class="theme-option">
+                                            <i class="fas fa-adjust"></i>
+                                            Automático
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Notifications -->
+                    <section class="settings-card">
+                        <div class="settings-header">
+                            <h3 class="settings-title">
+                                <i class="fas fa-bell"></i>
+                                Notificaciones
+                            </h3>
+                        </div>
+                        <div class="settings-content">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Notificaciones por Email</h4>
+                                    <p>Recibe actualizaciones importantes por correo</p>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle">
+                                        <input type="checkbox" id="emailNotifications" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Recordatorios de Tareas</h4>
+                                    <p>Alertas cuando las tareas están por vencer</p>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle">
+                                        <input type="checkbox" id="taskReminders" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Actualizaciones de Reputación</h4>
+                                    <p>Notificaciones sobre cambios en tu reputación</p>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle">
+                                        <input type="checkbox" id="reputationUpdates" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Resumen Semanal</h4>
+                                    <p>Recibe un resumen de tu productividad cada semana</p>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle">
+                                        <input type="checkbox" id="weeklyDigest" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Privacy & Security -->
+                    <section class="settings-card">
+                        <div class="settings-header">
+                            <h3 class="settings-title">
+                                <i class="fas fa-shield-alt"></i>
+                                Privacidad y Seguridad
+                            </h3>
+                        </div>
+                        <div class="settings-content">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Perfil Público</h4>
+                                    <p>Permite que otros usuarios vean tu perfil básico</p>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle">
+                                        <input type="checkbox" id="publicProfile">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Mostrar Reputación</h4>
+                                    <p>Hacer visible tu puntuación de reputación</p>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle">
+                                        <input type="checkbox" id="showReputation" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Autenticación de Dos Factores</h4>
+                                    <p>Añade una capa extra de seguridad a tu cuenta</p>
+                                </div>
+                                <div class="setting-control">
+                                    <button class="btn btn-secondary" id="setup2FA">
+                                        Configurar 2FA
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Cambiar Contraseña</h4>
+                                    <p>Actualiza tu contraseña regularmente</p>
+                                </div>
+                                <div class="setting-control">
+                                    <button class="btn btn-secondary" id="changePassword">
+                                        Cambiar Contraseña
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Data Export -->
+                    <section class="settings-card">
+                        <div class="settings-header">
+                            <h3 class="settings-title">
+                                <i class="fas fa-download"></i>
+                                Exportar Datos
+                            </h3>
+                        </div>
+                        <div class="settings-content">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Descargar mis Datos</h4>
+                                    <p>Obtén una copia de toda tu información</p>
+                                </div>
+                                <div class="setting-control">
+                                    <button class="btn btn-primary" id="exportData">
+                                        <i class="fas fa-download"></i>
+                                        Descargar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Eliminar Cuenta</h4>
+                                    <p class="text-danger">Esta acción es permanente y no se puede deshacer</p>
+                                </div>
+                                <div class="setting-control">
+                                    <button class="btn btn-danger" id="deleteAccount">
+                                        <i class="fas fa-trash"></i>
+                                        Eliminar Cuenta
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Save Settings Button -->
+                <div class="settings-actions">
+                    <button class="btn btn-primary btn-large" id="saveSettings">
+                        <i class="fas fa-save"></i>
+                        Guardar Configuración
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cambiar Contraseña</h3>
+                <button class="modal-close" id="closePasswordModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label for="currentPassword">Contraseña Actual</label>
+                        <input type="password" id="currentPassword" name="currentPassword" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newPassword">Nueva Contraseña</label>
+                        <input type="password" id="newPassword" name="newPassword" required>
+                        <div class="password-strength" id="passwordStrength">
+                            <div class="strength-bar">
+                                <div class="strength-fill"></div>
+                            </div>
+                            <span class="strength-text">Ingresa una contraseña</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirmar Nueva Contraseña</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelPasswordChange">Cancelar</button>
+                <button class="btn btn-primary" id="savePasswordChange">Cambiar Contraseña</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Account Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-danger">Eliminar Cuenta</h3>
+                <button class="modal-close" id="closeDeleteModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h4>¿Estás seguro de que quieres eliminar tu cuenta?</h4>
+                    <p>Esta acción eliminará permanentemente:</p>
+                    <ul>
+                        <li>Todos tus datos personales</li>
+                        <li>Historial de tareas y logros</li>
+                        <li>Puntuación de reputación</li>
+                        <li>Configuraciones y preferencias</li>
+                    </ul>
+                    <p><strong>Esta acción no se puede deshacer.</strong></p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="deleteConfirmation">Para confirmar, escribe "ELIMINAR" en mayúsculas:</label>
+                    <input type="text" id="deleteConfirmation" placeholder="ELIMINAR">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelAccountDelete">Cancelar</button>
+                <button class="btn btn-danger" id="confirmAccountDelete" disabled>Eliminar Cuenta</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/sidebar-new.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/settings.js"></script>
+</body>
+</html>

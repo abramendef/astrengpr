@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tareas - Astren</title>
+    <meta name="description" content="Gestiona todas tus tareas en Astren - Organizadas por áreas y prioridades.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/tasks.css">
+
+    <!-- Flatpickr DateTime Picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+</head>
+<body class="dashboard-body">
+    <div class="dashboard">
+        <!-- El sidebar será inyectado dinámicamente por sidebar-new.js -->
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard__header">
+                <div class="header__container">
+                    <div class="header__left">
+                        <button class="mobile-menu-btn" id="mobileMenuBtn">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h1 class="header__title">Tareas</h1>
+                    </div>
+
+                    <div class="header__right">
+                        <div class="header__search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Buscar tareas..." class="search__input">
+                        </div>
+
+                        <button class="header__notification">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification__badge">3</span>
+                        </button>
+
+                        <div class="header__profile">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%233366FF'%3E%3Cpath fill-rule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="Avatar">
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Tasks Content -->
+            <div class="dashboard__content">
+                <!-- Task Actions Bar -->
+                <section class="tasks-actions">
+                    <div class="actions-left">
+                        <button class="button button--primary" id="newTaskBtn">
+                            <i class="fas fa-plus"></i>
+                            Nueva Tarea
+                        </button>
+                        
+                        <div class="tasks-filters">
+                            <select class="filter-select" id="areaFilter">
+                                <option value="">Todas las áreas</option>
+                                <option value="personal">Personal</option>
+                                <option value="work">Trabajo</option>
+                                <option value="school">Escuela</option>
+                            </select>
+                            <select class="filter-select" id="statusFilter">
+                                <option value="">Todos los estados</option>
+                                <option value="today">Tareas Hoy</option>
+                                <option value="pending">Pendientes</option>
+                                <option value="completed">Completadas</option>
+                                <option value="overdue">Vencidas</option>
+                            </select>
+                            <select class="filter-select" id="groupFilter">
+                                <option value="">Todos los grupos</option>
+                                <!-- Opciones de grupo se llenarán dinámicamente -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="actions-right">
+                        <!-- Botones de vista eliminados -->
+                    </div>
+                </section>
+
+                <!-- Task Stats (Contadores de estadísticas) -->
+                <section class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-icon stat-icon--today">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statToday">0</span>
+                            <span class="stat-label">Hoy</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon stat-icon--pending">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statPending">0</span>
+                            <span class="stat-label">Pendientes</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon stat-icon--completed">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statCompleted">0</span>
+                            <span class="stat-label">Completadas</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon stat-icon--overdue">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statOverdue">0</span>
+                            <span class="stat-label">Vencidas</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tasks List -->
+                <section class="tasks-container">
+                    <div class="tasks-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-calendar-day"></i>
+                            Tareas Hoy
+                        </h2>
+                        <div class="tasks-grid" id="urgentTasks"></div>
+                    </div>
+
+                    <div class="tasks-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-clock"></i>
+                            Tareas Pendientes
+                        </h2>
+                        <div class="tasks-grid" id="pendingTasks"></div>
+                    </div>
+
+                    <div class="tasks-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-check-circle"></i>
+                            Tareas Completadas Recientes
+                        </h2>
+                        <div class="tasks-grid" id="completedTasks"></div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- New Task Modal -->
+    <div class="modal" id="newTaskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nueva Tarea</h2>
+                <button class="modal-close" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form class="task-form" id="newTaskForm">
+                <div class="form-group">
+                    <label for="taskTitle">Título de la tarea</label>
+                    <input type="text" id="taskTitle" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Descripción</label>
+                    <textarea id="taskDescription" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskArea">Área</label>
+                        <select id="taskArea" name="area" required>
+                            <option value="">Seleccionar área</option>
+                            <option value="personal">Personal</option>
+                            <option value="work">Trabajo</option>
+                            <option value="school">Escuela</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="taskDueDate">Fecha de vencimiento</label>
+                    <input type="datetime-local" id="taskDueDate" name="dueDate" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="button button--ghost" id="cancelTask">Cancelar</button>
+                    <button type="submit" class="button button--primary">Crear Tarea</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar tarea -->
+    <div class="modal" id="deleteConfirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>¿Eliminar tarea?</h2>
+                <button class="modal-close" id="closeDeleteModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar esta tarea? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="button button--ghost" id="cancelDeleteTask">Cancelar</button>
+                <button type="button" class="button button--danger" id="confirmDeleteTask">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/sidebar-new.js"></script>
+    <script src="js/scripts.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/tasks.js"></script>
+    <script src="js/header-buttons.js"></script>
+    
+    <!-- Test script -->
+    <script>
+        // Global test function
+        function testModalDirect() {
+            console.log('🧪 Test modal function called');
+            const modal = document.getElementById('newTaskModal');
+            if (modal) {
+                console.log('🧪 Opening test modal directly');
+                modal.style.display = 'flex';
+                modal.classList.add('active');
+                console.log('🧪 Modal classes:', modal.className);
+                console.log('🧪 Modal style display:', modal.style.display);
+            } else {
+                console.log('❌ Test modal not found');
+            }
+        }
+        
+        // Also test the original button
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 DOM loaded in test script');
+            const originalBtn = document.getElementById('newTaskBtn');
+            console.log('🧪 Original button found:', !!originalBtn);
+            
+            if (originalBtn) {
+                originalBtn.addEventListener('click', function() {
+                    console.log('🧪 Original button clicked from test script');
+                    testModalDirect();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

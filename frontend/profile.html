@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Astren</title>
+    <meta name="description" content="Gestiona tu perfil y configuración personal en Astren">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/profile.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard">
+        <!-- El sidebar será inyectado dinámicamente por sidebar-new.js -->
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard__header">
+                <div class="header__container">
+                    <div class="header__left">
+                        <button class="mobile-menu-btn" id="mobileMenuBtn">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h1 class="header__title">Mi Perfil</h1>
+                    </div>
+
+                    <div class="header__right">
+                        <div class="header__search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Buscar..." class="search__input">
+                        </div>
+
+                        <button class="header__notification">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification__badge">3</span>
+                        </button>
+
+                        <div class="header__profile">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%233366FF'%3E%3Cpath fill-rule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="Avatar">
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Profile Content -->
+            <div class="dashboard__content">
+                <div class="profile-grid">
+                    <!-- Profile Card -->
+                    <section class="profile-card">
+                        <div class="profile-header">
+                            <div class="profile-avatar-large">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%233366FF'%3E%3Cpath fill-rule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="Avatar" id="profileAvatar">
+                                <button class="avatar-upload" id="avatarUpload">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                            </div>
+                            <div class="profile-info">
+                                <h2 class="profile-name" id="profileName">Usuario Demo</h2>
+                                <p class="profile-type" id="profileType">Individual</p>
+                                <div class="profile-stats">
+                                    <div class="stat">
+                                        <span class="stat-value">4.5</span>
+                                        <span class="stat-label">Reputación</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-value">24</span>
+                                        <span class="stat-label">Tareas Completadas</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-value">5</span>
+                                        <span class="stat-label">Días de Racha</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Personal Information -->
+                    <section class="info-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-user"></i>
+                                Información Personal
+                            </h3>
+                            <button class="edit-btn" id="editPersonalInfo">
+                                <i class="fas fa-edit"></i>
+                                Editar
+                            </button>
+                        </div>
+                        <div class="card-content">
+                            <form class="info-form" id="personalInfoForm">
+                                <div class="form-group">
+                                    <label for="firstName">Nombre</label>
+                                    <input type="text" id="firstName" name="firstName" value="Usuario" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="lastName">Apellido</label>
+                                    <input type="text" id="lastName" name="lastName" value="Demo" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" id="email" name="email" value="usuario@demo.com" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone">Teléfono</label>
+                                    <input type="tel" id="phone" name="phone" value="+1 (555) 123-4567" readonly>
+                                </div>
+                                <div class="form-actions" id="personalInfoActions" style="display: none;">
+                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                    <button type="button" class="btn btn-secondary" id="cancelPersonalEdit">Cancelar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- Reputation Overview -->
+                    <section class="reputation-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-star"></i>
+                                Reputación por Áreas
+                            </h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="reputation-areas">
+                                <div class="reputation-area">
+                                    <div class="area-info">
+                                        <div class="area-icon personal">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="area-details">
+                                            <h4>Personal</h4>
+                                            <div class="area-stars">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                                <span>4.2</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="area-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 84%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="reputation-area">
+                                    <div class="area-info">
+                                        <div class="area-icon work">
+                                            <i class="fas fa-briefcase"></i>
+                                        </div>
+                                        <div class="area-details">
+                                            <h4>Trabajo</h4>
+                                            <div class="area-stars">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star-half-alt"></i>
+                                                <span>4.7</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="area-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 94%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="reputation-area">
+                                    <div class="area-info">
+                                        <div class="area-icon academic">
+                                            <i class="fas fa-graduation-cap"></i>
+                                        </div>
+                                        <div class="area-details">
+                                            <h4>Académico</h4>
+                                            <div class="area-stars">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                                <span>4.1</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="area-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 82%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="reputation-area">
+                                    <div class="area-info">
+                                        <div class="area-icon social">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <div class="area-details">
+                                            <h4>Social</h4>
+                                            <div class="area-stars">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star-half-alt"></i>
+                                                <i class="far fa-star"></i>
+                                                <span>3.8</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="area-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 76%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Activity Timeline -->
+                    <section class="activity-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-clock"></i>
+                                Actividad Reciente
+                            </h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="activity-timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-marker success"></div>
+                                    <div class="timeline-content">
+                                        <h4>Tarea completada</h4>
+                                        <p>Completaste "Revisar documentación del proyecto"</p>
+                                        <span class="timeline-time">Hace 2 horas</span>
+                                    </div>
+                                </div>
+
+                                <div class="timeline-item">
+                                    <div class="timeline-marker warning"></div>
+                                    <div class="timeline-content">
+                                        <h4>Reputación actualizada</h4>
+                                        <p>Tu reputación en "Trabajo" aumentó a 4.7</p>
+                                        <span class="timeline-time">Hace 3 horas</span>
+                                    </div>
+                                </div>
+
+                                <div class="timeline-item">
+                                    <div class="timeline-marker info"></div>
+                                    <div class="timeline-content">
+                                        <h4>Nueva tarea asignada</h4>
+                                        <p>Se agregó "Preparar presentación" a tu lista</p>
+                                        <span class="timeline-time">Ayer</span>
+                                    </div>
+                                </div>
+
+                                <div class="timeline-item">
+                                    <div class="timeline-marker success"></div>
+                                    <div class="timeline-content">
+                                        <h4>Logro desbloqueado</h4>
+                                        <p>¡Felicidades! Completaste 25 tareas este mes</p>
+                                        <span class="timeline-time">Hace 2 días</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Avatar Upload Modal -->
+    <div class="modal" id="avatarModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cambiar Foto de Perfil</h3>
+                <button class="modal-close" id="closeAvatarModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="avatar-options">
+                    <div class="avatar-upload-area">
+                        <input type="file" id="avatarFile" accept="image/*" style="display: none;">
+                        <label for="avatarFile" class="upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Subir nueva imagen</span>
+                        </label>
+                    </div>
+                    <div class="avatar-presets">
+                        <h4>O elige un avatar predefinido:</h4>
+                        <div class="preset-avatars">
+                            <div class="preset-avatar" data-avatar="1">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%233366FF'%3E%3Cpath fill-rule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="Avatar 1">
+                            </div>
+                            <div class="preset-avatar" data-avatar="2">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23FF6B6B'%3E%3Cpath fill-rule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="Avatar 2">
+                            </div>
+                            <div class="preset-avatar" data-avatar="3">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%234ECDC4'%3E%3Cpath fill-rule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="Avatar 3">
+                            </div>
+                            <div class="preset-avatar" data-avatar="4">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23FFE66D'%3E%3Cpath fill-rule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="Avatar 4">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelAvatarChange">Cancelar</button>
+                <button class="btn btn-primary" id="saveAvatarChange">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/sidebar-new.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>
