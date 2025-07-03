@@ -108,7 +108,7 @@ Write-Host ""
 Write-Host "URLs disponibles:" -ForegroundColor Cyan
 Write-Host "   • Frontend Principal: http://localhost:5500" -ForegroundColor White
 Write-Host "   • Backend API: http://localhost:8000" -ForegroundColor White
-Write-Host "   • Configuracion: http://localhost:8000/sync/config" -ForegroundColor White
+
 Write-Host ""
 Write-Host "Para detener los servidores, presiona Ctrl+C o cierra esta ventana" -ForegroundColor Yellow
 Write-Host ""

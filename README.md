@@ -19,7 +19,7 @@ astren/
 │   ├── settings.html     # Configuraciones
 │   ├── reputation.html   # Sistema de reputación
 │   ├── notifications.html # Notificaciones
-│   ├── sync-settings.html # Configuración de sincronización
+
 │   ├── login.html        # Página de login
 │   └── register.html     # Página de registro
 ├── backend/              # Servidor y lógica de negocio
@@ -92,14 +92,14 @@ python app.py
 - **Documentación General**: `docs/`
 - **IA Avanzada**: `docs/IA_AVANZADA.md` (📖 **NUEVO**)
 - **Sistema de Tareas**: `docs/TASK_MANAGEMENT_SYSTEM.md`
-- **Configuración iCloud**: `docs/ICLOUD_SETUP.md`
+
 
 ## 🛠️ Tecnologías
 
 - **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
 - **Backend**: Python, Flask
 - **Integración**: Google Classroom API
-- **Sincronización**: iCloud (configurable)
+
 
 ## 📝 Notas
 
