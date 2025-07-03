@@ -383,10 +383,7 @@
   color: hsl(4 90% 58%);
 }
 
-.button--microsoft:hover {
-  border-color: hsl(201 100% 49%);
-  color: hsl(201 100% 49%);
-}
+
 
 .form__register {
   text-align: center;

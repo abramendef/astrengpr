@@ -47,8 +47,7 @@ class SidebarManager {
             'reputation.html': 'reputation',
             'notifications.html': 'notifications',
             'profile.html': 'profile',
-            'settings.html': 'settings',
-            'sync-settings.html': 'sync-settings'
+            'settings.html': 'settings'
         };
 
         const detectedPage = pageMap[filename] || 'dashboard';
@@ -151,12 +150,6 @@ class SidebarManager {
                             <a href="settings.html" class="nav__link" data-page="settings">
                                 <i class="fas fa-cog" aria-hidden="true"></i>
                                 <span class="nav__text">Configuración</span>
-                            </a>
-                        </li>
-                        <li class="nav__item">
-                            <a href="sync-settings.html" class="nav__link" data-page="sync-settings">
-                                <i class="fas fa-sync-alt" aria-hidden="true"></i>
-                                <span class="nav__text">Sincronización</span>
                             </a>
                         </li>
                     </ul>

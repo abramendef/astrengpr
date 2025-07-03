@@ -59,7 +59,7 @@ def google_auth_callback():
     # Guardar token en memoria (solo para pruebas)
     session['google_token'] = token_data
     tokens['default_user'] = token_data
-    return redirect('/frontend/sync-settings.html')
+    return redirect('/frontend/settings.html')
 
 @google_bp.route('/sync/google/classroom', methods=['GET'])
 def get_classroom_tasks():

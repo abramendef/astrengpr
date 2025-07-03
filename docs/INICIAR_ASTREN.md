@@ -22,7 +22,7 @@ Una vez iniciados los servidores:
 
 - 🌐 **Aplicación Principal**: http://localhost:5500
 - 🔧 **API Backend**: http://localhost:8000
-- ⚙️ **Configuración**: http://localhost:8000/sync/config
+
 
 ## Requisitos
 
