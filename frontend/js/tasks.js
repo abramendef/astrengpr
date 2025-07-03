@@ -6,11 +6,27 @@ class TasksManager {
         this.currentView = 'grid';
         this.searchQuery = '';
         this.currentTaskId = null;
+        // NUEVO: Detectar área desde la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const areaParam = urlParams.get('area');
+        if (areaParam) {
+            this.areaFromUrl = areaParam;
+        } else {
+            this.areaFromUrl = null;
+        }
         this.init();
     }
 
     init() {
         this.setupEventListeners();
+        // Si hay área en la URL, seleccionarla en el filtro y filtrar
+        if (this.areaFromUrl) {
+            const areaFilter = document.getElementById('areaFilter');
+            if (areaFilter) {
+                areaFilter.value = this.areaFromUrl;
+            }
+        }
+        this.populateAreaSelects();
         this.renderTasks();
         this.updateTaskCounts();
         this.checkEmptyState();
@@ -32,73 +48,7 @@ class TasksManager {
     }
 
     getDefaultTasks() {
-        return [
-            {
-                id: 1,
-                title: 'Presentación proyecto final',
-                description: 'Preparar y entregar la presentación del proyecto final de la materia de desarrollo web.',
-                area: 'school',
-                dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
-                status: 'pending',
-                createdAt: new Date().toISOString(),
-                completedAt: null,
-                evidence: null,
-                evidenceValidated: false,
-                reputationImpact: 0
-            },
-            {
-                id: 2,
-                title: 'Revisar propuesta de cliente',
-                description: 'Analizar y dar feedback sobre la propuesta del cliente ABC Corp para el nuevo proyecto.',
-                area: 'work',
-                dueDate: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
-                status: 'pending',
-                createdAt: new Date().toISOString(),
-                completedAt: null,
-                evidence: null,
-                evidenceValidated: false,
-                reputationImpact: 0
-            },
-            {
-                id: 3,
-                title: 'Ejercicio diario',
-                description: 'Realizar 30 minutos de ejercicio cardiovascular y 15 minutos de estiramientos.',
-                area: 'personal',
-                dueDate: new Date(Date.now() + 1000 * 60 * 60 * 6).toISOString(),
-                status: 'pending',
-                createdAt: new Date().toISOString(),
-                completedAt: null,
-                evidence: null,
-                evidenceValidated: false,
-                reputationImpact: 0
-            },
-            {
-                id: 4,
-                title: 'Revisar código del equipo',
-                description: 'Revisar el código enviado por el equipo de desarrollo para el sprint actual.',
-                area: 'work',
-                dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString(),
-                status: 'pending',
-                createdAt: new Date().toISOString(),
-                completedAt: null,
-                evidence: null,
-                evidenceValidated: false,
-                reputationImpact: 0
-            },
-            {
-                id: 5,
-                title: 'Leer libro de programación',
-                description: 'Leer capítulos 5-7 del libro "Clean Code" para mejorar habilidades de desarrollo.',
-                area: 'personal',
-                dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
-                status: 'pending',
-                createdAt: new Date().toISOString(),
-                completedAt: null,
-                evidence: null,
-                evidenceValidated: false,
-                reputationImpact: 0
-            }
-        ];
+        return [];
     }
 
     saveTasks() {
@@ -328,6 +278,7 @@ class TasksManager {
         if (form) {
             form.reset();
         }
+        this.populateAreaSelects();
         this.showModal('newTaskModal');
     }
 
@@ -337,6 +288,7 @@ class TasksManager {
 
         const form = document.getElementById('editTaskForm');
         if (form) {
+            this.populateAreaSelects();
             form.querySelector('#editTaskTitle').value = task.title;
             form.querySelector('#editTaskDescription').value = task.description;
             form.querySelector('#editTaskArea').value = task.area;
@@ -536,8 +488,14 @@ class TasksManager {
 
         // Apply area filter
         const areaFilter = document.getElementById('areaFilter');
+        let areaValue = '';
         if (areaFilter && areaFilter.value) {
-            filteredTasks = filteredTasks.filter(task => task.area === areaFilter.value);
+            areaValue = areaFilter.value;
+        } else if (this.areaFromUrl) {
+            areaValue = this.areaFromUrl;
+        }
+        if (areaValue) {
+            filteredTasks = filteredTasks.filter(task => task.area == areaValue);
         }
 
         // Apply status filter
@@ -884,6 +842,59 @@ class TasksManager {
             const dueDate = new Date(task.dueDate);
             return dueDate >= today && dueDate < tomorrow && task.status === 'pending';
         });
+    }
+
+    populateAreaSelects() {
+        // Cargar áreas desde localStorage (igual que AreasManager)
+        let areas = [];
+        try {
+            const savedAreas = localStorage.getItem('astren_areas');
+            if (savedAreas) {
+                areas = JSON.parse(savedAreas);
+            }
+        } catch (e) {
+            areas = [];
+        }
+        // Solo áreas no archivadas
+        areas = areas.filter(a => !a.archived);
+        const areaSelects = [
+            document.getElementById('taskArea'),
+            document.getElementById('editTaskArea')
+        ];
+        areaSelects.forEach(select => {
+            if (!select) return;
+            select.innerHTML = '';
+            if (areas.length === 0) {
+                select.innerHTML = '<option value="">No hay áreas disponibles</option>';
+                select.disabled = true;
+            } else {
+                select.disabled = false;
+                select.innerHTML = '<option value="">Seleccionar área</option>' +
+                    areas.map(area => `<option value="${area.id}">${area.name}</option>`).join('');
+            }
+        });
+        // Deshabilitar botón de crear tarea si no hay áreas
+        const newTaskBtn = document.querySelector('#newTaskForm button[type="submit"]');
+        if (newTaskBtn) {
+            newTaskBtn.disabled = areas.length === 0;
+        }
+        // Mensaje si no hay áreas
+        const form = document.getElementById('newTaskForm');
+        if (form) {
+            let msg = form.querySelector('.no-areas-msg');
+            if (areas.length === 0) {
+                if (!msg) {
+                    msg = document.createElement('div');
+                    msg.className = 'no-areas-msg';
+                    msg.style.color = 'red';
+                    msg.style.marginTop = '10px';
+                    msg.textContent = 'Debes crear un área antes de poder crear tareas.';
+                    form.appendChild(msg);
+                }
+            } else if (msg) {
+                msg.remove();
+            }
+        }
     }
 }
 

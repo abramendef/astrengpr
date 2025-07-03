@@ -28,8 +28,6 @@ astren/
 │   ├── requirements.txt  # Dependencias de Python
 │   └── env.example      # Variables de entorno de ejemplo
 ├── secreto_ia/          # Funcionalidad secreta de IA
-│   ├── frontend/        # Interfaz de la IA secreta
-│   ├── backend/         # Lógica del servidor (futuro)
 │   └── docs/            # Documentación de la IA
 ├── docs/                # Documentación del proyecto
 ├── scripts/             # Scripts de configuración
@@ -60,10 +58,6 @@ astren/
 - Puntuación basada en completación de tareas
 - Progreso visual con estrellas
 - Historial de mejoras
-
-### 🔐 Funcionalidad Secreta
-- Trigger secreto: escribir "astren" en la búsqueda del dashboard
-- Redirección automática a la página de IA secreta
 
 ## 🚀 Cómo Iniciar
 
@@ -96,7 +90,7 @@ python app.py
 ## 📚 Documentación
 
 - **Documentación General**: `docs/`
-- **IA Secreta**: `secreto_ia/docs/`
+- **IA Avanzada**: `docs/IA_AVANZADA.md` (📖 **NUEVO**)
 - **Sistema de Tareas**: `docs/TASK_MANAGEMENT_SYSTEM.md`
 - **Configuración iCloud**: `docs/ICLOUD_SETUP.md`
 
@@ -106,13 +100,6 @@ python app.py
 - **Backend**: Python, Flask
 - **Integración**: Google Classroom API
 - **Sincronización**: iCloud (configurable)
-
-## 🔐 Acceso a la IA Secreta
-
-Para acceder a la funcionalidad secreta:
-1. Ve al Dashboard
-2. En la barra de búsqueda, escribe: **"astren"**
-3. Serás redirigido automáticamente
 
 ## 📝 Notas
 
