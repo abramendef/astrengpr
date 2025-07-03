@@ -62,76 +62,28 @@ Para implementarlo en backend se necesita, como mínimo:
 
 ## Esquema de datos (referencia)
 
-```sql
--- Extracto del esquema usado en el diseño.
--- Nota: este bloque es un fragmento de referencia y no necesariamente es ejecutable tal cual.
+Nota: por seguridad y para evitar que se copie/ejecute por accidente, este documento no incluye SQL ejecutable.
+El esquema se describe a nivel conceptual.
 
-usuario_id INT NOT NULL,
-area_id INT DEFAULT NULL,
-grupo_id INT DEFAULT NULL,
-asignado_a_id INT DEFAULT NULL,
-titulo VARCHAR(200) NOT NULL,
-descripcion TEXT,
-estado VARCHAR(20) DEFAULT 'pendiente',
-estrellas TINYINT DEFAULT NULL,  -- Valor de 0 a 5 según evaluación
-fecha_completada DATETIME DEFAULT NULL, -- Se asigna una vez e inmutable (al completar)
-fecha_reapertura DATETIME DEFAULT NULL,  -- Se setea al reabrir y borrar estrellas
-fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-fecha_vencimiento DATETIME DEFAULT NULL,
-PRIMARY KEY (id),
-FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+Entidades (propuesta):
 
--- Tablas de reputación existentes (ya implementadas)
-CREATE TABLE reputacion_general (
-    id INT NOT NULL AUTO_INCREMENT,
-    usuario_id INT NOT NULL,
-    estrellas DECIMAL(4,2) NOT NULL DEFAULT 3.00,
-    fecha_ultima_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uniq_usuario (usuario_id),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-);
+- `tareas`
+  - Campos relevantes: `usuario_id`, `area_id` (opcional), `grupo_id` (opcional), `asignado_a_id` (opcional),
+    `titulo`, `descripcion`, `estado`, `estrellas` (0 a 5), `fecha_completada` (inmutable), `fecha_reapertura`,
+    `fecha_creacion`, `fecha_vencimiento`.
 
--- Tabla pendiente para historial detallado
-CREATE TABLE historial_reputacion (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    usuario_id INTEGER NOT NULL,
-    tarea_id INTEGER NOT NULL,
-    estrellas_ganadas DECIMAL(3,2),
-    criterio_tiempo DECIMAL(3,2),
-    criterio_descripcion DECIMAL(3,2),
-    criterio_evidencia DECIMAL(3,2),
-    criterio_colaboracion DECIMAL(3,2),
-    motivo_json JSON DEFAULT NULL,
-    fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    evento ENUM('completada','reapertura','ajuste') DEFAULT 'completada',
-    UNIQUE KEY uniq_usuario_tarea_evento (usuario_id, tarea_id, evento),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
-    FOREIGN KEY (tarea_id) REFERENCES tareas(id)
-);
+- `reputacion_general`
+  - 1 fila por usuario con la reputación agregada y la última actualización.
 
--- Evidencias (permitir adjuntos)
-CREATE TABLE evidencias_tarea (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    tarea_id INT NOT NULL,
-    usuario_id INT NOT NULL,
-    url VARCHAR(500) DEFAULT NULL,
-    archivo_path VARCHAR(500) DEFAULT NULL,
-    estado_validacion ENUM('pendiente','aprobada','rechazada') DEFAULT 'pendiente',
-    fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (tarea_id) REFERENCES tareas(id),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-);
+- `historial_reputacion`
+  - Historial de eventos de reputación por tarea: estrellas ganadas, criterios (tiempo/descripcion/grupo/evidencia),
+    motivo en formato JSON (auditoría), timestamp y tipo de evento (completada/reapertura/ajuste).
 
--- Rate limiting simple por usuario
-CREATE TABLE rate_limit_reputacion (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    usuario_id INT NOT NULL,
-    ventana_inicio TIMESTAMP NOT NULL,
-    eventos INT NOT NULL DEFAULT 0,
-    INDEX idx_usuario_ventana (usuario_id, ventana_inicio)
-);
-```
+- `evidencias_tarea`
+  - Evidencias asociadas a tareas (URL/archivo) con estado de validación (pendiente/aprobada/rechazada).
+
+- `rate_limit_reputacion`
+  - Ventanas por usuario para limitar eventos de calificación por minuto (anti-spam).
 
 ### Frontend - Integración pendiente
 ```javascript
@@ -177,36 +129,25 @@ Carga:
 ```
 
 ### **Reputación por Área (opcional recomendada)**
-```sql
-CREATE TABLE reputacion_area (
-    id INT NOT NULL AUTO_INCREMENT,
-    usuario_id INT NOT NULL,
-    area_id INT NOT NULL,
-    estrellas DECIMAL(4,2) NOT NULL DEFAULT 5.00,
-    fecha_ultima_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uniq_usuario_area (usuario_id, area_id),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
-    FOREIGN KEY (area_id) REFERENCES areas(id)
-);
-```
+
+Entidad recomendada: `reputacion_area`
+
+- Clave natural: (`usuario_id`, `area_id`)
+- Campos: `estrellas` (0 a 5, con decimales), `fecha_ultima_actualizacion`
 
 ### **Índices Críticos**
-```sql
-CREATE INDEX idx_tareas_usuario_estado_creacion 
-  ON tareas (usuario_id, estado, fecha_creacion);
 
-CREATE INDEX idx_tareas_usuario_estado_completada 
-  ON tareas (usuario_id, estado, fecha_completada);
+Índices recomendados (a nivel de diseño):
 
-CREATE INDEX idx_tareas_area_estado_completada 
-  ON tareas (area_id, estado, fecha_completada);
+- `tareas`: por (`usuario_id`, `estado`, `fecha_creacion`) para listados principales.
+- `tareas`: por (`usuario_id`, `estado`, `fecha_completada`) para reputación/recientes.
+- `tareas`: por (`area_id`, `estado`, `fecha_completada`) para reputación por área.
+- `historial_reputacion`: por (`usuario_id`, `fecha_cambio`) para timeline/auditoría.
 
-CREATE INDEX idx_historial_usuario_fecha 
-  ON historial_reputacion (usuario_id, fecha_cambio);
+Restricciones de unicidad (diseño):
 
--- Unicidad en reputacion_general(usuario_id) y reputacion_area(usuario_id, area_id)
-```
+- `reputacion_general`: 1 fila por `usuario_id`.
+- `reputacion_area`: 1 fila por (`usuario_id`, `area_id`).
 
 ### **Flujo de Evidencias y Validación**
 ```text
@@ -253,21 +194,13 @@ def excede_rate_limit(usuario_id):
    - Determinar 'vencida' al vuelo en listados con CASE.
 ```
 
-#### Ejemplo SQL (determinar vencida al vuelo)
-```sql
-SELECT 
-  t.id,
-  t.titulo,
-  CASE 
-    WHEN t.estado = 'completada' THEN 'completada'
-    WHEN t.fecha_vencimiento IS NOT NULL AND NOW() > t.fecha_vencimiento THEN 'vencida'
-    ELSE t.estado
-  END AS estado_efectivo
-FROM tareas t
-WHERE t.usuario_id = ?
-ORDER BY t.fecha_creacion DESC
-LIMIT 50;
-```
+#### Determinar estado “vencida” al vuelo (sin UPDATE masivo)
+
+Regla sugerida para listados:
+
+- Si `estado` es `completada`, mantener `completada`.
+- Si hay `fecha_vencimiento` y “ahora” > `fecha_vencimiento`, tratar como `vencida`.
+- En caso contrario, usar el `estado` persistido.
 
 ### **Algoritmos de Cálculo**
 
@@ -331,18 +264,9 @@ def calcular_reputacion_general(usuario_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Obtener todas las tareas completadas con estrellas
-    sql = """
-        SELECT estrellas, fecha_creacion 
-        FROM tareas 
-        WHERE usuario_id = %s 
-        AND estado = 'completada' 
-        AND estrellas IS NOT NULL
-        ORDER BY fecha_creacion DESC
-        LIMIT 100
-    """
-    cursor.execute(sql, (usuario_id,))
-    tareas = cursor.fetchall()
+    # Obtener tareas completadas recientes con estrellas (pseudocódigo)
+    # tareas = fetch_recent_completed_tasks(usuario_id, limit=100, only_with_stars=True)
+    tareas = cursor.fetchall()  # placeholder
     
     if not tareas:
         return 5.0  # Reputación inicial
@@ -361,14 +285,8 @@ def calcular_reputacion_general(usuario_id):
     # Clip para mantener semántica de estrellas [1.0, 5.0]
     reputacion = max(1.0, min(5.0, reputacion))
     
-    # Actualizar tabla de reputación
-    cursor.execute("""
-        INSERT INTO reputacion_general (usuario_id, estrellas) 
-        VALUES (%s, %s) 
-        ON DUPLICATE KEY UPDATE 
-        estrellas = VALUES(estrellas), 
-        fecha_ultima_actualizacion = CURRENT_TIMESTAMP
-    """, (usuario_id, reputacion))
+    # Persistir reputación general (pseudocódigo)
+    # upsert_reputacion_general(usuario_id, reputacion)
     
     conn.commit()
     cursor.close()
