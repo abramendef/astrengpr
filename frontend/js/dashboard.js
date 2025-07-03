@@ -46,10 +46,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Selector ultra-específico para el input del buscador del header del dashboard
     const searchInput = document.querySelector('.dashboard__header .header__search input[type="text"]');
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const value = this.value.trim().toLowerCase();
-            if (value === 'astren') {
-                window.location.href = '../secreto_ia/frontend/ia-secreta.html';
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
             }
         });
     } else {
@@ -157,28 +157,6 @@ document.addEventListener('DOMContentLoaded', function() {
     syncTasksOnLoad();
     
     console.log('📊 Dashboard de Astren cargado correctamente');
-
-    function addSecretTriggerToSearchInputs() {
-        document.querySelectorAll('input.search__input').forEach(input => {
-            if (!input._astrenSecretListener) {
-                input.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        const value = this.value.trim().toLowerCase();
-                        if (value === 'astren') {
-                            console.log('🎯 Trigger secreto detectado: "astren" - redirigiendo a ia-secreta.html');
-                            window.location.href = '../secreto_ia/frontend/ia-secreta.html';
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }
-                    }
-                });
-                input._astrenSecretListener = true;
-            }
-        });
-    }
-    addSecretTriggerToSearchInputs();
-    const observer = new MutationObserver(addSecretTriggerToSearchInputs);
-    observer.observe(document.body, { childList: true, subtree: true });
 });
 
 /*===== REPUTATION CHARTS =====*/
@@ -666,85 +644,71 @@ function renderDashboardTodayTasks() {
 }
 
 function createTaskCard(task) {
-    const taskCard = document.createElement('div');
-    // Solo tareas pendientes llegan aquí, así que simplificamos
-    taskCard.className = 'task-card task-card--pending';
-    taskCard.dataset.taskId = task.id;
-    
+    // Determina el color del borde según el estado
+    let borderColor = 'hsl(55, 95%, 75%)'; // pendiente (amarillo igual que en tasks)
+    if (task.status === 'completed') borderColor = '#4ade80'; // verde
+    if (task.status === 'overdue') borderColor = '#f87171'; // rojo
+
     const areaText = { personal: 'Personal', work: 'Trabajo', school: 'Escuela' };
     const areaIcon = { personal: 'fas fa-user', work: 'fas fa-briefcase', school: 'fas fa-graduation-cap' };
-    
-    let evidenceIndicator = '';
-    if (task.evidence) {
-        evidenceIndicator = `<span class="task-evidence task-evidence--validated"><i class="fas fa-check-circle"></i> Evidencia subida</span>`;
-    }
-    
-    let reputationIndicator = '';
-    if (task.reputationImpact !== 0) {
-        const impactClass = task.reputationImpact > 0 ? 'positive' : 'negative';
-        const impactIcon = task.reputationImpact > 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-        reputationIndicator = `<span class="task-reputation task-reputation--${impactClass}"><i class="fas ${impactIcon}"></i> ${Math.abs(task.reputationImpact)} pts</span>`;
-    }
-    
     let groupTag = '';
     if (task.group) {
-        groupTag = `<span class="task-group"><i class='fas fa-users'></i> ${task.group}</span>`;
+        groupTag = `<span class=\"task-group\" style=\"display: flex; align-items: center; gap: 0.35rem; font-size: 0.95rem; color: #666;\"><i class='fas fa-users' style=\"font-size: 1rem;\"></i> ${task.group}</span>`;
     }
-    
-    // Botón de evidencia para tareas pendientes
-    const uploadEvidenceBtn = `<button class="task-action" title="Subir evidencia" onclick="triggerEvidenceUpload(${task.id})"><i class='fas fa-camera'></i></button><input type="file" id="evidence-input-${task.id}" style="display:none" accept="image/*,application/pdf" onchange="handleEvidenceUpload(event, ${task.id})">`;
-    
+    const uploadEvidenceBtn = `<button class=\"task-action\" title=\"Subir evidencia\" onclick=\"triggerEvidenceUpload(${task.id})\"><i class=\"fas fa-camera\"></i></button><input type=\"file\" id=\"evidence-input-${task.id}\" style=\"display:none\" accept=\"image/*,application/pdf\" onchange=\"handleEvidenceUpload(event, ${task.id})\">`;
+
+    const taskCard = document.createElement('div');
+    taskCard.className = 'dashboard-task-card-content';
+    taskCard.style.display = 'flex';
+    taskCard.style.alignItems = 'center';
+    taskCard.style.gap = '0.7rem';
+    taskCard.style.width = '100%';
+    taskCard.style.padding = '0.7rem 0.8rem';
+    taskCard.style.border = `1px solid ${borderColor}`;
+    taskCard.style.borderLeft = `5px solid ${borderColor}`;
     taskCard.innerHTML = `
-        <div class="task-header">
-            <div style="display: flex; align-items: center; gap: 0.6rem; flex: 1;">
-                <div class="task-checkbox">
-                    <input type="checkbox" id="task-${task.id}">
-                    <label for="task-${task.id}"></label>
-                </div>
-                <h3 class="dashboard-task-title">${task.title}</h3>
-            </div>
-            <div class="task-status task-status--pending">
-                <i class="fas fa-clock"></i>
-                Pendiente
-            </div>
+        <div class=\"task-checkbox\" style=\"flex-shrink: 0;\">
+            <input type=\"checkbox\" id=\"task-${task.id}\">
+            <label for=\"task-${task.id}\"></label>
         </div>
-        <div class="task-meta">${evidenceIndicator}${reputationIndicator}</div>
-        <div class="task-meta-bottom">
-            <div class="task-meta-row">
-                <span class="task-area task-area--${task.area}">
-                    <i class="${areaIcon[task.area]}"></i>
-                    ${areaText[task.area]}
+        <div class=\"dashboard-task-content\" style=\"flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.18rem;\">
+            <div style=\"display: flex; align-items: center; gap: 0.5rem;\">
+                <h3 class=\"dashboard-task-title\" style=\"font-size: 0.98rem; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em;\">${task.title}</h3>
+                <span class=\"task-status task-status--${task.status}\" style=\"font-size: 0.82rem; padding: 0.08rem 0.7rem; border-radius: 1rem; background: #fffbe6; color: #bfa100; font-weight: 500;\">
+                    <i class=\"fas fa-clock\" style=\"font-size: 0.9rem;\"></i> ${task.status === 'pending' ? 'Pendiente' : task.status === 'completed' ? 'Completada' : 'Vencida'}
+                </span>
+            </div>
+            <div class=\"dashboard-task-meta-row\" style=\"display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap;\">
+                <span class=\"task-area task-area--${task.area}\" style=\"display: flex; align-items: center; gap: 0.25rem; font-size: 0.92rem; color: #666;\">
+                    <i class=\"${areaIcon[task.area]}\" style=\"font-size: 0.95rem;\"></i> ${areaText[task.area]}
                 </span>
                 ${groupTag}
+                <span class=\"task-due task-due--normal\" style=\"display: flex; align-items: center; gap: 0.25rem; font-size: 0.92rem; color: #666;\">
+                    <i class=\"fas fa-calendar\" style=\"font-size: 0.95rem;\"></i> Vence a las ${new Date(task.dueDate).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                </span>
             </div>
         </div>
-        <div class="task-meta-footer">
-            <span class="task-due task-due--normal">
-                <i class="fas fa-calendar"></i>
-                Vence a las ${new Date(task.dueDate).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-        </div>
-        <div class="task-actions task-actions-bottom">
-            <button class="task-action" title="Editar" onclick="editTask(${task.id})"><i class="fas fa-edit"></i></button>
+        <div class=\"dashboard-task-actions\" style=\"display: flex; align-items: center; gap: 0.6rem; margin-left: auto;\">
+            <button class=\"task-action\" title=\"Editar\" onclick=\"editTask(${task.id})\"><i class=\"fas fa-edit\" style=\"font-size: 1rem;\"></i></button>
             ${uploadEvidenceBtn}
-            <button class="task-action task-action--danger" title="Eliminar" onclick="openDeleteModal(${task.id})"><i class="fas fa-trash"></i></button>
+            <button class=\"task-action task-action--danger\" title=\"Eliminar\" onclick=\"openDeleteModal(${task.id})\"><i class=\"fas fa-trash\" style=\"font-size: 1rem;\"></i></button>
         </div>
     `;
-    
+
     // Add event listener for checkbox
     const checkbox = taskCard.querySelector('input[type="checkbox"]');
     checkbox.addEventListener('change', (e) => {
         if (e.target.checked) {
             // Verificar si requiere evidencia antes de marcar como completada
             const requiresEvidence = task.area === 'work' || task.area === 'school';
-            
+
             if (requiresEvidence && !task.evidence) {
                 // Desmarcar el checkbox y mostrar notificación
                 e.target.checked = false;
                 showNotification('Esta tarea requiere evidencia antes de completarse', 'warning');
                 return;
             }
-            
+
             // Si no requiere evidencia o ya tiene evidencia, proceder normalmente
             taskCard.classList.add('task-completing');
             setTimeout(() => {
@@ -754,7 +718,7 @@ function createTaskCard(task) {
             toggleTaskCompletion(task.id, false);
         }
     });
-    
+
     return taskCard;
 }
 
@@ -1047,18 +1011,6 @@ function formatDate(dateString) {
         year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
 }
-
-// SECRET TRIGGER: Redirigir a la página secreta de IA cuando se escriba "astren"
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.querySelector('.dashboard__header .header__search input[type="text"]');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            if (this.value.toLowerCase() === 'astren') {
-                window.location.href = '../secreto_ia/frontend/ia-secreta.html';
-            }
-        });
-    }
-});
 
 /*===== DASHBOARD RESPONSIVE ENHANCEMENTS =====*/
 class DashboardResponsive {
