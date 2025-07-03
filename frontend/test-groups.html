@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Página de Grupos - Astren</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .groups-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .group-preview {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test de Funcionalidad - Página de Grupos</h1>
+        
+        <div id="test-results">
+            <div class="test-result info">
+                <strong>Estado:</strong> Iniciando tests...
+            </div>
+        </div>
+
+        <h2>Acciones de Prueba</h2>
+        <button onclick="testLocalStorage()">Probar LocalStorage</button>
+        <button onclick="testGroupCreation()">Simular Creación de Grupo</button>
+        <button onclick="testFiltering()">Probar Filtros</button>
+        <button onclick="loadGroupsPage()">Cargar Página de Grupos</button>
+        <button onclick="clearStorage()">Limpiar Datos</button>
+
+        <h2>Vista Previa de Grupos</h2>
+        <div id="groups-preview" class="groups-preview"></div>
+
+        <h2>Logs del Sistema</h2>
+        <div id="system-logs" style="background: #f8f9fa; padding: 15px; border-radius: 4px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <script>
+        let testResults = document.getElementById('test-results');
+        let groupsPreview = document.getElementById('groups-preview');
+        let systemLogs = document.getElementById('system-logs');
+
+        function addTestResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            testResults.appendChild(div);
+        }
+
+        function addLog(message) {
+            const time = new Date().toLocaleTimeString();
+            systemLogs.innerHTML += `[${time}] ${message}\n`;
+            systemLogs.scrollTop = systemLogs.scrollHeight;
+        }
+
+        function testLocalStorage() {
+            try {
+                // Test write
+                localStorage.setItem('test_key', 'test_value');
+                const value = localStorage.getItem('test_key');
+                
+                if (value === 'test_value') {
+                    addTestResult('✅ LocalStorage funcionando correctamente', 'success');
+                    addLog('LocalStorage test: PASSED');
+                } else {
+                    addTestResult('❌ Error en LocalStorage', 'error');
+                    addLog('LocalStorage test: FAILED');
+                }
+                
+                localStorage.removeItem('test_key');
+            } catch (e) {
+                addTestResult(`❌ Error en LocalStorage: ${e.message}`, 'error');
+                addLog(`LocalStorage test: ERROR - ${e.message}`);
+            }
+        }
+
+        function testGroupCreation() {
+            try {
+                const testGroup = {
+                    id: Date.now(),
+                    name: 'Grupo de Prueba',
+                    description: 'Este es un grupo creado para pruebas',
+                    type: 'development',
+                    privacy: 'private',
+                    color: 'blue',
+                    role: 'owner',
+                    status: 'active',
+                    members: [
+                        { id: 1, name: 'Usuario Prueba', email: 'test@example.com', role: 'owner', avatar: 'UP' }
+                    ],
+                    stats: { total: 5, completed: 2, pending: 3 },
+                    progress: 40,
+                    createdAt: Date.now()
+                };
+
+                let groups = JSON.parse(localStorage.getItem('astren_groups') || '[]');
+                groups.push(testGroup);
+                localStorage.setItem('astren_groups', JSON.stringify(groups));
+
+                addTestResult('✅ Grupo de prueba creado exitosamente', 'success');
+                addLog(`Group created: ${testGroup.name} (ID: ${testGroup.id})`);
+                
+                updateGroupsPreview();
+            } catch (e) {
+                addTestResult(`❌ Error creando grupo: ${e.message}`, 'error');
+                addLog(`Group creation: ERROR - ${e.message}`);
+            }
+        }
+
+        function testFiltering() {
+            try {
+                const groups = JSON.parse(localStorage.getItem('astren_groups') || '[]');
+                
+                // Test filter by status
+                const activeGroups = groups.filter(g => g.status === 'active');
+                const archivedGroups = groups.filter(g => g.status === 'archived');
+                
+                // Test filter by role
+                const ownedGroups = groups.filter(g => g.role === 'owner');
+                const adminGroups = groups.filter(g => g.role === 'admin');
+                
+                addTestResult(`✅ Filtros funcionando: ${activeGroups.length} activos, ${archivedGroups.length} archivados, ${ownedGroups.length} propios`, 'success');
+                addLog(`Filtering test: Active=${activeGroups.length}, Archived=${archivedGroups.length}, Owned=${ownedGroups.length}`);
+            } catch (e) {
+                addTestResult(`❌ Error en filtros: ${e.message}`, 'error');
+                addLog(`Filtering test: ERROR - ${e.message}`);
+            }
+        }
+
+        function loadGroupsPage() {
+            addTestResult('🔄 Redirigiendo a la página de grupos...', 'info');
+            addLog('Redirecting to groups.html');
+            window.open('groups.html', '_blank');
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('astren_groups');
+            addTestResult('🗑️ Datos de grupos eliminados', 'info');
+            addLog('Groups data cleared from localStorage');
+            updateGroupsPreview();
+        }
+
+        function updateGroupsPreview() {
+            const groups = JSON.parse(localStorage.getItem('astren_groups') || '[]');
+            
+            if (groups.length === 0) {
+                groupsPreview.innerHTML = '<p style="text-align: center; color: #6c757d;">No hay grupos guardados</p>';
+                return;
+            }
+
+            groupsPreview.innerHTML = groups.map(group => `
+                <div class="group-preview">
+                    <h4 style="margin: 0 0 10px 0; color: #007bff;">${group.name}</h4>
+                    <p style="margin: 5px 0; font-size: 14px; color: #6c757d;">${group.description || 'Sin descripción'}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <span style="background: #007bff; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">${group.type}</span>
+                        <span style="font-size: 12px; color: #6c757d;">${group.members.length} miembros</span>
+                    </div>
+                    <div style="margin-top: 8px; background: #e9ecef; height: 4px; border-radius: 2px;">
+                        <div style="background: #007bff; height: 100%; width: ${group.progress}%; border-radius: 2px;"></div>
+                    </div>
+                    <div style="text-align: center; margin-top: 5px; font-size: 12px; color: #6c757d;">
+                        ${group.progress}% completado
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            addTestResult('🚀 Sistema de pruebas inicializado', 'success');
+            addLog('Test system initialized');
+            updateGroupsPreview();
+            
+            // Test basic functionality
+            testLocalStorage();
+        });
+
+        // Add some sample data if none exists
+        if (!localStorage.getItem('astren_groups')) {
+            addTestResult('📝 Creando datos de ejemplo...', 'info');
+            addLog('Creating sample data');
+            
+            const sampleGroups = [
+                {
+                    id: 1,
+                    name: 'Equipo Desarrollo',
+                    description: 'Equipo principal de desarrollo de software',
+                    type: 'development',
+                    privacy: 'private',
+                    color: 'blue',
+                    role: 'owner',
+                    status: 'active',
+                    members: [
+                        { id: 1, name: 'Ana García', email: 'ana@example.com', role: 'owner', avatar: 'AG' },
+                        { id: 2, name: 'Carlos López', email: 'carlos@example.com', role: 'member', avatar: 'CL' }
+                    ],
+                    stats: { total: 12, completed: 8, pending: 4 },
+                    progress: 67,
+                    createdAt: Date.now() - 86400000
+                },
+                {
+                    id: 2,
+                    name: 'Marketing Digital',
+                    description: 'Estrategias y campañas de marketing',
+                    type: 'marketing',
+                    privacy: 'public',
+                    color: 'green',
+                    role: 'admin',
+                    status: 'active',
+                    members: [
+                        { id: 3, name: 'María González', email: 'maria@example.com', role: 'owner', avatar: 'MG' },
+                        { id: 4, name: 'Juan Pérez', email: 'juan@example.com', role: 'admin', avatar: 'JP' }
+                    ],
+                    stats: { total: 8, completed: 6, pending: 2 },
+                    progress: 75,
+                    createdAt: Date.now() - 172800000
+                }
+            ];
+            
+            localStorage.setItem('astren_groups', JSON.stringify(sampleGroups));
+            updateGroupsPreview();
+        }
+    </script>
+</body>
+</html>
