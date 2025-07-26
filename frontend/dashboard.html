@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/tasks.css">
+    <link rel="stylesheet" href="css/areas.css">
 </head>
 <body class="dashboard-body">
     <div class="dashboard">
@@ -394,7 +395,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="taskArea">Área</label>
-                        <select id="taskArea" name="area" required>
+                        <select id="taskArea" name="area">
                             <option value="">Seleccionar área</option>
                             <option value="personal">Personal</option>
                             <option value="work">Trabajo</option>
@@ -404,7 +405,7 @@
                 </div>
                 <div class="form-group">
                     <label for="taskDueDate">Fecha de vencimiento</label>
-                    <input type="text" id="taskDueDate" name="dueDate" required placeholder="Seleccionar fecha y hora">
+                    <input type="datetime-local" id="taskDueDate" name="dueDate" required>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="button button--ghost" id="cancelTask">Cancelar</button>
@@ -414,10 +415,30 @@
         </div>
     </div>
 
+    <!-- Modal de confirmación para eliminar tarea -->
+    <div class="modal" id="deleteTaskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>¿Eliminar tarea?</h2>
+                <button class="modal-close" id="closeDeleteModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar esta tarea? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="button button--ghost" id="cancelDeleteTask">Cancelar</button>
+                <button type="button" class="button button--danger" id="confirmDeleteTask">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/sidebar-new.js"></script>
     <script src="js/scripts.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/header-buttons.js"></script>
+    <script src="js/tasks.js"></script>
 </body>
 </html>

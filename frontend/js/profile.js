@@ -760,22 +760,22 @@ class ProfileManager {
     }
 
     loadUserData() {
-        // Load user data from session storage if available
+        // Al cargar el perfil, obtener el usuario real de sessionStorage
         const userData = sessionStorage.getItem('astren_user');
+        let nombre = '';
+        let apellido = '';
         if (userData) {
             try {
                 const user = JSON.parse(userData);
-                if (user.firstName && user.lastName) {
-                    this.profile.personal.firstName = user.firstName;
-                    this.profile.personal.lastName = user.lastName;
-                    this.profile.personal.email = user.email || this.profile.personal.email;
-                    this.saveProfile();
-                    this.renderProfile();
-                }
-            } catch (e) {
-                console.error('Error parsing user data:', e);
-            }
+                nombre = user.nombre || '';
+                apellido = user.apellido || '';
+            } catch (e) {}
         }
+        // Usar nombre y apellido en vez de firstName/lastName en todo el archivo
+        this.profile.personal.firstName = nombre;
+        this.profile.personal.lastName = apellido;
+        this.saveProfile();
+        this.renderProfile();
     }
 
     escapeHtml(text) {
