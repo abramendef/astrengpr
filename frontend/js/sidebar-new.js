@@ -65,7 +65,18 @@ class SidebarManager {
         document.body.appendChild(this.overlay);
         console.log('✅ Overlay creado');
 
-        // Create sidebar HTML
+        // Obtener el nombre real del usuario
+        const userData = sessionStorage.getItem('astren_user');
+        let userName = 'Usuario';
+        if (userData) {
+            try {
+                const user = JSON.parse(userData);
+                if (user.nombre) {
+                    userName = `${user.nombre} ${user.apellido || ''}`.trim();
+                }
+            } catch (e) {}
+        }
+        // Crear el HTML del sidebar usando el nombre real
         const sidebarHTML = `
             <aside class="sidebar" id="sidebar" role="navigation" aria-label="Navegación principal">
                 <div class="sidebar__header">
@@ -84,7 +95,7 @@ class SidebarManager {
                         <div class="profile__status"></div>
                     </div>
                     <div class="profile__info">
-                        <h3 class="profile__name">Abraham Méndez</h3>
+                        <h3 class="profile__name">${userName}</h3>
                         <div class="profile__reputation">
                             <span class="reputation__label">Reputación:</span>
                             <div class="reputation__stars" aria-label="4.5 estrellas de 5">
@@ -398,13 +409,16 @@ class SidebarManager {
     handleLogout() {
         // Show confirmation dialog
         if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-            // Clear any stored data
-            localStorage.removeItem('userSession');
-            localStorage.removeItem('userData');
-            
+            // Limpiar todos los datos de usuario y recordarme
+            localStorage.removeItem('astren_rememberMe');
+            localStorage.removeItem('astren_email');
+            localStorage.removeItem('astren_usuario_id');
+            localStorage.removeItem('astren_nombre');
+            localStorage.removeItem('astren_apellido');
+            localStorage.removeItem('astren_correo');
+            sessionStorage.clear();
             // Redirect to home page
-            window.location.href = 'index.html';
-            
+            window.location.href = 'login.html';
             // Track logout
             if (window.AstrenApp && window.AstrenApp.Analytics) {
                 window.AstrenApp.Analytics.trackEvent('Authentication', 'Logout', 'Sidebar');

@@ -93,8 +93,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const userNameElement = document.getElementById('userName');
             const userTypeElement = document.getElementById('userType');
             
-            if (userNameElement && user.firstName) {
-                userNameElement.textContent = `${user.firstName} ${user.lastName || ''}`.trim();
+            if (userNameElement && user.nombre) {
+                userNameElement.textContent = `${user.nombre} ${user.apellido || ''}`.trim();
             }
             if (userTypeElement && user.userType) {
                 userTypeElement.textContent = user.userType.charAt(0).toUpperCase() + user.userType.slice(1);
@@ -109,12 +109,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            
             sessionStorage.clear();
-            localStorage.removeItem('astren_remember');
-            localStorage.removeItem('astren_user_email');
-            
-            window.location.href = 'index.html';
+            localStorage.removeItem('astren_rememberMe');
+            localStorage.removeItem('astren_email');
+            localStorage.removeItem('astren_usuario_id');
+            localStorage.removeItem('astren_nombre');
+            localStorage.removeItem('astren_apellido');
+            localStorage.removeItem('astren_correo');
+            window.location.href = 'login.html';
         });
     }
 
@@ -157,6 +159,16 @@ document.addEventListener('DOMContentLoaded', function() {
     syncTasksOnLoad();
     
     console.log('📊 Dashboard de Astren cargado correctamente');
+
+    populateAreaSelects();
+    // Inicializar Flatpickr en el campo de fecha del modal
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr("#taskDueDate", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            locale: "es"
+        });
+    }
 });
 
 /*===== REPUTATION CHARTS =====*/
@@ -453,16 +465,26 @@ function initQuickAddTaskButton() {
     
     if (quickAddBtn) {
         quickAddBtn.addEventListener('click', function() {
-            openModal();
+            newTaskModal.style.display = 'flex';
+            newTaskModal.classList.add('active');
+            if (typeof populateTaskAreaSelect === 'function') {
+                populateTaskAreaSelect();
+            }
         });
     }
 
     if (closeModal) {
-        closeModal.addEventListener('click', closeModalFunction);
+        closeModal.addEventListener('click', function() {
+            newTaskModal.style.display = 'none';
+            newTaskModal.classList.remove('active');
+        });
     }
 
     if (cancelTask) {
-        cancelTask.addEventListener('click', closeModalFunction);
+        cancelTask.addEventListener('click', function() {
+            newTaskModal.style.display = 'none';
+            newTaskModal.classList.remove('active');
+        });
     }
 
     // Close modal on overlay click
@@ -485,55 +507,34 @@ function initQuickAddTaskButton() {
     if (newTaskForm) {
         newTaskForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const taskData = {
-                id: Date.now(),
-                title: document.getElementById('taskTitle').value,
-                description: document.getElementById('taskDescription').value,
-                area: document.getElementById('taskArea').value,
-                dueDate: new Date(document.getElementById('taskDueDate').value).toISOString(),
-                status: 'pending',
-                createdAt: new Date().toISOString(),
-                completedAt: null,
-                evidence: null,
-                evidenceValidated: false,
-                startedAt: null,
-                reputationImpact: 0
+            const usuario_id = localStorage.getItem('astren_usuario_id') || 1;
+            const titulo = document.getElementById('taskTitle').value;
+            const descripcion = document.getElementById('taskDescription').value;
+            const area_id = document.getElementById('taskArea').value || null;
+            const fecha_vencimiento = document.getElementById('taskDueDate').value;
+            const data = {
+                usuario_id: usuario_id,
+                titulo: titulo,
+                descripcion: descripcion,
+                area_id: area_id,
+                fecha_vencimiento: fecha_vencimiento
             };
-            
-            // Validate required fields
-            if (!taskData.title || !taskData.area || !taskData.dueDate) {
-                showNotification('Por favor completa todos los campos requeridos', 'error');
-                return;
-            }
-            
-            // Add task to array
-            let tasks = JSON.parse(localStorage.getItem('astren_tasks')) || [];
-            tasks.unshift(taskData);
-            localStorage.setItem('astren_tasks', JSON.stringify(tasks));
-            
-            // Update UI
-            updateDashboardTaskCounts();
-            renderDashboardTodayTasks();
-            
-            // Close modal
-            closeModalFunction();
-            
-            // Show success notification
-            showNotification('Tarea creada exitosamente', 'success');
-            
-            // Flatpickr: destruir instancia previa si existe
-            if (window.taskDueDatePicker && window.taskDueDatePicker.destroy) {
-                window.taskDueDatePicker.destroy();
-            }
-            // Inicializar Flatpickr en el campo de fecha/hora
-            window.taskDueDatePicker = flatpickr('#taskDueDate', {
-                enableTime: true,
-                time_24hr: true,
-                dateFormat: 'Y-m-d H:i',
-                locale: 'es',
-                minDate: 'today',
-                placeholder: 'Seleccionar fecha y hora'
+            fetch('http://localhost:8000/tareas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(res => {
+                // Cerrar modal, limpiar formulario, actualizar dashboard
+                newTaskModal.style.display = 'none';
+                newTaskModal.classList.remove('active');
+                newTaskForm.reset();
+                updateDashboardTaskCounts();
+                renderDashboardTodayTasks();
+            })
+            .catch(() => {
+                alert('Error al crear la tarea.');
             });
         });
     }
@@ -544,7 +545,9 @@ function openModal() {
     if (newTaskModal) {
         newTaskModal.classList.add('active');
         document.body.style.overflow = 'hidden';
-        
+        if (typeof populateTaskAreaSelect === 'function') {
+            populateTaskAreaSelect();
+        }
         // Inicializar Flatpickr cuando se abre el modal
         setTimeout(() => {
             if (window.taskDueDatePicker && window.taskDueDatePicker.destroy) {
@@ -577,52 +580,72 @@ function closeModalFunction() {
     }
 }
 
+// --- Agregar función robusta esFechaHoy al inicio del archivo ---
+function esFechaHoy(fechaStr) {
+    if (!fechaStr) return false;
+    let fechaIso = fechaStr.trim();
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(fechaIso)) {
+        fechaIso = fechaIso.replace(' ', 'T') + ':00';
+    }
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(fechaIso)) {
+        fechaIso += ':00';
+    }
+    const fecha = new Date(fechaIso);
+    console.log('DASHBOARD esFechaHoy:', fechaStr, '->', fecha, 'Hoy:', new Date());
+    if (isNaN(fecha.getTime())) return false;
+    const hoy = new Date();
+    return (
+        fecha.getFullYear() === hoy.getFullYear() &&
+        fecha.getMonth() === hoy.getMonth() &&
+        fecha.getDate() === hoy.getDate()
+    );
+}
+
+// --- Función para obtener tareas del backend y normalizarlas ---
+function fetchDashboardTasks() {
+    const usuario_id = localStorage.getItem('astren_usuario_id') || 1;
+    return fetch(`http://localhost:8000/tareas/${usuario_id}`)
+        .then(response => response.json())
+        .then(tareas => tareas.map(t => ({
+            ...t,
+            status: t.estado === 'pendiente' ? 'pending' :
+                    t.estado === 'completada' ? 'completed' :
+                    t.estado === 'vencida' ? 'overdue' : t.estado,
+            title: t.titulo || t.title,
+            dueDate: t.fecha_vencimiento || t.dueDate
+        })))
+        .catch(() => []);
+}
+
+// --- updateDashboardTaskCounts usando backend ---
 function updateDashboardTaskCounts() {
-    const tasks = JSON.parse(localStorage.getItem('astren_tasks')) || [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const tasksDueToday = tasks.filter(task => {
-        if (task.status !== 'pending') return false;
-        const dueDate = new Date(task.dueDate);
-        dueDate.setHours(0, 0, 0, 0);
-        return dueDate.getTime() === today.getTime();
-    }).length;
-    
+    fetchDashboardTasks().then(tasks => {
+        const tasksDueToday = tasks.filter(task => 
+            task.status === 'pending' && esFechaHoy(task.dueDate)
+        ).length;
     const completedTasks = tasks.filter(task => task.status === 'completed').length;
     const pendingTasks = tasks.filter(task => task.status === 'pending').length;
     const overdueTasks = tasks.filter(task => task.status === 'overdue').length;
 
-    // Actualizar tarjetas de estadísticas con el diseño original
     if (document.getElementById('statToday')) document.getElementById('statToday').textContent = tasksDueToday;
     if (document.getElementById('statCompleted')) document.getElementById('statCompleted').textContent = completedTasks;
     if (document.getElementById('statPending')) document.getElementById('statPending').textContent = pendingTasks;
     if (document.getElementById('statOverdue')) document.getElementById('statOverdue').textContent = overdueTasks;
-
-    // Actualizar el contador de tareas de hoy
     if (document.getElementById('todayTasksCounter')) {
         document.getElementById('todayTasksCounter').textContent = tasksDueToday;
     }
+    });
 }
 
+// --- renderDashboardTodayTasks usando backend ---
 function renderDashboardTodayTasks() {
     const dashboardTodayTasks = document.getElementById('dashboardTodayTasks');
     if (dashboardTodayTasks) {
         dashboardTodayTasks.innerHTML = '';
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tasks = JSON.parse(localStorage.getItem('astren_tasks')) || [];
-        
-        // Solo mostrar tareas pendientes que vencen hoy
+        fetchDashboardTasks().then(tasks => {
         let tasksToday = tasks.filter(task => {
-            // Solo tareas pendientes
-            if (task.status !== 'pending') return false;
-            // Que vencen hoy
-            const dueDate = new Date(task.dueDate);
-            dueDate.setHours(0, 0, 0, 0);
-            return dueDate.getTime() === today.getTime();
-        });
-        // Ordenar por hora de vencimiento ascendente
+                return task.status === 'pending' && esFechaHoy(task.dueDate);
+            });
         tasksToday = tasksToday.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
         if (tasksToday.length === 0) {
             dashboardTodayTasks.innerHTML = `
@@ -640,7 +663,23 @@ function renderDashboardTodayTasks() {
                 dashboardTodayTasks.appendChild(taskElement);
             });
         }
+        });
     }
+}
+
+function deleteDashboardTask(taskId) {
+    fetch(`http://localhost:8000/tareas/${taskId}`, {
+        method: 'DELETE'
+    })
+    .then(res => res.json())
+    .then(res => {
+        showNotification('Tarea eliminada exitosamente', 'info');
+        updateDashboardTaskCounts();
+        renderDashboardTodayTasks();
+    })
+    .catch(() => {
+        showNotification('Error al eliminar la tarea', 'error');
+    });
 }
 
 function createTaskCard(task) {
@@ -657,6 +696,21 @@ function createTaskCard(task) {
     }
     const uploadEvidenceBtn = `<button class=\"task-action\" title=\"Subir evidencia\" onclick=\"triggerEvidenceUpload(${task.id})\"><i class=\"fas fa-camera\"></i></button><input type=\"file\" id=\"evidence-input-${task.id}\" style=\"display:none\" accept=\"image/*,application/pdf\" onchange=\"handleEvidenceUpload(event, ${task.id})\">`;
 
+    // Solo mostrar el área si existe
+    let areaSpan = '';
+    if (task.area_nombre) {
+        const colorMap = {
+            'blue': '#3b82f6', 'green': '#10b981', 'purple': '#8b5cf6',
+            'orange': '#f59e0b', 'red': '#ef4444', 'pink': '#ffb6c1', 
+            'yellow': '#ffe066', 'mint': '#98ff98', 'sky': '#87ceeb',
+            'coral': '#ff7f50', 'lavender': '#e6e6fa'
+        };
+        const areaColor = colorMap[task.area_color] || '#666';
+        areaSpan = `<span class="task-area-badge" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.95rem; border-radius: 1rem; padding: 0.13rem 0.7rem; font-weight: 500; background: none;">
+            <i class="fas ${task.area_icono || 'fa-layer-group'}" style="font-size: 1rem; color: ${areaColor};"></i> ${task.area_nombre}
+        </span>`;
+    }
+
     const taskCard = document.createElement('div');
     taskCard.className = 'dashboard-task-card-content';
     taskCard.style.display = 'flex';
@@ -667,33 +721,30 @@ function createTaskCard(task) {
     taskCard.style.border = `1px solid ${borderColor}`;
     taskCard.style.borderLeft = `5px solid ${borderColor}`;
     taskCard.innerHTML = `
-        <div class=\"task-checkbox\" style=\"flex-shrink: 0;\">
-            <input type=\"checkbox\" id=\"task-${task.id}\">
-            <label for=\"task-${task.id}\"></label>
-        </div>
-        <div class=\"dashboard-task-content\" style=\"flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.18rem;\">
-            <div style=\"display: flex; align-items: center; gap: 0.5rem;\">
-                <h3 class=\"dashboard-task-title\" style=\"font-size: 0.98rem; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em;\">${task.title}</h3>
-                <span class=\"task-status task-status--${task.status}\" style=\"font-size: 0.82rem; padding: 0.08rem 0.7rem; border-radius: 1rem; background: #fffbe6; color: #bfa100; font-weight: 500;\">
-                    <i class=\"fas fa-clock\" style=\"font-size: 0.9rem;\"></i> ${task.status === 'pending' ? 'Pendiente' : task.status === 'completed' ? 'Completada' : 'Vencida'}
-                </span>
-            </div>
-            <div class=\"dashboard-task-meta-row\" style=\"display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap;\">
-                <span class=\"task-area task-area--${task.area}\" style=\"display: flex; align-items: center; gap: 0.25rem; font-size: 0.92rem; color: #666;\">
-                    <i class=\"${areaIcon[task.area]}\" style=\"font-size: 0.95rem;\"></i> ${areaText[task.area]}
-                </span>
-                ${groupTag}
-                <span class=\"task-due task-due--normal\" style=\"display: flex; align-items: center; gap: 0.25rem; font-size: 0.92rem; color: #666;\">
-                    <i class=\"fas fa-calendar\" style=\"font-size: 0.95rem;\"></i> Vence a las ${new Date(task.dueDate).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-            </div>
-        </div>
-        <div class=\"dashboard-task-actions\" style=\"display: flex; align-items: center; gap: 0.6rem; margin-left: auto;\">
-            <button class=\"task-action\" title=\"Editar\" onclick=\"editTask(${task.id})\"><i class=\"fas fa-edit\" style=\"font-size: 1rem;\"></i></button>
-            ${uploadEvidenceBtn}
-            <button class=\"task-action task-action--danger\" title=\"Eliminar\" onclick=\"openDeleteModal(${task.id})\"><i class=\"fas fa-trash\" style=\"font-size: 1rem;\"></i></button>
-        </div>
-    `;
+        <div class=\"task-checkbox\" style=\"flex-shrink: 0;\">\n` +
+            `<input type=\"checkbox\" id=\"task-${task.id}\">\n` +
+            `<label for=\"task-${task.id}\"></label>\n` +
+        `</div>\n` +
+        `<div class=\"dashboard-task-content\" style=\"flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.18rem;\">\n` +
+            `<div style=\"display: flex; align-items: center; gap: 0.5rem;\">\n` +
+                `<h3 class=\"dashboard-task-title\" style=\"font-size: 0.98rem; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em;\">${task.title}</h3>\n` +
+                `<span class=\"task-status task-status--${task.status}\" style=\"font-size: 0.82rem; padding: 0.08rem 0.7rem; border-radius: 1rem; background: #fffbe6; color: #bfa100; font-weight: 500;\">\n` +
+                    `<i class=\"fas fa-clock\" style=\"font-size: 0.9rem;\"></i> ${task.status === 'pending' ? 'Pendiente' : task.status === 'completed' ? 'Completada' : 'Vencida'}\n` +
+                `</span>\n` +
+            `</div>\n` +
+            `<div class=\"dashboard-task-meta-row\" style=\"display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap;\">\n` +
+                areaSpan +
+                groupTag +
+                `<span class=\"task-due task-due--normal\" style=\"display: flex; align-items: center; gap: 0.25rem; font-size: 0.92rem; color: #666;\">\n` +
+                    `<i class=\"fas fa-calendar\" style=\"font-size: 0.95rem;\"></i> Vence a las ${parseLocalDateTime(task.dueDate).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}\n` +
+                `</span>\n` +
+            `</div>\n` +
+        `</div>\n` +
+        `<div class=\"dashboard-task-actions\" style=\"display: flex; align-items: center; gap: 0.6rem; margin-left: auto;\">\n` +
+            `<button class=\"task-action\" title=\"Editar\" onclick=\"editTask(${task.id})\"><i class=\"fas fa-edit\" style=\"font-size: 1rem;\"></i></button>\n` +
+            uploadEvidenceBtn +
+            `<button class=\"task-action task-action--danger\" title=\"Eliminar\" onclick=\"deleteDashboardTask(${task.id})\"><i class=\"fas fa-trash\" style=\"font-size: 1rem;\"></i></button>\n` +
+        `</div>\n`;
 
     // Add event listener for checkbox
     const checkbox = taskCard.querySelector('input[type="checkbox"]');
@@ -722,23 +773,43 @@ function createTaskCard(task) {
     return taskCard;
 }
 
+// Añadir función para parsear fecha local
+function parseLocalDateTime(dateTimeStr) {
+    // Espera formato 'YYYY-MM-DD HH:mm'
+    if (!dateTimeStr) return null;
+    const [datePart, timePart] = dateTimeStr.split(' ');
+    if (!datePart || !timePart) return new Date(dateTimeStr); // fallback
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute] = timePart.split(':').map(Number);
+    // Mes en JS es 0-indexado
+    return new Date(year, month - 1, day, hour, minute);
+}
+
 function getDueTimeText(task) {
-    // Si la tarea es de hoy y está pendiente, mostrar solo la hora
-    const dueDate = new Date(task.dueDate);
+    // Usar parseLocalDateTime en vez de new Date
+    const dueDate = parseLocalDateTime(task.dueDate);
     const now = new Date();
-    if (task.status === 'pending' && dueDate.toDateString() === now.toDateString()) {
-        return `Vence a las ${dueDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    if (task.status === 'pending' && dueDay.getTime() === today.getTime()) {
+        return `Vence hoy a las ${dueDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
     }
-    // Si está completada, mostrar fecha y hora de completado
+    if (task.status === 'pending' && dueDay.getTime() === tomorrow.getTime()) {
+        return `Vence mañana a las ${dueDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    }
     if (task.status === 'completed' && task.completedAt) {
-        const completedDate = new Date(task.completedAt);
+        const completedDate = parseLocalDateTime(task.completedAt);
         return `Completada el ${completedDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} a las ${completedDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
     }
-    // Si está vencida, mostrar fecha y hora de vencimiento
     if (task.status === 'overdue') {
         return `Vencida el ${dueDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} a las ${dueDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
     }
-    // Por defecto, mostrar fecha y hora de vencimiento
+    const daysDiff = (dueDay - today) / (1000 * 60 * 60 * 24);
+    if (task.status === 'pending' && daysDiff > 1 && daysDiff < 7) {
+        return `Vence el ${dueDate.toLocaleDateString('es-ES', { weekday: 'long' })} a las ${dueDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    }
     return `Vence el ${dueDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} a las ${dueDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
 }
 
@@ -1261,3 +1332,43 @@ if (document.readyState === 'loading') {
 
 // Export for use in other scripts
 window.DashboardResponsive = DashboardResponsive;
+
+// --- Función para poblar el select de áreas en el modal de nueva tarea (igual que en tasks.js) ---
+function populateAreaSelects() {
+    let areas = [];
+    try {
+        const savedAreas = localStorage.getItem('astren_areas');
+        if (savedAreas) {
+            areas = JSON.parse(savedAreas);
+        }
+    } catch (e) {
+        areas = [];
+    }
+    areas = areas.filter(a => !a.archived);
+    const areaSelects = [
+        document.getElementById('taskArea'),
+        document.getElementById('editTaskArea')
+    ];
+    areaSelects.forEach(select => {
+        if (!select) return;
+        select.innerHTML = '';
+        select.disabled = false;
+        if (areas.length === 0) {
+            select.innerHTML = '<option value="">Sin área</option>';
+        } else {
+            select.innerHTML = '<option value="">Sin área</option>' +
+                areas.map(area => `<option value="${area.id}">${area.name}</option>`).join('');
+        }
+    });
+    const newTaskBtn = document.querySelector('#newTaskForm button[type="submit"]');
+    if (newTaskBtn) {
+        newTaskBtn.disabled = false;
+    }
+    const form = document.getElementById('newTaskForm');
+    if (form) {
+        let msg = form.querySelector('.no-areas-msg');
+        if (msg) {
+            msg.remove();
+        }
+    }
+}

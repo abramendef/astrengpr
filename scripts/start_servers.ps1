@@ -21,12 +21,12 @@ function Start-Backend {
     
     # Intentar con py -3.13, si falla usar python
     try {
-        Start-Process -FilePath "py" -ArgumentList "-3.13", "main_app.py" -WindowStyle Minimized
+        Start-Process -FilePath "py" -ArgumentList "-3.13", "app.py" -WindowStyle Normal
         Write-Host "Backend iniciado con py -3.13" -ForegroundColor Green
     } catch {
         Write-Host "Intentando con 'python' en lugar de 'py -3.13'..." -ForegroundColor Yellow
         try {
-            Start-Process -FilePath "python" -ArgumentList "main_app.py" -WindowStyle Minimized
+            Start-Process -FilePath "python" -ArgumentList "app.py" -WindowStyle Normal
             Write-Host "Backend iniciado con python" -ForegroundColor Green
         } catch {
             Write-Host "Error iniciando backend. Verifica que Python esté instalado." -ForegroundColor Red

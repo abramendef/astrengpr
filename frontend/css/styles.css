@@ -1,8 +1,8 @@
 /*===== VARIABLES CSS =====*/
 :root {
   /* Colors - HSL format */
-  --primary-color: 220 100% 60%; /* #3366FF - Blue */
-  --primary-light: 220 100% 70%; /* #5588FF */
+  --primary-color: 220 98% 60%; /* #3366FF - Blue */
+  --primary-light: 220 98% 70%; /* #5588FF */
   --primary-dark: 220 100% 50%; /* #0044FF */
   
   --secondary-color: 200 100% 55%; /* #00AAFF - Light Blue */
@@ -21,6 +21,15 @@
   
   --border: 215 20% 89%; /* #E2E8F0 */
   --border-light: 215 20% 94%; /* #F1F5F9 */
+  
+  /* Additional variables for areas */
+  --card-bg: hsl(var(--surface));
+  --card-bg-secondary: hsl(var(--surface-hover));
+  --input-bg: hsl(var(--surface));
+  --border-color: hsl(var(--border));
+  --text-color: hsl(var(--text-primary));
+  --stat-bg: hsl(var(--surface-hover));
+  --progress-bg: hsl(var(--border));
   
   --shadow-light: 0 1px 3px 0 hsl(215 20% 65% / 0.1);
   --shadow-medium: 0 4px 6px -1px hsl(215 20% 65% / 0.15);
@@ -164,7 +173,7 @@ button {
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-6);
-  font-size: var(--font-size-base);
+  font-size: 1rem;
   font-weight: var(--font-weight-medium);
   border-radius: var(--radius-lg);
   transition: all var(--transition-normal);
@@ -175,9 +184,15 @@ button {
 }
 
 .button--primary {
-  background: linear-gradient(135deg, hsl(var(--primary-color)), hsl(var(--primary-light)));
-  color: white;
-  box-shadow: var(--shadow-medium);
+  background: linear-gradient(135deg, hsl(var(--primary-color)), hsl(var(--primary-light))) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(51, 102, 255, 0.10) !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 0.75rem !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  min-width: 160px !important;
+  border: none !important;
 }
 
 .button--primary:hover {
@@ -210,6 +225,18 @@ button {
   color: hsl(var(--text-primary));
   transform: translateY(-1px);
   box-shadow: var(--shadow-light);
+}
+
+.button--danger {
+  background: linear-gradient(135deg, hsl(0 84% 60%), hsl(0 84% 70%));
+  color: white;
+  box-shadow: var(--shadow-medium);
+}
+
+.button--danger:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
+  background: linear-gradient(135deg, hsl(0 84% 50%), hsl(0 84% 60%));
 }
 
 .button--large {
@@ -950,13 +977,19 @@ button {
   }
   
   .nav__close {
-    display: block;
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    font-size: 1.5rem;
-    color: hsl(var(--text-primary));
-    cursor: pointer;
+    display: none !important;
+  }
+
+  @media screen and (max-width: 768px) {
+    .nav__close {
+      display: block !important;
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      font-size: 1.5rem;
+      color: hsl(var(--text-primary));
+      cursor: pointer;
+    }
   }
   
   .hero__buttons {
@@ -1076,4 +1109,293 @@ html {
   html {
     scroll-behavior: auto;
   }
+}
+
+/* ===== MODAL STYLES (importados de tasks.css para unificar diseño) ===== */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal.active {
+  display: flex;
+  opacity: 1;
+}
+
+.modal-content {
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.modal.active .modal-content {
+  transform: scale(1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.task-form {
+  padding: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 1rem;
+  color: #1e293b;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Unificación de tamaño de texto en modales */
+.modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+.form-group label {
+  font-size: 1rem;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  font-size: 1rem;
+}
+.button {
+  font-size: 1rem;
+}
+
+.color-pink {
+  background: #f8bbd0; /* rosa pastel */
+}
+.color-yellow {
+  background: #fff9b2; /* amarillo pastel */
+}
+.color-mint {
+  background: #b2f9e3; /* menta pastel */
+}
+.color-sky {
+  background: #b2e0ff; /* celeste pastel */
+}
+.color-coral {
+  background: #ffd1b2; /* coral pastel */
+}
+.color-lavender {
+  background: #e3b2ff; /* lavanda pastel */
+}
+.color-green {
+  background: #b7e7a7; /* verde pastel */
+}
+.color-purple {
+  background: #d1a7e7; /* morado pastel */
+}
+.color-orange {
+  background: #ffe0b2; /* naranja pastel */
+}
+
+.stat-icon--active {
+  background: #b7e7a7;
+  color: #fff;
+}
+.stat-icon--reputation {
+  background: #fff9b2;
+  color: #fff;
+}
+
+/* Unificar tamaño y estilo de contadores de áreas con los de tareas */
+.stats-grid {
+  display: flex;
+  gap: var(--space-4) !important;
+  margin-bottom: var(--space-6);
+  padding: 0 !important;
+}
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) !important;
+  background-color: hsl(var(--surface));
+  border-radius: var(--radius-xl);
+  border: 1px solid hsl(var(--border-light));
+  flex: 1;
+  transition: all var(--transition-normal);
+}
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xl);
+  color: white;
+}
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.stat-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: hsl(var(--text-primary));
+  line-height: 1;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+}
+.stat-label {
+  font-size: var(--font-size-sm);
+  color: hsl(var(--text-secondary));
+  font-weight: var(--font-weight-medium);
+  margin: 0 !important;
+  padding: 0 !important;
+}
+@media (max-width: 768px) {
+  .stats-grid {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .stat-item {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--space-2);
+  }
+}
+
+.areas-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6) !important; /* Aumentar margen inferior */
+  padding: var(--space-4);
+  background-color: hsl(var(--surface));
+  border-radius: var(--radius-xl);
+  border: 1px solid hsl(var(--border-light));
+  gap: var(--space-4);
+}
+@media (max-width: 768px) {
+  .areas-actions-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding: 1rem;
+  }
+}
+
+.filter-select {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-lg);
+  background-color: #f3f4f6 !important;
+  font-size: var(--font-size-sm);
+  color: #1e293b !important;
+  min-width: 140px;
+  transition: all var(--transition-fast);
+}
+.filter-select:focus {
+  outline: none;
+  border-color: hsl(var(--primary-color));
+  box-shadow: 0 0 0 3px hsl(var(--primary-color) / 0.1);
+}
+
+.areas-container {
+  border: none !important;
+}
+.empty-state {
+  border: none !important;
 }

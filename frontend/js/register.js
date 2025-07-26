@@ -302,28 +302,52 @@ function validateForm() {
 }
 
 /*===== FORM SUBMISSION =====*/
+function registrarUsuario(formData) {
+    fetch('http://localhost:8000/usuarios', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            nombre: formData.firstName,
+            apellido: formData.lastName,
+            correo: formData.email,
+            contraseña: formData.password,
+            telefono: formData.phone || null
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        setLoadingState(false);
+        if (data.mensaje) {
+            showSuccessMessage(formData);
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 3000);
+        } else if (data.error) {
+            showRegistrationError(data.error);
+        }
+    })
+    .catch(error => {
+        setLoadingState(false);
+        showRegistrationError('Error de conexión con el servidor');
+    });
+}
+
 registerForm.addEventListener('submit', function(e) {
     e.preventDefault();
-    
     if (!validateForm()) {
         return;
     }
-    
-    // Show loading state
     setLoadingState(true);
-    
-    // Get form data
     const formData = {
         firstName: firstNameInput.value.trim(),
         lastName: lastNameInput.value.trim(),
         email: emailInput.value.trim(),
         password: passwordInput.value,
-        userType: userTypeSelect.value,
-        agreeNewsletter: agreeNewsletterCheckbox.checked
+        phone: null // Puedes agregar un input para teléfono si lo deseas
     };
-    
-    // Simulate registration process
-    simulateRegistration(formData);
+    registrarUsuario(formData);
 });
 
 function setLoadingState(isLoading) {
@@ -369,28 +393,6 @@ function hideLoadingOverlay() {
             overlay.remove();
         }, 300);
     }
-}
-
-function simulateRegistration(formData) {
-    // Simulate API call delay
-    setTimeout(() => {
-        setLoadingState(false);
-        
-        // Check if email already exists (demo simulation)
-        if (formData.email === 'demo@productiv.com') {
-            showRegistrationError('Este correo electrónico ya está registrado. Intenta con otro.');
-            return;
-        }
-        
-        // Show success message
-        showSuccessMessage(formData);
-        
-        // Redirect to login after success
-        setTimeout(() => {
-            window.location.href = 'login.html';
-        }, 3000);
-        
-    }, 3000);
 }
 
 function showSuccessMessage(formData) {

@@ -57,21 +57,13 @@
             <!-- Areas Content -->
             <div class="dashboard__content">
                 <!-- Areas Actions Bar -->
-                <section class="areas-actions">
+                <div class="areas-actions-bar">
                     <div class="actions-left">
                         <button class="button button--primary" id="newAreaBtn">
                             <i class="fas fa-plus"></i>
                             Nueva Área
                         </button>
-                        
-                        <div class="areas-filters">
-                            <select class="filter-select" id="typeFilter">
-                                <option value="">Todos los tipos</option>
-                                <option value="personal">Personal</option>
-                                <option value="work">Trabajo</option>
-                                <option value="school">Escuela</option>
-                                <option value="group">Grupo</option>
-                            </select>
+                        <div class="tasks-filters">
                             <select class="filter-select" id="statusFilter">
                                 <option value="">Todos los estados</option>
                                 <option value="active">Activas</option>
@@ -79,28 +71,22 @@
                             </select>
                         </div>
                     </div>
-                    <div class="actions-right">
-                        <button class="button button--ghost" id="viewToggleBtn">
-                            <i class="fas fa-th-large"></i>
-                            Cambiar Vista
-                        </button>
-                    </div>
-                </section>
+                </div>
 
                 <!-- Areas Stats -->
-                <section class="areas-stats">
+                <section class="stats-grid">
                     <div class="stat-item">
-                        <div class="stat-icon stat-icon--total">
+                        <div class="stat-icon stat-icon--today">
                             <i class="fas fa-layer-group"></i>
                         </div>
                         <div class="stat-content">
                             <span class="stat-value" id="totalAreas">0</span>
-                            <span class="stat-label">Total Áreas</span>
+                            <span class="stat-label">Todas</span>
                         </div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-icon stat-icon--active">
-                            <i class="fas fa-check-circle"></i>
+                            <i class="fas fa-bolt"></i>
                         </div>
                         <div class="stat-content">
                             <span class="stat-value" id="activeAreas">0</span>
@@ -108,12 +94,12 @@
                         </div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-icon stat-icon--tasks">
-                            <i class="fas fa-tasks"></i>
+                        <div class="stat-icon stat-icon--completed">
+                            <i class="fas fa-archive"></i>
                         </div>
                         <div class="stat-content">
-                            <span class="stat-value" id="totalTasks">0</span>
-                            <span class="stat-label">Tareas Totales</span>
+                            <span class="stat-value" id="archivedAreas">0</span>
+                            <span class="stat-label">Archivadas</span>
                         </div>
                     </div>
                     <div class="stat-item">
@@ -121,8 +107,8 @@
                             <i class="fas fa-star"></i>
                         </div>
                         <div class="stat-content">
-                            <span class="stat-value" id="avgReputation">0.0</span>
-                            <span class="stat-label">Promedio Reputación</span>
+                            <span class="stat-value" id="noDescriptionAreas">0</span>
+                            <span class="stat-label">Reputación General</span>
                         </div>
                     </div>
                 </section>
@@ -154,48 +140,67 @@
 
     <!-- New Area Modal -->
     <div class="modal" id="newAreaModal">
-        <div class="modal__content">
-            <div class="modal__header">
-                <h2 class="modal__title">Nueva Área</h2>
-                <button class="modal__close" id="closeNewAreaModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nueva Área</h2>
+                <button class="modal-close" id="closeNewAreaModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <form class="modal__form" id="newAreaForm">
-                <div class="form__group">
-                    <label for="areaName" class="form__label">Nombre del Área</label>
-                    <input type="text" id="areaName" name="areaName" class="form__input" placeholder="Ej: Proyecto Marketing" required>
+            <form class="task-form" id="newAreaForm">
+                <div class="form-group">
+                    <label for="areaName">Nombre del Área</label>
+                    <input type="text" id="areaName" name="areaName" required>
                 </div>
-                <div class="form__group">
-                    <label for="areaType" class="form__label">Tipo de Área</label>
-                    <select id="areaType" name="areaType" class="form__select" required>
-                        <option value="">Seleccionar tipo</option>
-                        <option value="personal">Personal</option>
-                        <option value="work">Trabajo</option>
-                        <option value="school">Escuela</option>
-                        <option value="group">Grupo</option>
-                    </select>
+                <div class="form-group">
+                    <label for="areaDescription">Descripción</label>
+                    <textarea id="areaDescription" name="areaDescription" rows="3"></textarea>
                 </div>
-                <div class="form__group">
-                    <label for="areaDescription" class="form__label">Descripción</label>
-                    <textarea id="areaDescription" name="areaDescription" class="form__textarea" placeholder="Describe el propósito de esta área..." rows="3"></textarea>
+                <div class="form-group">
+                    <label>Icono del Área</label>
+                    <div class="icon-picker" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <input type="radio" id="iconBriefcase" name="areaIcon" value="fa-briefcase" checked>
+                        <label for="iconBriefcase"><i class="fas fa-briefcase"></i></label>
+                        <input type="radio" id="iconUser" name="areaIcon" value="fa-user">
+                        <label for="iconUser"><i class="fas fa-user"></i></label>
+                        <input type="radio" id="iconGraduation" name="areaIcon" value="fa-graduation-cap">
+                        <label for="iconGraduation"><i class="fas fa-graduation-cap"></i></label>
+                        <input type="radio" id="iconHome" name="areaIcon" value="fa-home">
+                        <label for="iconHome"><i class="fas fa-home"></i></label>
+                        <input type="radio" id="iconStar" name="areaIcon" value="fa-star">
+                        <label for="iconStar"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="iconHeart" name="areaIcon" value="fa-heart">
+                        <label for="iconHeart"><i class="fas fa-heart"></i></label>
+                        <input type="radio" id="iconLightbulb" name="areaIcon" value="fa-lightbulb">
+                        <label for="iconLightbulb"><i class="fas fa-lightbulb"></i></label>
+                        <input type="radio" id="iconBook" name="areaIcon" value="fa-book">
+                        <label for="iconBook"><i class="fas fa-book"></i></label>
+                    </div>
                 </div>
-                <div class="form__group">
-                    <label for="areaColor" class="form__label">Color del Área</label>
-                    <div class="color-picker">
-                        <input type="radio" id="colorBlue" name="areaColor" value="blue" class="color-option" checked>
-                        <label for="colorBlue" class="color-label color-blue"></label>
+                <div class="form-group">
+                    <label>Color del Área</label>
+                    <div class="color-picker" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <input type="radio" id="colorPink" name="areaColor" value="pink" class="color-option" checked>
+                        <label for="colorPink" class="color-label color-pink"></label>
+                        <input type="radio" id="colorYellow" name="areaColor" value="yellow" class="color-option">
+                        <label for="colorYellow" class="color-label color-yellow"></label>
+                        <input type="radio" id="colorMint" name="areaColor" value="mint" class="color-option">
+                        <label for="colorMint" class="color-label color-mint"></label>
+                        <input type="radio" id="colorSky" name="areaColor" value="sky" class="color-option">
+                        <label for="colorSky" class="color-label color-sky"></label>
+                        <input type="radio" id="colorCoral" name="areaColor" value="coral" class="color-option">
+                        <label for="colorCoral" class="color-label color-coral"></label>
+                        <input type="radio" id="colorLavender" name="areaColor" value="lavender" class="color-option">
+                        <label for="colorLavender" class="color-label color-lavender"></label>
                         <input type="radio" id="colorGreen" name="areaColor" value="green" class="color-option">
                         <label for="colorGreen" class="color-label color-green"></label>
                         <input type="radio" id="colorPurple" name="areaColor" value="purple" class="color-option">
                         <label for="colorPurple" class="color-label color-purple"></label>
                         <input type="radio" id="colorOrange" name="areaColor" value="orange" class="color-option">
                         <label for="colorOrange" class="color-label color-orange"></label>
-                        <input type="radio" id="colorRed" name="areaColor" value="red" class="color-option">
-                        <label for="colorRed" class="color-label color-red"></label>
                     </div>
                 </div>
-                <div class="modal__actions">
+                <div class="form-actions">
                     <button type="button" class="button button--ghost" id="cancelNewArea">Cancelar</button>
                     <button type="submit" class="button button--primary">Crear Área</button>
                 </div>
@@ -205,34 +210,26 @@
 
     <!-- Edit Area Modal -->
     <div class="modal" id="editAreaModal">
-        <div class="modal__content">
-            <div class="modal__header">
-                <h2 class="modal__title">Editar Área</h2>
-                <button class="modal__close" id="closeEditAreaModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Área</h2>
+                <button class="modal-close" id="closeEditAreaModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <form class="modal__form" id="editAreaForm">
+            <form class="task-form" id="editAreaForm">
                 <input type="hidden" id="editAreaId" name="areaId">
-                <div class="form__group">
-                    <label for="editAreaName" class="form__label">Nombre del Área</label>
-                    <input type="text" id="editAreaName" name="areaName" class="form__input" required>
+                <div class="form-group">
+                    <label for="editAreaName">Nombre del Área</label>
+                    <input type="text" id="editAreaName" name="areaName" required>
                 </div>
-                <div class="form__group">
-                    <label for="editAreaType" class="form__label">Tipo de Área</label>
-                    <select id="editAreaType" name="areaType" class="form__select" required>
-                        <option value="personal">Personal</option>
-                        <option value="work">Trabajo</option>
-                        <option value="school">Escuela</option>
-                        <option value="group">Grupo</option>
-                    </select>
+
+                <div class="form-group">
+                    <label for="editAreaDescription">Descripción</label>
+                    <textarea id="editAreaDescription" name="areaDescription" rows="3"></textarea>
                 </div>
-                <div class="form__group">
-                    <label for="editAreaDescription" class="form__label">Descripción</label>
-                    <textarea id="editAreaDescription" name="areaDescription" class="form__textarea" rows="3"></textarea>
-                </div>
-                <div class="form__group">
-                    <label for="editAreaColor" class="form__label">Color del Área</label>
+                <div class="form-group">
+                    <label for="editAreaColor">Color del Área</label>
                     <div class="color-picker">
                         <input type="radio" id="editColorBlue" name="areaColor" value="blue" class="color-option">
                         <label for="editColorBlue" class="color-label color-blue"></label>
@@ -246,7 +243,7 @@
                         <label for="editColorRed" class="color-label color-red"></label>
                     </div>
                 </div>
-                <div class="modal__actions">
+                <div class="form-actions">
                     <button type="button" class="button button--ghost" id="cancelEditArea">Cancelar</button>
                     <button type="submit" class="button button--primary">Guardar Cambios</button>
                 </div>
@@ -256,14 +253,14 @@
 
     <!-- Delete Confirmation Modal -->
     <div class="modal" id="deleteAreaModal">
-        <div class="modal__content">
-            <div class="modal__header">
-                <h2 class="modal__title">Eliminar Área</h2>
-                <button class="modal__close" id="closeDeleteAreaModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Eliminar Área</h2>
+                <button class="modal-close" id="closeDeleteAreaModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal__body">
+            <div class="modal-body">
                 <p class="delete-warning">
                     <i class="fas fa-exclamation-triangle"></i>
                     ¿Estás seguro de que quieres eliminar el área "<span id="deleteAreaName"></span>"?
@@ -272,7 +269,7 @@
                     Esta acción no se puede deshacer. Todas las tareas asociadas a esta área se moverán a "Sin área".
                 </p>
             </div>
-            <div class="modal__actions">
+            <div class="form-actions">
                 <button type="button" class="button button--ghost" id="cancelDeleteArea">Cancelar</button>
                 <button type="button" class="button button--danger" id="confirmDeleteArea">Eliminar Área</button>
             </div>

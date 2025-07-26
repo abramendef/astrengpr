@@ -637,7 +637,7 @@ class HeaderButtonsManager {
                         <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%233366FF'%3E%3Cpath fill-rule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="Avatar">
                     </div>
                     <div class="profile-details">
-                        <div class="profile-name">Abraham Méndez</div>
+                        <div class="profile-name">${userName}</div>
                         <div class="profile-email">abraham@example.com</div>
                     </div>
                 </div>
@@ -692,13 +692,16 @@ class HeaderButtonsManager {
 
     handleLogout() {
         if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-            // Clear session data
-            localStorage.removeItem('userSession');
-            localStorage.removeItem('userData');
-            
+            // Limpiar todos los datos de usuario y recordarme
+            localStorage.removeItem('astren_rememberMe');
+            localStorage.removeItem('astren_email');
+            localStorage.removeItem('astren_usuario_id');
+            localStorage.removeItem('astren_nombre');
+            localStorage.removeItem('astren_apellido');
+            localStorage.removeItem('astren_correo');
+            sessionStorage.clear();
             // Redirect to home page
-            window.location.href = 'index.html';
-            
+            window.location.href = 'login.html';
             // Track logout
             if (window.AstrenApp && window.AstrenApp.Analytics) {
                 window.AstrenApp.Analytics.trackEvent('Authentication', 'Logout', 'Header');
