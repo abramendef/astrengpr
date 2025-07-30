@@ -226,6 +226,7 @@
   padding: 0;
   margin: 0;
   box-sizing: border-box;
+  margin-bottom: 0.5rem; /* Añadir margen inferior */
 }
 
 .header__container {
@@ -293,6 +294,43 @@
   align-items: center;
   gap: 1rem;
   flex-shrink: 0;
+}
+
+/* Ensure profile button is visible and properly styled */
+.header__button {
+  background: none;
+  border: none;
+  color: hsl(var(--text-secondary));
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  margin-left: 0.5rem;
+}
+
+.header__button:hover {
+  background-color: hsl(var(--surface-hover));
+  color: hsl(var(--text-primary));
+  transform: translateY(-1px);
+}
+
+.header__button:active {
+  transform: translateY(0);
+  background-color: hsl(var(--border-light));
+}
+
+.header__button img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .header__search {
@@ -428,6 +466,8 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
+  margin-top: 0; /* Eliminar margen superior */
+  padding-top: 0 !important; /* Eliminar padding superior */
 }
 
 .stat-item {
@@ -444,6 +484,52 @@
 
 .stat-item:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Estilos para elementos clickeables del dashboard */
+.stat-item {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  background-color: hsl(var(--surface-hover));
+}
+
+/* Progreso de reputación clickeable */
+.dashboard-row-grid > .dashboard-card:nth-child(2) {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.dashboard-row-grid > .dashboard-card:nth-child(2):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  background-color: hsl(var(--surface-hover));
+}
+
+/* Áreas y grupos clickeables del dashboard */
+.dashboard .area-card,
+.dashboard .group-card {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.dashboard .area-card:hover,
+.dashboard .group-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Tareas clickeables del dashboard */
+.dashboard-task-card-content {
+  transition: all 0.2s ease;
+}
+
+.dashboard-task-card-content:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -507,10 +593,20 @@
   padding: 1rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
+  margin-top: 2rem; /* Espacio externo arriba de las tarjetas */
+}
+
+/* Eliminar margen superior para las tarjetas del grid */
+.dashboard-row-grid > .dashboard-card {
+  margin-top: 0 !important; /* Sin margen superior para las tarjetas del grid */
 }
 
 .dashboard-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-card:first-child {
+  margin-top: 0; /* La primera sección no necesita margen superior */
 }
 
 .dashboard-card--large {
@@ -531,14 +627,18 @@
 
 .card__header {
   padding: var(--space-6);
-  border-bottom: 1px solid hsl(var(--border-light));
+  border-bottom: 3px solid hsl(var(--border-light));
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .card__header--compact {
-  padding: 1rem 1.168rem 0.5rem 1.168rem;
+  padding: var(--space-6); /* Mismo padding que el header normal */
+  border-bottom: 3px solid hsl(var(--border-light));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .card__title {
@@ -812,7 +912,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-6);
+  margin-bottom: 0; /* Eliminamos el margen que empuja hacia abajo */
 }
 
 .reputation-score {
@@ -824,7 +924,7 @@
 .score-stars {
   display: flex;
   gap: var(--space-1);
-  margin-bottom: var(--space-2);
+  margin-bottom: 0; /* Eliminar margen inferior */
 }
 
 .score-stars i {
@@ -836,7 +936,7 @@
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-bold);
   color: hsl(var(--primary-color));
-  margin-bottom: var(--space-1);
+  margin-bottom: 0; /* Eliminar margen inferior */
 }
 
 .score-label {
@@ -864,10 +964,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0 !important; /* Sin márgenes */
+  padding: 0 !important; /* Sin paddings */
 }
 
 .reputation-chart-container {
-  margin-top: var(--space-4);
+  margin-top: 0; /* Quitamos el margen superior que empuja hacia abajo */
   padding: var(--space-3);
   background-color: hsl(var(--surface));
   border-radius: var(--radius-lg);
@@ -1289,6 +1391,11 @@
   margin-bottom: 0.12rem !important;
 }
 
+/* Eliminar padding inferior para las tarjetas del grid */
+.dashboard-row-grid .dashboard-task-list .task-card {
+  padding-bottom: 1.3rem !important; /* Restaurar padding original */
+}
+
 .task-meta-bottom--custom {
   display: flex;
   flex-direction: row;
@@ -1590,7 +1697,10 @@
 /* Asegurar que los grids funcionen correctamente */
 .dashboard-row-grid {
   display: grid !important;
+  grid-template-columns: 2fr 1fr !important; /* Tareas Hoy más ancha, Reputación más estrecha */
+  gap: 1rem !important;
   width: 100% !important;
+  align-items: stretch !important; /* Hace que ambas tarjetas tengan la misma altura */
 }
 
 .dashboard-grid {
@@ -1915,9 +2025,12 @@
   }
 }
 
-.dashboard-row-grid > .dashboard-card:first-child,
-.dashboard-row-grid > .dashboard-card:nth-child(2) {
+.dashboard-row-grid > .dashboard-card:first-child {
   margin-bottom: 1rem !important;
+}
+
+.dashboard-row-grid > .dashboard-card:nth-child(2) {
+  margin-top: 0.5rem !important; /* Espacio entre "Tareas Hoy/Reputación" y "Mis Áreas" */
 }
 
 .task-meta-bottom--custom {
@@ -2033,6 +2146,147 @@
 
 .dashboard-row-grid > .dashboard-card {
   min-height: 250px;
+  height: 100% !important; /* Fuerza que ambas tarjetas tengan la misma altura */
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.dashboard-row-grid > .dashboard-card .card__content {
+  flex: 1 !important; /* Hace que el contenido ocupe todo el espacio disponible */
+  display: flex !important;
+  flex-direction: column !important;
+  padding: var(--space-6) !important; /* Padding uniforme para ambos */
+}
+
+/* Forzar que ambos elementos internos tengan el mismo padding */
+.dashboard-row-grid > .dashboard-card .dashboard-task-list-scroll,
+.dashboard-row-grid > .dashboard-card .reputation-summary {
+  padding: 0 !important; /* Sin padding extra */
+  margin: 0 !important; /* Sin margen extra */
+}
+
+/* Forzar que ambas tarjetas tengan exactamente el mismo padding interno */
+.dashboard-row-grid > .dashboard-card .card__content {
+  padding: var(--space-6) !important; /* Padding uniforme para ambos */
+  margin: 0 !important; /* Sin márgenes */
+}
+
+/* Altura fija para la lista de tareas - exactamente 3 tareas */
+.dashboard-row-grid > .dashboard-card .dashboard-task-list-scroll {
+  height: 291px !important; /* Altura exacta para 3 tareas */
+  max-height: 291px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin !important; /* Scrollbar delgado siempre visible */
+  scrollbar-color: hsl(var(--primary-color) / 0.3) transparent !important;
+  -ms-overflow-style: auto !important; /* Mostrar en IE/Edge */
+}
+
+/* Estilizar scrollbar para webkit - siempre visible cuando necesario */
+.dashboard-row-grid > .dashboard-card .dashboard-task-list-scroll::-webkit-scrollbar {
+  width: 4px !important;
+  background: transparent !important;
+}
+
+.dashboard-row-grid > .dashboard-card .dashboard-task-list-scroll::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.dashboard-row-grid > .dashboard-card .dashboard-task-list-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary-color) / 0.3) !important;
+  border-radius: 2px !important;
+  transition: all 0.2s ease !important;
+}
+
+.dashboard-row-grid > .dashboard-card .dashboard-task-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary-color) / 0.5) !important;
+}
+
+/* Ocultar scrollbar solo cuando no hay scroll (3 tareas o menos) */
+.dashboard-row-grid > .dashboard-card .dashboard-task-list-scroll:not(.has-scroll)::-webkit-scrollbar {
+  width: 0 !important;
+}
+
+.dashboard-row-grid > .dashboard-card .dashboard-task-list-scroll:not(.has-scroll) {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+/* Forzar que ambos headers tengan exactamente la misma altura y espaciado */
+.dashboard-row-grid > .dashboard-card .card__header,
+.dashboard-row-grid > .dashboard-card .card__header--compact {
+  padding: var(--space-6) !important;
+  border-bottom: 3px solid hsl(var(--border-light)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 100px !important; /* Altura fija para ambos headers */
+  min-height: 100px !important; /* Altura mínima aumentada */
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Asegurar que el header de reputación tenga exactamente el mismo espacio que el de tareas */
+.dashboard-row-grid > .dashboard-card:nth-child(2) .card__header {
+  height: 100px !important; /* Misma altura fija que el header de tareas */
+  min-height: 100px !important; /* Misma altura mínima */
+  padding: var(--space-6) !important;
+  margin: 0 !important;
+}
+
+/* ELIMINAR TODOS los márgenes y paddings de los elementos de reputación */
+.dashboard-row-grid > .dashboard-card .reputation-summary {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.dashboard-row-grid > .dashboard-card .score-stars {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.dashboard-row-grid > .dashboard-card .score-value {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.dashboard-row-grid > .dashboard-card .chart-container {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.dashboard-row-grid > .dashboard-card .reputation-chart-container {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Forzar que ambas tarjetas empiecen exactamente en la misma posición */
+.dashboard-row-grid > .dashboard-card {
+  margin-top: 0 !important; /* Sin margen superior */
+  margin-bottom: 0 !important; /* Sin margen inferior */
+  padding-top: 0 !important; /* Sin padding superior */
+  padding-bottom: 0 !important; /* Sin padding inferior */
+  align-self: start !important; /* Alinear al inicio del grid */
+  height: 100% !important; /* Misma altura para ambas */
+  display: flex !important; /* Flex para ambas */
+  flex-direction: column !important; /* Columna para ambas */
+}
+
+/* Forzar que ambas tarjetas tengan exactamente el mismo comportamiento */
+.dashboard-row-grid > .dashboard-card:first-child,
+.dashboard-row-grid > .dashboard-card:nth-child(2) {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Forzar que el grid container no tenga espacios extra */
+.dashboard-row-grid {
+  margin: 0 !important; /* Sin márgenes */
+  padding: 0 !important; /* Sin paddings */
+  align-items: start !important; /* Alinear elementos al inicio */
 }
 
 @media (max-width: 768px) {
@@ -2156,4 +2410,596 @@
 }
 .dashboard-task-card-content:hover {
   box-shadow: 0 4px 16px rgba(51,102,255,0.12);
+}
+
+/*===== HEADER BUTTONS STYLES =====*/
+.header__button {
+    background: none;
+    border: none;
+    color: hsl(var(--text-secondary));
+    font-size: var(--font-size-lg);
+    cursor: pointer;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header__button:hover {
+    background-color: hsl(var(--background));
+    color: hsl(var(--text-primary));
+}
+
+.header__button:active {
+    transform: scale(0.95);
+}
+
+.header__button img {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+}
+
+.header-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background-color: hsl(0 84% 60%);
+    color: white;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    padding: 2px 6px;
+    border-radius: var(--radius-full);
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    display: none;
+}
+
+/*===== HEADER DROPDOWNS =====*/
+.header-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    min-width: 300px;
+    max-width: 400px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.header-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/*===== SEARCH DROPDOWN =====*/
+.search-dropdown {
+    min-width: 400px;
+    max-width: 600px;
+}
+
+.search-container {
+    padding: var(--space-4);
+}
+
+.search-input-wrapper {
+    position: relative;
+    margin-bottom: var(--space-4);
+}
+
+.search-icon {
+    position: absolute;
+    left: var(--space-3);
+    top: 50%;
+    transform: translateY(-50%);
+    color: hsl(var(--text-secondary));
+}
+
+.search-input {
+    width: 100%;
+    padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-3) * 2 + 16px);
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+    border-color: hsl(var(--primary-color));
+}
+
+.search-clear {
+    position: absolute;
+    right: var(--space-3);
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: hsl(var(--text-secondary));
+    cursor: pointer;
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+}
+
+.search-clear:hover {
+    background-color: hsl(var(--background));
+    color: hsl(var(--text-primary));
+}
+
+.search-results {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.search-placeholder {
+    text-align: center;
+    padding: var(--space-8);
+    color: hsl(var(--text-secondary));
+}
+
+.search-placeholder i {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-2);
+    opacity: 0.5;
+}
+
+.search-no-results {
+    text-align: center;
+    padding: var(--space-6);
+    color: hsl(var(--text-secondary));
+}
+
+.search-section {
+    margin-bottom: var(--space-4);
+}
+
+.search-section h4 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: hsl(var(--text-secondary));
+    margin-bottom: var(--space-2);
+    padding: 0 var(--space-2);
+}
+
+.search-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: background-color 0.2s ease;
+}
+
+.search-item:hover {
+    background-color: hsl(var(--background));
+}
+
+.search-item i {
+    color: hsl(var(--primary-color));
+    font-size: var(--font-size-lg);
+    width: 20px;
+    text-align: center;
+}
+
+.search-item-content {
+    flex: 1;
+}
+
+.search-item-title {
+    font-weight: var(--font-weight-medium);
+    color: hsl(var(--text-primary));
+    margin-bottom: var(--space-1);
+}
+
+.search-item-subtitle {
+    font-size: var(--font-size-sm);
+    color: hsl(var(--text-secondary));
+}
+
+/*===== NOTIFICATIONS DROPDOWN =====*/
+.notifications-dropdown {
+    min-width: 350px;
+    max-width: 450px;
+}
+
+.notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4);
+    border-bottom: 1px solid hsl(var(--border-light));
+}
+
+.notifications-header h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: hsl(var(--text-primary));
+    margin: 0;
+}
+
+.mark-all-read {
+    background: none;
+    border: none;
+    color: hsl(var(--primary-color));
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease;
+}
+
+.mark-all-read:hover {
+    background-color: hsl(var(--background));
+}
+
+.notifications-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-bottom: 1px solid hsl(var(--border-light));
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.notification-item:hover {
+    background-color: hsl(var(--background));
+}
+
+.notification-item.unread {
+    background-color: hsl(var(--primary-color) / 0.05);
+}
+
+.notification-item.read {
+    opacity: 0.7;
+}
+
+.notification-icon {
+    color: hsl(var(--primary-color));
+    font-size: var(--font-size-lg);
+    margin-top: 2px;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: var(--font-weight-medium);
+    color: hsl(var(--text-primary));
+    margin-bottom: var(--space-1);
+}
+
+.notification-message {
+    font-size: var(--font-size-sm);
+    color: hsl(var(--text-secondary));
+    margin-bottom: var(--space-2);
+}
+
+.notification-time {
+    font-size: var(--font-size-xs);
+    color: hsl(var(--text-secondary));
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: hsl(var(--text-secondary));
+    cursor: pointer;
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.notification-close:hover {
+    background-color: hsl(var(--background));
+    color: hsl(var(--text-primary));
+}
+
+.notifications-footer {
+    padding: var(--space-4);
+    border-top: 1px solid hsl(var(--border-light));
+    text-align: center;
+}
+
+.view-all-notifications {
+    color: hsl(var(--primary-color));
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+    transition: color 0.2s ease;
+}
+
+.view-all-notifications:hover {
+    color: hsl(var(--primary-color) / 0.8);
+}
+
+/*===== PROFILE DROPDOWN =====*/
+.profile-dropdown {
+    min-width: 280px;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-bottom: 1px solid hsl(var(--border-light));
+}
+
+.profile-avatar {
+    width: 48px;
+    height: 48px;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+}
+
+.profile-details {
+    flex: 1;
+}
+
+.profile-name {
+    font-weight: var(--font-weight-semibold);
+    color: hsl(var(--text-primary));
+    margin-bottom: var(--space-1);
+}
+
+.profile-email {
+    font-size: var(--font-size-sm);
+    color: hsl(var(--text-secondary));
+}
+
+.profile-menu {
+    padding: var(--space-2);
+}
+
+.profile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-3);
+    background: none;
+    border: none;
+    color: hsl(var(--text-primary));
+    text-decoration: none;
+    font-size: var(--font-size-base);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.profile-menu-item:hover {
+    background-color: hsl(var(--background));
+}
+
+.profile-menu-item i {
+    color: hsl(var(--text-secondary));
+    width: 16px;
+    text-align: center;
+}
+
+.profile-divider {
+    height: 1px;
+    background-color: hsl(var(--border-light));
+    margin: var(--space-2) 0;
+}
+
+/*===== RESPONSIVE HEADER BUTTONS =====*/
+@media (max-width: 768px) {
+    .header__button {
+        padding: var(--space-2);
+        font-size: var(--font-size-base);
+    }
+    
+    .header__button img {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .header-dropdown {
+        position: fixed;
+        top: 60px;
+        left: var(--space-4);
+        right: var(--space-4);
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .search-dropdown {
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .notifications-dropdown {
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .profile-dropdown {
+        min-width: auto;
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .header__button {
+        padding: var(--space-1);
+        font-size: var(--font-size-sm);
+    }
+    
+    .header__button img {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .header-dropdown {
+        left: var(--space-2);
+        right: var(--space-2);
+    }
+}
+
+/* Contenedores de áreas y grupos con scroll horizontal */
+.areas-container,
+.groups-container {
+    display: flex;
+    gap: var(--space-4);
+    overflow-x: hidden; /* Ocultar scroll nativo */
+    scroll-behavior: smooth;
+    padding: var(--space-2) 0;
+    position: relative;
+    min-height: 200px;
+    max-width: calc(3 * 380px + 2 * 16px); /* Exactamente 3 tarjetas ligeramente más grandes + gaps */
+    width: calc(3 * 380px + 2 * 16px);
+}
+
+/* Asegurar que las tarjetas mantengan su tamaño */
+.area-card,
+.group-card {
+    flex-shrink: 0;
+    min-width: 380px;
+    max-width: 380px;
+    width: 380px; /* Tamaño fijo ligeramente más grande */
+}
+
+/* Contenedor principal del dashboard */
+.dashboard-grid {
+    overflow-x: hidden; /* Prevenir scroll horizontal en el grid */
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Card content para prevenir overflow */
+.card__content {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Dashboard principal */
+.dashboard {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Botones de navegación */
+.scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-200);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.scroll-btn:hover {
+    background: var(--color-gray-50);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.scroll-btn--left {
+    left: 15px; /* Un poco más separado del borde */
+}
+
+.scroll-btn--right {
+    right: 15px; /* Un poco más separado del borde */
+}
+
+.scroll-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Espaciado entre secciones */
+.dashboard-card {
+    margin-bottom: var(--space-6);
+}
+
+.dashboard-card:last-child {
+    margin-bottom: 0;
+}
+
+/* Secciones con posición relativa */
+.areas-section,
+.groups-section {
+    position: relative;
+    margin-bottom: var(--space-6);
+}
+
+/* Contenedor de las cards para posicionar flechas */
+.card__content {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    position: relative; /* Para posicionar las flechas */
+    padding: 0 20px; /* Un poco de padding para mejor balance */
+}
+
+/* Estilos para las secciones de áreas y grupos */
+.dashboard-card {
+    /* Quitamos el margin-top de las secciones */
+}
+
+.dashboard-card:first-child {
+    /* Quitamos el margin-top de la primera sección */
+}
+
+/* Espacio entre secciones del dashboard */
+.dashboard-card:nth-child(2) {
+  margin-top: 3rem !important; /* Espacio considerable entre "Tareas Hoy/Reputación" y "Mis Áreas" */
+}
+
+/* Reducir espacio externo de arriba en áreas y grupos */
+.dashboard-card:nth-child(3),
+.dashboard-card:nth-child(4) {
+  margin-top: 0.3rem !important; /* Espacio reducido para áreas y grupos */
+}
+
+/* AUMENTAR espacio entre tareas/reputación y áreas */
+.dashboard-card:nth-child(3) {
+  margin-top: 1.5rem !important; /* Espacio moderado para áreas */
+}
+
+/* Espacio arriba de las tarjetas individuales */
+.dashboard .area-card {
+    margin-top: 1rem; /* Espacio arriba de cada tarjeta de área */
+}
+
+.dashboard .group-card {
+    margin-top: 1rem; /* Espacio arriba de cada tarjeta de grupo */
 }

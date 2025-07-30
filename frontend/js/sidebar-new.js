@@ -46,6 +46,7 @@ class SidebarManager {
             'groups.html': 'groups',
             'reputation.html': 'reputation',
             'notifications.html': 'notifications',
+
             'profile.html': 'profile',
             'settings.html': 'settings'
         };
@@ -151,6 +152,7 @@ class SidebarManager {
                                 <span class="nav__badge" id="notificationsBadge">3</span>
                             </a>
                         </li>
+
                         <li class="nav__item">
                             <a href="profile.html" class="nav__link" data-page="profile">
                                 <i class="fas fa-user" aria-hidden="true"></i>

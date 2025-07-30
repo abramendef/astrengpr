@@ -130,12 +130,11 @@ loginForm.addEventListener('submit', function(e) {
     .then(({ status, body }) => {
         setLoadingState(false);
         if (status === 200 && body.mensaje === 'Login exitoso') {
-            // Guardar datos de usuario en localStorage/sessionStorage
-            localStorage.setItem('astren_usuario_id', body.usuario_id);
-            localStorage.setItem('astren_nombre', body.nombre);
-            localStorage.setItem('astren_apellido', body.apellido);
-            localStorage.setItem('astren_correo', body.correo);
-            // NUEVO: Guardar objeto usuario en sessionStorage
+            // Verificar si es el mismo usuario que ya está logueado
+            const currentUser = sessionStorage.getItem('astren_user');
+            const isSameUser = currentUser && JSON.parse(currentUser).correo === formData.correo;
+            
+            // Guardar datos de usuario en sessionStorage (sesión activa)
             sessionStorage.setItem('astren_user', JSON.stringify({
                 usuario_id: body.usuario_id,
                 nombre: body.nombre,
@@ -143,11 +142,26 @@ loginForm.addEventListener('submit', function(e) {
                 correo: body.correo,
                 userType: body.userType // si existe
             }));
-            showSuccessMessage();
+            
+            // Solo guardar en localStorage si "recordarme" está marcado
             if (rememberMeCheckbox.checked) {
+                localStorage.setItem('astren_usuario_id', body.usuario_id);
+                localStorage.setItem('astren_nombre', body.nombre);
+                localStorage.setItem('astren_apellido', body.apellido);
+                localStorage.setItem('astren_correo', body.correo);
                 localStorage.setItem('astren_rememberMe', 'true');
                 localStorage.setItem('astren_email', formData.correo);
+                localStorage.setItem('astren_password', formData.contraseña);
+                localStorage.setItem('astren_autoLogin', 'true');
             }
+            
+            showSuccessMessage();
+            
+            // Si es el mismo usuario, mostrar mensaje diferente
+            const message = isSameUser ? 
+                '¡Sesión renovada exitosamente! Redirigiendo...' : 
+                '¡Inicio de sesión exitoso! Redirigiendo...';
+            
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 2000);
@@ -232,13 +246,127 @@ function showLoginError(msg) {
 
 /*===== REMEMBER ME FUNCTIONALITY =====*/
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if user should be remembered
+    // Check if user should be remembered and auto-login
     const rememberMe = localStorage.getItem('astren_rememberMe');
     const savedEmail = localStorage.getItem('astren_email');
+    const savedPassword = localStorage.getItem('astren_password');
+    const autoLogin = localStorage.getItem('astren_autoLogin');
     
-    if (rememberMe === 'true' && savedEmail) {
+    // Check if there's already an active session
+    const currentUser = sessionStorage.getItem('astren_user');
+    
+    if (rememberMe === 'true' && savedEmail && savedPassword && autoLogin === 'true') {
+        // Auto-fill form
+        emailInput.value = savedEmail;
+        passwordInput.value = savedPassword;
+        rememberMeCheckbox.checked = true;
+        
+        // If there's already a session, ask user what to do
+        if (currentUser) {
+            const currentUserData = JSON.parse(currentUser);
+            showSessionConflictModal(currentUserData, savedEmail);
+        } else {
+            // Auto-login after a short delay
+            setTimeout(() => {
+                console.log('Auto-login iniciado...');
+                loginForm.dispatchEvent(new Event('submit'));
+            }, 1000);
+        }
+    } else if (rememberMe === 'true' && savedEmail) {
+        // Just fill email if only email was saved
         emailInput.value = savedEmail;
         rememberMeCheckbox.checked = true;
+    }
+    
+    // Clear auto-login flag after first use
+    if (autoLogin === 'true') {
+        localStorage.removeItem('astren_autoLogin');
+    }
+});
+
+// Function to show session conflict modal
+function showSessionConflictModal(currentUser, newEmail) {
+    const modalHTML = `
+        <div id="sessionConflictModal" class="modal-overlay" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        ">
+            <div class="modal-content" style="
+                background: white;
+                padding: 2rem;
+                border-radius: 0.5rem;
+                max-width: 400px;
+                text-align: center;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            ">
+                <h3 style="margin-bottom: 1rem; color: #333;">Sesión Activa Detectada</h3>
+                <p style="margin-bottom: 1.5rem; color: #666;">
+                    Ya tienes una sesión activa con <strong>${currentUser.correo}</strong>.
+                    ¿Qué quieres hacer?
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button id="continueCurrentSession" style="
+                        padding: 0.75rem 1.5rem;
+                        background: #3366FF;
+                        color: white;
+                        border: none;
+                        border-radius: 0.25rem;
+                        cursor: pointer;
+                    ">
+                        Continuar sesión actual
+                    </button>
+                    <button id="switchToNewUser" style="
+                        padding: 0.75rem 1.5rem;
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        border-radius: 0.25rem;
+                        cursor: pointer;
+                    ">
+                        Cambiar a ${newEmail}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add event listeners
+    document.getElementById('continueCurrentSession').addEventListener('click', () => {
+        document.getElementById('sessionConflictModal').remove();
+        // Clear form and redirect to dashboard
+        loginForm.reset();
+        window.location.href = 'dashboard.html';
+    });
+    
+    document.getElementById('switchToNewUser').addEventListener('click', () => {
+        document.getElementById('sessionConflictModal').remove();
+        // Clear current session and proceed with auto-login
+        sessionStorage.clear();
+        setTimeout(() => {
+            console.log('Auto-login con nuevo usuario iniciado...');
+            loginForm.dispatchEvent(new Event('submit'));
+        }, 500);
+    });
+}
+
+// Add function to handle remember me checkbox changes
+rememberMeCheckbox.addEventListener('change', function() {
+    if (!this.checked) {
+        // Clear saved credentials when unchecked
+        localStorage.removeItem('astren_email');
+        localStorage.removeItem('astren_password');
+        localStorage.removeItem('astren_rememberMe');
+        localStorage.removeItem('astren_autoLogin');
     }
 });
 

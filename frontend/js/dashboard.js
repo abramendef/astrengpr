@@ -7,6 +7,52 @@ const sidebarClose = document.getElementById('sidebar-close') || document.getEle
 const overlay = document.getElementById('mobileOverlay');
 const searchInput = document.querySelector('.header__search .search__input');
 
+// Navegación inteligente del dashboard
+function setupDashboardNavigation() {
+    // Contadores de estadísticas
+    const statToday = document.getElementById('statToday');
+    const statPending = document.getElementById('statPending');
+    const statCompleted = document.getElementById('statCompleted');
+    const statOverdue = document.getElementById('statOverdue');
+    
+    if (statToday) {
+        statToday.closest('.stat-item').style.cursor = 'pointer';
+        statToday.closest('.stat-item').addEventListener('click', () => {
+            window.location.href = 'tasks.html#today';
+        });
+    }
+    
+    if (statPending) {
+        statPending.closest('.stat-item').style.cursor = 'pointer';
+        statPending.closest('.stat-item').addEventListener('click', () => {
+            window.location.href = 'tasks.html#pending';
+        });
+    }
+    
+    if (statCompleted) {
+        statCompleted.closest('.stat-item').style.cursor = 'pointer';
+        statCompleted.closest('.stat-item').addEventListener('click', () => {
+            window.location.href = 'tasks.html#completed';
+        });
+    }
+    
+    if (statOverdue) {
+        statOverdue.closest('.stat-item').style.cursor = 'pointer';
+        statOverdue.closest('.stat-item').addEventListener('click', () => {
+            window.location.href = 'tasks.html#overdue';
+        });
+    }
+    
+    // Progreso de reputación
+    const reputationCard = document.querySelector('.dashboard-card:nth-child(2)');
+    if (reputationCard) {
+        reputationCard.style.cursor = 'pointer';
+        reputationCard.addEventListener('click', () => {
+            window.location.href = 'reputation.html';
+        });
+    }
+}
+
 /*===== MOBILE MENU FUNCTIONALITY =====*/
 function openMobileMenu() {
     if (sidebar) {
@@ -663,8 +709,44 @@ function renderDashboardTodayTasks() {
                 dashboardTodayTasks.appendChild(taskElement);
             });
         }
+        
+        // Detectar si necesita scrollbar después de renderizar
+        setTimeout(() => {
+            detectScrollbarNeeded();
+        }, 100);
         });
     }
+}
+
+// Función para detectar si necesita scrollbar
+function detectScrollbarNeeded() {
+    const scrollContainer = document.querySelector('.dashboard-task-list-scroll');
+    if (!scrollContainer) {
+        console.log('❌ No se encontró el contenedor de scroll');
+        return;
+    }
+    
+    // Esperar a que el contenido se renderice completamente
+    setTimeout(() => {
+        const scrollHeight = scrollContainer.scrollHeight;
+        const clientHeight = scrollContainer.clientHeight;
+        const hasScroll = scrollHeight > clientHeight;
+        
+        console.log('📋 Debug scrollbar:', {
+            scrollHeight,
+            clientHeight,
+            hasScroll,
+            difference: scrollHeight - clientHeight
+        });
+        
+        if (hasScroll) {
+            scrollContainer.classList.add('has-scroll');
+            console.log('📋 Scrollbar activado - hay más de 3 tareas');
+        } else {
+            scrollContainer.classList.remove('has-scroll');
+            console.log('📋 Sin scrollbar - 3 tareas o menos');
+        }
+    }, 200);
 }
 
 function deleteDashboardTask(taskId) {
@@ -720,6 +802,26 @@ function createTaskCard(task) {
     taskCard.style.padding = '0.7rem 0.8rem';
     taskCard.style.border = `1px solid ${borderColor}`;
     taskCard.style.borderLeft = `5px solid ${borderColor}`;
+    taskCard.style.cursor = 'pointer';
+    taskCard.style.transition = 'all 0.2s ease';
+    
+    // Hacer la tarjeta clickeable para navegar a la tarea específica
+    taskCard.addEventListener('click', (e) => {
+        // No navegar si se hace click en botones o checkbox
+        if (e.target.closest('button') || e.target.closest('input[type="checkbox"]') || e.target.closest('input[type="file"]')) {
+            return;
+        }
+        window.location.href = `tasks.html?task=${task.id}`;
+    });
+    
+    // Efecto hover para indicar que es clickeable
+    taskCard.addEventListener('mouseenter', () => {
+        taskCard.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+    });
+    
+    taskCard.addEventListener('mouseleave', () => {
+        taskCard.style.boxShadow = 'none';
+    });
     taskCard.innerHTML = `
         <div class=\"task-checkbox\" style=\"flex-shrink: 0;\">\n` +
             `<input type=\"checkbox\" id=\"task-${task.id}\">\n` +
@@ -1335,40 +1437,417 @@ window.DashboardResponsive = DashboardResponsive;
 
 // --- Función para poblar el select de áreas en el modal de nueva tarea (igual que en tasks.js) ---
 function populateAreaSelects() {
-    let areas = [];
+    const userId = getUserId();
+    if (!userId) {
+        console.log('❌ No se encontró userId para poblar selects de áreas');
+        return;
+    }
+
+    // Cargar áreas del usuario
+    fetch(`http://localhost:8000/areas/${userId}`)
+        .then(response => response.json())
+        .then(data => {
+            const areas = data.areas || [];
+            console.log('📝 Poblando selects con áreas:', areas.length);
+            
+            // Poblar select de área en el modal de nueva tarea
+            const areaSelect = document.getElementById('taskArea');
+            if (areaSelect) {
+                areaSelect.innerHTML = '<option value="">Seleccionar área</option>';
+                areas.forEach(area => {
+                    if (!area.archived) {
+                        const option = document.createElement('option');
+                        option.value = area.id;
+                        option.textContent = area.name;
+                        areaSelect.appendChild(option);
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error al cargar áreas para selects:', error);
+        });
+}
+
+// --- Funciones para cargar áreas y grupos desde el backend ---
+async function loadDashboardAreas() {
     try {
-        const savedAreas = localStorage.getItem('astren_areas');
-        if (savedAreas) {
-            areas = JSON.parse(savedAreas);
+        const userId = getUserId();
+        if (!userId) {
+            console.log('❌ No se encontró userId para cargar áreas');
+            return [];
         }
-    } catch (e) {
-        areas = [];
-    }
-    areas = areas.filter(a => !a.archived);
-    const areaSelects = [
-        document.getElementById('taskArea'),
-        document.getElementById('editTaskArea')
-    ];
-    areaSelects.forEach(select => {
-        if (!select) return;
-        select.innerHTML = '';
-        select.disabled = false;
-        if (areas.length === 0) {
-            select.innerHTML = '<option value="">Sin área</option>';
+
+        console.log('📡 Cargando áreas para usuario:', userId);
+        const response = await fetch(`http://localhost:8000/areas/${userId}`);
+        if (response.ok) {
+            const data = await response.json();
+            console.log('📊 Datos completos del backend:', data);
+            
+            // El backend devuelve un array directo de áreas
+            const areas = Array.isArray(data) ? data : (data.areas || []);
+            console.log('📋 Áreas recibidas:', areas);
+            console.log('🔍 Áreas con estado "activa":', areas.filter(area => area.estado === 'activa'));
+            
+            // Guardar en localStorage para uso posterior
+            localStorage.setItem('astren_areas', JSON.stringify(areas));
+            
+            // Renderizar áreas en el dashboard
+            renderDashboardAreas(areas);
+            
+            return areas;
         } else {
-            select.innerHTML = '<option value="">Sin área</option>' +
-                areas.map(area => `<option value="${area.id}">${area.name}</option>`).join('');
+            console.error('❌ Error al cargar áreas:', response.status);
+            return [];
         }
+    } catch (error) {
+        console.error('❌ Error al cargar áreas:', error);
+        return [];
+    }
+}
+
+async function loadDashboardGroups() {
+    try {
+        const userId = getUserId();
+        if (!userId) {
+            console.log('❌ No se encontró userId para cargar grupos');
+            return [];
+        }
+
+        console.log('📡 Cargando grupos para usuario:', userId);
+        const response = await fetch(`http://localhost:8000/grupos/${userId}`);
+        if (response.ok) {
+            const data = await response.json();
+            const groups = data.grupos || [];
+            console.log('✅ Grupos cargados para dashboard:', groups);
+            
+            // Guardar en localStorage para uso posterior
+            localStorage.setItem('astren_groups', JSON.stringify(groups));
+            
+            // Renderizar grupos en el dashboard
+            renderDashboardGroups(groups);
+            
+            return groups;
+        } else {
+            console.error('❌ Error al cargar grupos:', response.status);
+            return [];
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar grupos:', error);
+        return [];
+    }
+}
+
+function renderDashboardAreas(areas) {
+    console.log('🎨 Renderizando áreas:', areas);
+    const areasContainer = document.getElementById('areasGrid');
+    if (!areasContainer) {
+        console.log('❌ No se encontró el contenedor de áreas');
+        return;
+    }
+
+    // Filtrar solo áreas activas
+    const activeAreas = areas.filter(area => area.estado === 'activa');
+    console.log('✅ Áreas activas:', activeAreas.length);
+    
+    if (activeAreas.length === 0) {
+        console.log('📝 Mostrando estado vacío para áreas');
+        areasContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state__icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <h3 class="empty-state__title">No tienes áreas aún</h3>
+                <p class="empty-state__description">
+                    Crea tu primera área para comenzar a organizar tus tareas.
+                </p>
+            </div>
+        `;
+        return;
+    }
+
+    // Mapear colores de la base de datos a valores hexadecimales (versiones pasteles)
+    const colorMap = {
+        'blue': '#93c5fd',
+        'green': '#86efac',
+        'purple': '#c4b5fd',
+        'orange': '#fed7aa',
+        'red': '#fca5a5',
+        'pink': '#f9a8d4',
+        'yellow': '#fde68a',
+        'mint': '#a7f3d0',
+        'sky': '#7dd3fc',
+        'coral': '#fecaca',
+        'lavender': '#ddd6fe'
+    };
+
+    const areasHTML = activeAreas.map(area => {
+        const areaColor = colorMap[area.color] || '#93c5fd';
+        console.log('🎨 Área:', area.nombre || area.name, 'Color:', area.color, '→', areaColor);
+        
+        return `
+            <div class="area-card" data-area-id="${area.id}" style="border-color: ${areaColor}; cursor: pointer; transition: all 0.2s ease;" onclick="window.location.href='areas.html?area=${area.id}'">
+                <div class="area__header">
+                    <div class="area__icon" style="background: linear-gradient(135deg, ${areaColor}, ${adjustColor(areaColor, -20)});">
+                        <i class="fas ${area.icon || area.icono || 'fa-briefcase'}"></i>
+                    </div>
+                    <div class="area__actions">
+                        <button class="area__action" title="Ver área" onclick="event.stopPropagation(); window.location.href='areas.html?area=${area.id}'">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="area__info">
+                    <h3 class="area__name">${escapeHtml(area.nombre || area.name || 'Sin nombre')}</h3>
+                    <p class="area__description">${escapeHtml(area.descripcion || area.description || 'Sin descripción')}</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    console.log('📝 HTML generado para áreas:', areasHTML.length, 'caracteres');
+    areasContainer.innerHTML = areasHTML;
+    console.log('✅ Áreas renderizadas');
+}
+
+function renderDashboardGroups(groups) {
+    console.log('🎨 Renderizando grupos:', groups);
+    const groupsContainer = document.getElementById('groupsGrid');
+    if (!groupsContainer) {
+        console.log('❌ No se encontró el contenedor de grupos');
+        return;
+    }
+
+    // Filtrar solo grupos activos
+    const activeGroups = groups.filter(group => group.estado === 'activo');
+    console.log('✅ Grupos activos:', activeGroups.length);
+    
+    if (activeGroups.length === 0) {
+        console.log('📝 Mostrando estado vacío para grupos');
+        groupsContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state__icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="empty-state__title">No tienes grupos aún</h3>
+                <p class="empty-state__description">
+                    Crea tu primer grupo para comenzar a colaborar.
+                </p>
+            </div>
+        `;
+        return;
+    }
+
+    // Mapear colores de la base de datos a valores hexadecimales (versiones pasteles más suaves)
+    const colorMap = {
+        'blue': '#dbeafe',
+        'green': '#dcfce7',
+        'purple': '#ede9fe',
+        'orange': '#fed7aa',
+        'red': '#fee2e2',
+        'pink': '#fce7f3',
+        'yellow': '#fef3c7',
+        'mint': '#d1fae5',
+        'sky': '#e0f2fe',
+        'coral': '#fecaca',
+        'lavender': '#f3e8ff'
+    };
+
+    const groupsHTML = activeGroups.map(group => {
+        const groupColor = colorMap[group.color] || '#93c5fd';
+        console.log('🎨 Grupo:', group.nombre, 'Color:', group.color, '→', groupColor);
+        
+        return `
+            <div class="group-card" data-group-id="${group.id}" style="border-color: ${groupColor} !important; cursor: pointer; transition: all 0.2s ease;" onclick="window.location.href='groups.html?group=${group.id}'">
+                <div class="group__header">
+                    <div class="group__avatar" style="background: linear-gradient(135deg, ${groupColor}, ${adjustColor(groupColor, -10)});">
+                        <i class="fas ${group.icono || 'fa-users'}"></i>
+                    </div>
+                    <div class="group__actions">
+                        <button class="group__action" title="Ver grupo" onclick="event.stopPropagation(); window.location.href='groups.html?group=${group.id}'">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="group__info">
+                    <h3 class="group__name">${escapeHtml(group.nombre)}</h3>
+                    <p class="group__description">${escapeHtml(group.descripcion || 'Sin descripción')}</p>
+                </div>
+                <div class="group__meta">
+                    <span class="group__role group__role--${group.rol}">
+                        <i class="fas ${getRoleIcon(group.rol)}"></i>
+                        ${getRoleText(group.rol)}
+                    </span>
+                    <span class="group__members">
+                        <i class="fas fa-users"></i>
+                        ${group.num_miembros || 0}
+                    </span>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    console.log('📝 HTML generado para grupos:', groupsHTML.length, 'caracteres');
+    groupsContainer.innerHTML = groupsHTML;
+    console.log('✅ Grupos renderizados');
+}
+
+// Funciones helper
+function adjustColor(hexColor, percentage) {
+    let r = parseInt(hexColor.slice(1, 3), 16);
+    let g = parseInt(hexColor.slice(3, 5), 16);
+    let b = parseInt(hexColor.slice(5, 7), 16);
+
+    r = Math.round(r * (1 + percentage / 100));
+    g = Math.round(g * (1 + percentage / 100));
+    b = Math.round(b * (1 + percentage / 100));
+
+    r = Math.min(255, Math.max(0, r));
+    g = Math.min(255, Math.max(0, g));
+    b = Math.min(255, Math.max(0, b));
+
+    const rHex = r.toString(16).padStart(2, '0');
+    const gHex = g.toString(16).padStart(2, '0');
+    const bHex = b.toString(16).padStart(2, '0');
+
+    return `#${rHex}${gHex}${bHex}`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getRoleIcon(role) {
+    switch (role) {
+        case 'lider': return 'fa-crown';
+        case 'administrador': return 'fa-user-shield';
+        case 'miembro': return 'fa-user';
+        default: return 'fa-user';
+    }
+}
+
+function getRoleText(role) {
+    switch (role) {
+        case 'lider': return 'Líder';
+        case 'administrador': return 'Administrador';
+        case 'miembro': return 'Miembro';
+        default: return 'Miembro';
+    }
+}
+
+// Funciones para scroll horizontal
+function setupHorizontalScroll(containerId, leftBtnId, rightBtnId) {
+    const container = document.getElementById(containerId);
+    const leftBtn = document.getElementById(leftBtnId);
+    const rightBtn = document.getElementById(rightBtnId);
+    
+    if (!container || !leftBtn || !rightBtn) return;
+    
+    // Calcular el ancho de una tarjeta + gap
+    const cardWidth = 380; // Ancho de la tarjeta
+    const gap = 16; // Gap entre tarjetas
+    const scrollAmount = cardWidth + gap; // Una tarjeta completa + gap
+    
+    function updateScrollButtons() {
+        const isAtStart = container.scrollLeft === 0;
+        const isAtEnd = container.scrollLeft >= container.scrollWidth - container.clientWidth;
+        
+        leftBtn.style.display = isAtStart ? 'none' : 'flex';
+        rightBtn.style.display = isAtEnd ? 'none' : 'flex';
+    }
+    
+    // Scroll hacia la izquierda
+    leftBtn.addEventListener('click', () => {
+        container.scrollBy({
+            left: -scrollAmount,
+            behavior: 'smooth'
+        });
     });
-    const newTaskBtn = document.querySelector('#newTaskForm button[type="submit"]');
-    if (newTaskBtn) {
-        newTaskBtn.disabled = false;
-    }
-    const form = document.getElementById('newTaskForm');
-    if (form) {
-        let msg = form.querySelector('.no-areas-msg');
-        if (msg) {
-            msg.remove();
+    
+    // Scroll hacia la derecha
+    rightBtn.addEventListener('click', () => {
+        container.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+    });
+    
+    // Actualizar botones al hacer scroll
+    container.addEventListener('scroll', updateScrollButtons);
+    
+    // Actualizar botones inicialmente
+    updateScrollButtons();
+    
+    // Actualizar botones cuando cambie el contenido
+    const observer = new MutationObserver(updateScrollButtons);
+    observer.observe(container, { childList: true, subtree: true });
+}
+
+// Inicializar scroll horizontal después de cargar el contenido
+function initializeHorizontalScroll() {
+    setupHorizontalScroll('areasGrid', 'areasScrollLeft', 'areasScrollRight');
+    setupHorizontalScroll('groupsGrid', 'groupsScrollLeft', 'groupsScrollRight');
+}
+
+// Cargar datos del dashboard al inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Dashboard inicializando...');
+    
+    // Verificar userId
+    const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
+    console.log('👤 UserId encontrado:', userId);
+    
+    // Verificar contenedores
+    const areasContainer = document.getElementById('areasGrid');
+    const groupsContainer = document.getElementById('groupsGrid');
+    console.log('📦 Contenedor de áreas encontrado:', !!areasContainer);
+    console.log('📦 Contenedor de grupos encontrado:', !!groupsContainer);
+    
+    // Cargar áreas y grupos
+    console.log('📡 Cargando áreas...');
+    loadDashboardAreas().then(areas => {
+        console.log('✅ Áreas cargadas:', areas.length);
+        // Inicializar scroll horizontal después de cargar áreas
+        setTimeout(initializeHorizontalScroll, 100);
+    });
+    
+    console.log('📡 Cargando grupos...');
+    loadDashboardGroups().then(groups => {
+        console.log('✅ Grupos cargados:', groups.length);
+        // Inicializar scroll horizontal después de cargar grupos
+        setTimeout(initializeHorizontalScroll, 100);
+    });
+    
+    // Poblar selects de áreas
+    populateAreaSelects();
+    
+    // Inicializar navegación inteligente del dashboard
+    setupDashboardNavigation();
+    
+    console.log('✅ Dashboard inicializado');
+});
+
+// Función para obtener el userId del usuario logueado
+function getUserId() {
+    // Intentar obtener de sessionStorage (sesión activa)
+    const astrenUser = sessionStorage.getItem('astren_user');
+    if (astrenUser) {
+        try {
+            const userData = JSON.parse(astrenUser);
+            return userData.usuario_id;
+        } catch (error) {
+            console.error('❌ Error al parsear astren_user:', error);
         }
     }
+    
+    // Intentar obtener de localStorage (recordarme)
+    const astrenUserId = localStorage.getItem('astren_usuario_id');
+    if (astrenUserId) {
+        return astrenUserId;
+    }
+    
+    // Fallback: buscar userId directamente (compatibilidad)
+    return sessionStorage.getItem('userId') || localStorage.getItem('userId');
 }

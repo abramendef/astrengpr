@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Dashboard - Astren</title>
     <meta name="description" content="Panel principal de Astren - Gestiona tus áreas personales y grupos colaborativos con reputación por estrellas.">
 
@@ -25,9 +28,11 @@
     <!-- CSS -->
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/sidebar.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/dashboard.css?v=1035">
+    <link rel="stylesheet" href="css/groups.css?v=12">
     <link rel="stylesheet" href="css/tasks.css">
     <link rel="stylesheet" href="css/areas.css">
+    <link rel="stylesheet" href="css/notifications.css">
 </head>
 <body class="dashboard-body">
     <div class="dashboard">
@@ -56,9 +61,9 @@
                             <span class="notification__badge">3</span>
                         </button>
 
-                        <div class="header__profile">
-                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%233366FF'%3E%3Cpath fill-rule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="Avatar">
-                        </div>
+                        <button class="header__button" id="profileBtn" aria-label="Perfil" style="background: #3366FF; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; margin-left: 10px;">
+                            <i class="fas fa-user" style="font-size: 18px;"></i>
+                        </button>
                     </div>
                 </div>
             </header>
@@ -107,7 +112,7 @@
 
                 <!-- NUEVO GRID: Tareas Hoy y Progreso de Reputación -->
                 <div class="dashboard-row-grid">
-                  <section class="dashboard-card dashboard-card--wide" style="grid-column: 1;">
+                  <section class="dashboard-card" style="grid-column: 1;">
                       <div class="card__header card__header--compact">
                           <h2 class="card__title">
                               <i class="fas fa-calendar-day"></i>
@@ -163,210 +168,47 @@
                   </section>
                 </div>
 
-                <!-- Main Dashboard Grid -->
-                <div class="dashboard-grid">
-                    <!-- Personal Areas Overview -->
-                    <section class="dashboard-card dashboard-card--full">
-                        <div class="card__header">
-                            <h2 class="card__title">
-                                <i class="fas fa-layer-group"></i>
-                                Mis Áreas Personales
-                            </h2>
+                <!-- Sección de Áreas -->
+                <section class="dashboard-card dashboard-card--full">
+                    <div class="card__header">
+                        <h2 class="card__title">
+                            <i class="fas fa-layer-group"></i>
+                            Mis Áreas
+                        </h2>
+                    </div>
+                    <div class="card__content">
+                        <div class="areas-container" id="areasGrid">
+                            <!-- Las áreas se cargarán dinámicamente aquí -->
                         </div>
+                        <button class="scroll-btn scroll-btn--left" id="areasScrollLeft" style="display: none;">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="scroll-btn scroll-btn--right" id="areasScrollRight" style="display: none;">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </section>
 
-                        <div class="card__content">
-                            <div class="areas-grid">
-                                <div class="area-card area-card--personal">
-                                    <div class="area__header">
-                                        <div class="area__icon">
-                                            <i class="fas fa-user"></i>
-                                        </div>
-                                        <div class="area__info">
-                                            <h3 class="area__name">Personal</h3>
-                                            <div class="area__reputation">
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <span class="area__score">5.0</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="area__stats">
-                                        <div class="area__stat">
-                                            <span class="stat__value">5</span>
-                                            <span class="stat__label">Tareas Activas</span>
-                                        </div>
-                                        <div class="area__stat">
-                                            <span class="stat__value">12</span>
-                                            <span class="stat__label">Completadas</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="area-card area-card--work">
-                                    <div class="area__header">
-                                        <div class="area__icon">
-                                            <i class="fas fa-briefcase"></i>
-                                        </div>
-                                        <div class="area__info">
-                                            <h3 class="area__name">Trabajo</h3>
-                                            <div class="area__reputation">
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="far fa-star"></i>
-                                                <span class="area__score">4.0</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="area__stats">
-                                        <div class="area__stat">
-                                            <span class="stat__value">8</span>
-                                            <span class="stat__label">Tareas Activas</span>
-                                        </div>
-                                        <div class="area__stat">
-                                            <span class="stat__value">25</span>
-                                            <span class="stat__label">Completadas</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="area-card area-card--school">
-                                    <div class="area__header">
-                                        <div class="area__icon">
-                                            <i class="fas fa-graduation-cap"></i>
-                                        </div>
-                                        <div class="area__info">
-                                            <h3 class="area__name">Escuela</h3>
-                                            <div class="area__reputation">
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star-half-alt"></i>
-                                                <i class="far fa-star"></i>
-                                                <span class="area__score">3.5</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="area__stats">
-                                        <div class="area__stat">
-                                            <span class="stat__value">3</span>
-                                            <span class="stat__label">Tareas Activas</span>
-                                        </div>
-                                        <div class="area__stat">
-                                            <span class="stat__value">8</span>
-                                            <span class="stat__label">Completadas</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                <!-- Sección de Grupos -->
+                <section class="dashboard-card dashboard-card--full">
+                    <div class="card__header">
+                        <h2 class="card__title">
+                            <i class="fas fa-users"></i>
+                            Mis Grupos Colaborativos
+                        </h2>
+                    </div>
+                    <div class="card__content">
+                        <div class="groups-container" id="groupsGrid">
+                            <!-- Los grupos se cargarán dinámicamente aquí -->
                         </div>
-                    </section>
-
-                    <!-- Groups Overview -->
-                    <section class="dashboard-card dashboard-card--full">
-                        <div class="card__header">
-                            <h2 class="card__title">
-                                <i class="fas fa-users"></i>
-                                Mis Grupos Colaborativos
-                            </h2>
-                        </div>
-
-                        <div class="card__content">
-                            <div class="areas-grid">
-                                <div class="area-card area-card--group">
-                                    <div class="area__header">
-                                        <div class="area__icon area__icon--group">
-                                            <i class="fas fa-project-diagram"></i>
-                                        </div>
-                                        <div class="area__info">
-                                            <h3 class="area__name">Proyecto Alpha</h3>
-                                            <div class="area__reputation">
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="far fa-star"></i>
-                                                <span class="area__score">4.2</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="area__stats">
-                                        <div class="area__stat">
-                                            <span class="stat__value">12</span>
-                                            <span class="stat__label">Tareas Activas</span>
-                                        </div>
-                                        <div class="area__stat">
-                                            <span class="stat__value">34</span>
-                                            <span class="stat__label">Completadas</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="area-card area-card--group">
-                                    <div class="area__header">
-                                        <div class="area__icon area__icon--group">
-                                            <i class="fas fa-home"></i>
-                                        </div>
-                                        <div class="area__info">
-                                            <h3 class="area__name">Familia</h3>
-                                            <div class="area__reputation">
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <span class="area__score">4.8</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="area__stats">
-                                        <div class="area__stat">
-                                            <span class="stat__value">5</span>
-                                            <span class="stat__label">Tareas Activas</span>
-                                        </div>
-                                        <div class="area__stat">
-                                            <span class="stat__value">18</span>
-                                            <span class="stat__label">Completadas</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="area-card area-card--group">
-                                    <div class="area__header">
-                                        <div class="area__icon area__icon--group">
-                                            <i class="fas fa-code"></i>
-                                        </div>
-                                        <div class="area__info">
-                                            <h3 class="area__name">Equipo Dev</h3>
-                                            <div class="area__reputation">
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star"></i>
-                                                <i class="fas fa-star-half-alt"></i>
-                                                <span class="area__score">4.6</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="area__stats">
-                                        <div class="area__stat">
-                                            <span class="stat__value">9</span>
-                                            <span class="stat__label">Tareas Activas</span>
-                                        </div>
-                                        <div class="area__stat">
-                                            <span class="stat__value">42</span>
-                                            <span class="stat__label">Completadas</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
+                        <button class="scroll-btn scroll-btn--left" id="groupsScrollLeft" style="display: none;">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="scroll-btn scroll-btn--right" id="groupsScrollRight" style="display: none;">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </section>
             </div>
         </main>
     </div>
@@ -437,8 +279,9 @@
     <!-- Scripts -->
     <script src="js/sidebar-new.js"></script>
     <script src="js/scripts.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="js/dashboard.js?v=16"></script>
     <script src="js/header-buttons.js"></script>
     <script src="js/tasks.js"></script>
+    <script src="js/notifications.js"></script>
 </body>
 </html>

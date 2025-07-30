@@ -1,13 +1,13 @@
 @echo off
 REM ========================================
-REM ASTren - Gestor de Productividad
+REM Astren - Gestor de Productividad
 REM ========================================
 REM Acceso rápido para iniciar todos los servicios
 REM Backend Flask + Frontend HTTP + IA Secreta
 
 echo.
 echo ========================================
-echo    ASTren - Gestor de Productividad
+echo    Astren - Gestor de Productividad
 echo ========================================
 echo.
 echo Iniciando todos los servicios...
