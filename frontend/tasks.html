@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/tasks.css">
+    <link rel="stylesheet" href="css/notifications.css">
 
     <!-- Flatpickr DateTime Picker -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -136,7 +137,7 @@
 
                 <!-- Tasks List -->
                 <section class="tasks-container">
-                    <div class="tasks-section">
+                    <div class="tasks-section" id="today">
                         <h2 class="section-title">
                             <i class="fas fa-calendar-day"></i>
                             Tareas Hoy
@@ -144,7 +145,7 @@
                         <div class="tasks-grid" id="urgentTasks"></div>
                     </div>
 
-                    <div class="tasks-section">
+                    <div class="tasks-section" id="pending">
                         <h2 class="section-title">
                             <i class="fas fa-clock"></i>
                             Tareas Pendientes
@@ -152,12 +153,20 @@
                         <div class="tasks-grid" id="pendingTasks"></div>
                     </div>
 
-                    <div class="tasks-section">
+                    <div class="tasks-section" id="completed">
                         <h2 class="section-title">
                             <i class="fas fa-check-circle"></i>
                             Tareas Completadas Recientes
                         </h2>
                         <div class="tasks-grid" id="completedTasks"></div>
+                    </div>
+
+                    <div class="tasks-section" id="overdue">
+                        <h2 class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Tareas Vencidas
+                        </h2>
+                        <div class="tasks-grid" id="overdueTasks"></div>
                     </div>
                 </section>
             </div>
@@ -188,7 +197,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="taskArea">Área</label>
-                        <select id="taskArea" name="area" required>
+                        <select id="taskArea" name="area">
                             <option value="">Seleccionar área</option>
                             <option value="personal">Personal</option>
                             <option value="work">Trabajo</option>
@@ -231,8 +240,9 @@
     <script src="js/sidebar-new.js"></script>
     <script src="js/scripts.js"></script>
     <script src="js/dashboard.js"></script>
-    <script src="js/tasks.js"></script>
+    <script src="js/tasks.js?v=6"></script>
     <script src="js/header-buttons.js"></script>
+    <script src="js/notifications.js"></script>
     
     <!-- Test script -->
     <script>

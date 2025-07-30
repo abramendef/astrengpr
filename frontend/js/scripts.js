@@ -613,6 +613,80 @@ class AccessibilityManager {
     }
 }
 
+/*===== AUTHENTICATION MANAGER =====*/
+class AuthenticationManager {
+    static checkAuth() {
+        const sessionUser = sessionStorage.getItem('astren_user');
+        
+        // Solo verificar sessionStorage para sesiones activas
+        // localStorage se usa solo para "recordarme"
+        return !!sessionUser;
+    }
+    
+    static requireAuth() {
+        if (!this.checkAuth()) {
+            // Redirigir a login si no está autenticado
+            window.location.href = 'login.html';
+            return false;
+        }
+        return true;
+    }
+    
+    static getUserData() {
+        const sessionUser = sessionStorage.getItem('astren_user');
+        if (sessionUser) {
+            return JSON.parse(sessionUser);
+        }
+        
+        // Fallback a localStorage
+        const usuarioId = localStorage.getItem('astren_usuario_id');
+        if (usuarioId) {
+            return {
+                usuario_id: usuarioId,
+                nombre: localStorage.getItem('astren_nombre'),
+                apellido: localStorage.getItem('astren_apellido'),
+                correo: localStorage.getItem('astren_correo')
+            };
+        }
+        
+        return null;
+    }
+    
+    static logout() {
+        // Limpiar todos los datos de sesión
+        localStorage.removeItem('astren_rememberMe');
+        localStorage.removeItem('astren_email');
+        localStorage.removeItem('astren_password');
+        localStorage.removeItem('astren_autoLogin');
+        localStorage.removeItem('astren_usuario_id');
+        localStorage.removeItem('astren_nombre');
+        localStorage.removeItem('astren_apellido');
+        localStorage.removeItem('astren_correo');
+        sessionStorage.clear();
+        
+        // Redirigir a login
+        window.location.href = 'login.html';
+    }
+    
+    static switchUser() {
+        // Solo limpiar sessionStorage, mantener localStorage para "recordarme"
+        sessionStorage.clear();
+        
+        // Redirigir a login para iniciar nueva sesión
+        window.location.href = 'login.html';
+    }
+    
+    static getCurrentSessionUser() {
+        const sessionUser = sessionStorage.getItem('astren_user');
+        return sessionUser ? JSON.parse(sessionUser) : null;
+    }
+    
+    static isSameUser(email) {
+        const currentUser = this.getCurrentSessionUser();
+        return currentUser && currentUser.correo === email;
+    }
+}
+
 /*===== INITIALIZATION =====*/
 class AppInitializer {
     constructor() {
@@ -621,6 +695,20 @@ class AppInitializer {
     }
 
     init() {
+        // Check authentication for dashboard pages
+        const isDashboardPage = window.location.pathname.includes('dashboard') ||
+                               window.location.pathname.includes('tasks') ||
+                               window.location.pathname.includes('areas') ||
+                               window.location.pathname.includes('groups') ||
+                               window.location.pathname.includes('reputation') ||
+                               window.location.pathname.includes('notifications') ||
+                               window.location.pathname.includes('profile') ||
+                               window.location.pathname.includes('settings');
+        
+        if (isDashboardPage && !AuthenticationManager.requireAuth()) {
+            return; // Stop initialization if not authenticated
+        }
+        
         // Initialize all managers
         this.managers.mobileMenu = new MobileMenuManager();
         this.managers.navigation = new NavigationManager();
@@ -664,7 +752,8 @@ window.AstrenApp = {
     Utility: UtilityManager,
     Analytics: AnalyticsManager,
     Performance: PerformanceManager,
-    Accessibility: AccessibilityManager
+    Accessibility: AccessibilityManager,
+    Auth: AuthenticationManager
 };
 
 /*===== DOM CONTENT LOADED =====*/

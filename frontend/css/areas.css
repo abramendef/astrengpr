@@ -140,11 +140,11 @@
     background: var(--card-bg);
     border-radius: 16px;
     padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-light);
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    border: 2px solid transparent;
+    border-left: 4px solid;
 }
 
 .area-card:hover {
@@ -152,20 +152,9 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-.area-card--personal {
-    border-left: 4px solid #10b981;
-}
-
-.area-card--work {
-    border-left: 4px solid #3b82f6;
-}
-
-.area-card--school {
-    border-left: 4px solid #8b5cf6;
-}
-
-.area-card--group {
-    border-left: 4px solid #f59e0b;
+/* Usar el color dinámico de la base de datos */
+.area-card[data-color] {
+    border-left-color: var(--area-color, #3b82f6);
 }
 
 .area-card--archived {
@@ -237,6 +226,7 @@
 
 .area__info {
     margin-bottom: 1.5rem;
+    margin-left: 0;
 }
 
 .area__name {
@@ -244,13 +234,15 @@
     font-weight: 600;
     color: var(--text-color);
     margin: 0 0 0.5rem 0;
+    margin-left: 0;
 }
 
 .area__description {
     font-size: 0.875rem;
     color: var(--text-secondary);
-    margin: 0 0 0.5rem 0;
     line-height: 1.5;
+    margin: 0;
+    margin-left: 0;
 }
 
 .area__type {
@@ -973,14 +965,16 @@
 
 .area__info {
   flex: 1;
-  margin-left: var(--space-4);
+  margin-left: 0 !important;
 }
 
 .area__name {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   color: hsl(var(--text-primary));
-  margin-bottom: var(--space-1);
+  margin: 0 0 var(--space-2) 0;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
 }
 
 .area__description {
@@ -988,6 +982,34 @@
   color: hsl(var(--text-secondary));
   margin-bottom: var(--space-3);
   line-height: var(--line-height-relaxed);
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+/* Estilos para las tareas dentro de las áreas */
+.area__tasks {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.area-tasks-container {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.mini-task-card {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.area-tasks-empty {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.area-tasks-more {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
 }
 
 .area__type {

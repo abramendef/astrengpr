@@ -1,4 +1,4 @@
-# Script para iniciar tanto el backend como el frontend
+﻿# Script para iniciar tanto el backend como el frontend
 Write-Host "Iniciando servidores de Astren..." -ForegroundColor Green
 Write-Host ""
 
@@ -10,28 +10,29 @@ function Start-Backend {
     # Verificar si Flask está instalado
     Write-Host "Verificando dependencias..." -ForegroundColor Cyan
     try {
-        py -3.13 -c "import flask" 2>$null
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "Instalando dependencias..." -ForegroundColor Yellow
-            py -3.13 -m pip install -r requirements.txt
-        }
+        py -3.13 -m pip install --upgrade pip
+        py -3.13 -m pip install -r requirements.txt
     } catch {
-        Write-Host "Error verificando dependencias, continuando..." -ForegroundColor Yellow
+        Write-Host "Error instalando dependencias. Verifica tu conexión a internet." -ForegroundColor Red
+        return $false
     }
     
     # Intentar con py -3.13, si falla usar python
     try {
-        Start-Process -FilePath "py" -ArgumentList "-3.13", "app.py" -WindowStyle Normal
-        Write-Host "Backend iniciado con py -3.13" -ForegroundColor Green
-    } catch {
-        Write-Host "Intentando con 'python' en lugar de 'py -3.13'..." -ForegroundColor Yellow
-        try {
-            Start-Process -FilePath "python" -ArgumentList "app.py" -WindowStyle Normal
-            Write-Host "Backend iniciado con python" -ForegroundColor Green
-        } catch {
-            Write-Host "Error iniciando backend. Verifica que Python esté instalado." -ForegroundColor Red
+        $backendProcess = Start-Process -FilePath "py" -ArgumentList "-3.13", "app.py" -PassThru -WindowStyle Normal
+        
+        # Esperar un momento para verificar si el proceso se inició correctamente
+        Start-Sleep -Seconds 2
+        
+        if ($backendProcess.HasExited) {
+            Write-Host "El proceso del backend se cerró inmediatamente. Revisa el código de app.py." -ForegroundColor Red
             return $false
         }
+        
+        Write-Host "Backend iniciado con PID $($backendProcess.Id)" -ForegroundColor Green
+    } catch {
+        Write-Host "Error crítico al iniciar backend. Verifica tu instalación de Python." -ForegroundColor Red
+        return $false
     }
     Set-Location ".."
     Write-Host "Backend iniciado en http://localhost:8000" -ForegroundColor Green

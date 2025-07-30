@@ -44,13 +44,39 @@ class TasksManager {
             }
         }
         this.populateTaskAreaSelect();
-        // Cargar tareas desde el backend y renderizar
+                // Cargar tareas desde el backend y renderizar
         this.loadTasks().then(tasks => {
             this.tasks = tasks;
             this.renderTasks();
             this.updateTaskCounts();
             this.checkEmptyState();
+            
+            // Navegación automática a secciones específicas DESPUÉS de renderizar
+            this.handleSectionNavigation();
+            
+            // Si hay navegación pendiente desde el dashboard, ejecutarla
+            if (this.pendingNavigation) {
+                console.log('🎯 Ejecutando navegación pendiente:', this.pendingNavigation);
+                setTimeout(() => {
+                    this.navigateToSection(this.pendingNavigation);
+                    this.pendingNavigation = null;
+                }, 1000); // Esperar un poco más para asegurar que todo esté renderizado
+            }
         });
+        
+        // Listener para cambios en el hash de la URL (navegación desde dashboard)
+        window.addEventListener('hashchange', () => {
+            console.log('🔄 Hash cambiado, navegando a nueva sección');
+            // Esperar a que las tareas se carguen antes de navegar
+            this.waitForTasksAndNavigate();
+        });
+        
+        // También verificar hash al cargar la página (para navegación desde dashboard)
+        if (window.location.hash) {
+            console.log('🎯 Hash detectado al cargar página:', window.location.hash);
+            // Marcar que necesitamos navegar después de cargar las tareas
+            this.pendingNavigation = window.location.hash.substring(1);
+        }
         this.setupGlobalEvents();
         this.setupDeleteTaskEvents(); // Mantener esta línea
         console.log('📋 Tasks Manager inicializado con', this.tasks.length, 'tareas');
@@ -368,9 +394,9 @@ class TasksManager {
             // Usar requestAnimationFrame para mostrar el modal
             requestAnimationFrame(() => {
                 // Intentar múltiples métodos para mostrar el modal
-                modal.style.display = 'flex';
+            modal.style.display = 'flex';
                 modal.style.visibility = 'visible';
-                modal.classList.add('active');
+            modal.classList.add('active');
                 
                 // Forzar estilos para asegurar visibilidad
                 modal.setAttribute('style', `
@@ -752,7 +778,7 @@ class TasksManager {
                     }, 0);
                     
                     resolve(tasks);
-                })
+        })
                 .catch((error) => {
                     console.error('❌ [ERROR] Error al eliminar la tarea:', error);
                     
@@ -944,8 +970,8 @@ class TasksManager {
                     const batch = tasks.slice(i, i + BATCH_SIZE);
                     batch.forEach(task => {
                         container.insertAdjacentHTML('beforeend', this.createTaskCard(task));
-                    });
-                }
+            });
+        }
             };
 
             renderSection(urgentTasks, tareasHoy);
@@ -1382,7 +1408,7 @@ class TasksManager {
             // Manejar diferentes formatos de fecha
             if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(dateStr)) {
                 dateStr = dateStr.replace(' ', 'T') + ':00';
-            }
+        }
             return new Date(dateStr);
         };
 
@@ -1512,6 +1538,125 @@ class TasksManager {
         }
 
         console.log('✅ [DEBUG] Eventos de eliminación de tareas configurados');
+    }
+    
+    // Navegación automática a secciones específicas
+    handleSectionNavigation() {
+        // Obtener el fragmento de la URL (parte después del #)
+        const hash = window.location.hash.substring(1);
+        
+        if (hash) {
+            console.log('🎯 Navegando a sección:', hash);
+            
+            // Función para intentar hacer scroll
+            const attemptScroll = () => {
+                const targetSection = document.getElementById(hash);
+                
+                if (targetSection) {
+                    console.log('✅ Sección encontrada, haciendo scroll a:', hash);
+                    
+                    // Hacer scroll suave a la sección
+                    targetSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Agregar un efecto visual temporal
+                    targetSection.style.transition = 'all 0.3s ease';
+                    targetSection.style.backgroundColor = 'hsl(var(--surface-hover))';
+                    
+                    setTimeout(() => {
+                        targetSection.style.backgroundColor = '';
+                    }, 2000);
+                    
+                    console.log('✅ Scroll completado a sección:', hash);
+                    return true;
+                } else {
+                    console.warn('⚠️ Sección no encontrada:', hash);
+                    return false;
+                }
+            };
+            
+            // Intentar inmediatamente
+            if (!attemptScroll()) {
+                // Si no funciona, intentar después de un delay
+                setTimeout(() => {
+                    if (!attemptScroll()) {
+                        // Si aún no funciona, intentar una vez más
+                        setTimeout(attemptScroll, 1000);
+                    }
+                }, 1000);
+            }
+        } else {
+            console.log('ℹ️ No hay hash en la URL');
+        }
+    }
+    
+    // Esperar a que las tareas se carguen y luego navegar
+    waitForTasksAndNavigate() {
+        console.log('⏳ Esperando a que las tareas se carguen...');
+        
+        // Verificar si las tareas ya están cargadas
+        if (this.tasks && this.tasks.length > 0) {
+            console.log('✅ Tareas ya cargadas, navegando inmediatamente');
+            this.handleSectionNavigation();
+            return;
+        }
+        
+        // Si no están cargadas, esperar y verificar periódicamente
+        let attempts = 0;
+        const maxAttempts = 20; // Máximo 10 segundos (20 * 500ms)
+        
+        const checkAndNavigate = () => {
+            attempts++;
+            console.log(`⏳ Intento ${attempts}/${maxAttempts} - Verificando tareas...`);
+            
+            if (this.tasks && this.tasks.length > 0) {
+                console.log('✅ Tareas cargadas, navegando a sección');
+                this.handleSectionNavigation();
+                return;
+            }
+            
+            if (attempts >= maxAttempts) {
+                console.warn('⚠️ Tiempo de espera agotado, intentando navegar de todas formas');
+                this.handleSectionNavigation();
+                return;
+            }
+            
+            // Intentar de nuevo en 500ms
+            setTimeout(checkAndNavigate, 500);
+        };
+        
+        checkAndNavigate();
+    }
+    
+    // Navegación directa a una sección específica
+    navigateToSection(sectionId) {
+        console.log('🎯 Navegando directamente a sección:', sectionId);
+        
+        const targetSection = document.getElementById(sectionId);
+        
+        if (targetSection) {
+            console.log('✅ Sección encontrada, haciendo scroll a:', sectionId);
+            
+            // Hacer scroll suave a la sección
+            targetSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+            
+            // Agregar un efecto visual temporal
+            targetSection.style.transition = 'all 0.3s ease';
+            targetSection.style.backgroundColor = 'hsl(var(--surface-hover))';
+            
+            setTimeout(() => {
+                targetSection.style.backgroundColor = '';
+            }, 2000);
+            
+            console.log('✅ Scroll completado a sección:', sectionId);
+        } else {
+            console.warn('⚠️ Sección no encontrada:', sectionId);
+        }
     }
 }
 

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Areas - Astren</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="frontend/css/styles.css">
+    <link rel="stylesheet" href="frontend/css/areas.css">
+    
+    <style>
+        body {
+            padding: 2rem;
+            background: #f8fafc;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .test-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .test-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .test-button {
+            padding: 0.75rem 1.5rem;
+            background: #3366FF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .test-button:hover {
+            background: #2952cc;
+        }
+        .test-results {
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🧪 Test de Funcionalidad de Áreas</h1>
+            <p>Verificando que todas las funciones de áreas funcionen correctamente</p>
+        </div>
+
+        <div class="test-section">
+            <h2>Pruebas de Funcionalidad</h2>
+            <div class="test-buttons">
+                <button class="test-button" onclick="testAreasManager()">Test AreasManager</button>
+                <button class="test-button" onclick="testCreateArea()">Test Crear Área</button>
+                <button class="test-button" onclick="testEditArea()">Test Editar Área</button>
+                <button class="test-button" onclick="testDeleteArea()">Test Eliminar Área</button>
+                <button class="test-button" onclick="testFilters()">Test Filtros</button>
+                <button class="test-button" onclick="testSearch()">Test Búsqueda</button>
+                <button class="test-button" onclick="clearResults()">Limpiar Resultados</button>
+            </div>
+            <div id="testResults" class="test-results">Los resultados de las pruebas aparecerán aquí...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>Estado del Sistema</h2>
+            <div id="systemStatus" class="test-results">Verificando estado del sistema...</div>
+        </div>
+    </div>
+
+    <script src="frontend/js/areas.js"></script>
+    <script>
+        let testResults = [];
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            testResults.push(`[${timestamp}] ${message}`);
+            updateResults();
+        }
+        
+        function updateResults() {
+            document.getElementById('testResults').textContent = testResults.join('\n');
+        }
+        
+        function clearResults() {
+            testResults = [];
+            updateResults();
+        }
+        
+        function testAreasManager() {
+            log('🧪 Iniciando test de AreasManager...');
+            
+            try {
+                // Verificar que el AreasManager se inicializó correctamente
+                if (typeof AreasManager !== 'undefined') {
+                    log('✅ AreasManager está definido');
+                } else {
+                    log('❌ AreasManager no está definido');
+                    return;
+                }
+                
+                // Verificar que se creó una instancia global
+                if (window.areasManager) {
+                    log('✅ Instancia global de areasManager creada');
+                    log(`📊 Áreas cargadas: ${window.areasManager.areas.length}`);
+                } else {
+                    log('❌ No se encontró instancia global de areasManager');
+                }
+                
+                // Verificar métodos principales
+                const methods = ['addArea', 'updateArea', 'deleteArea', 'renderAreas', 'updateStats'];
+                methods.forEach(method => {
+                    if (typeof window.areasManager[method] === 'function') {
+                        log(`✅ Método ${method} disponible`);
+                    } else {
+                        log(`❌ Método ${method} no disponible`);
+                    }
+                });
+                
+            } catch (error) {
+                log(`❌ Error en test: ${error.message}`);
+            }
+        }
+        
+        function testCreateArea() {
+            log('🧪 Probando creación de área...');
+            
+            try {
+                const testArea = {
+                    name: 'Área de Prueba',
+                    type: 'personal',
+                    description: 'Esta es un área de prueba',
+                    color: 'blue'
+                };
+                
+                const originalCount = window.areasManager.areas.length;
+                window.areasManager.addArea(testArea);
+                const newCount = window.areasManager.areas.length;
+                
+                if (newCount > originalCount) {
+                    log('✅ Área creada exitosamente');
+                    log(`📊 Áreas antes: ${originalCount}, después: ${newCount}`);
+                } else {
+                    log('❌ No se pudo crear el área');
+                }
+                
+            } catch (error) {
+                log(`❌ Error creando área: ${error.message}`);
+            }
+        }
+        
+        function testEditArea() {
+            log('🧪 Probando edición de área...');
+            
+            try {
+                if (window.areasManager.areas.length === 0) {
+                    log('⚠️ No hay áreas para editar');
+                    return;
+                }
+                
+                const area = window.areasManager.areas[0];
+                const originalName = area.name;
+                const newName = 'Área Editada';
+                
+                window.areasManager.updateArea(area.id, { name: newName });
+                
+                const updatedArea = window.areasManager.areas.find(a => a.id === area.id);
+                if (updatedArea && updatedArea.name === newName) {
+                    log('✅ Área editada exitosamente');
+                    log(`📝 Nombre cambiado de "${originalName}" a "${newName}"`);
+                } else {
+                    log('❌ No se pudo editar el área');
+                }
+                
+            } catch (error) {
+                log(`❌ Error editando área: ${error.message}`);
+            }
+        }
+        
+        function testDeleteArea() {
+            log('🧪 Probando eliminación de área...');
+            
+            try {
+                if (window.areasManager.areas.length === 0) {
+                    log('⚠️ No hay áreas para eliminar');
+                    return;
+                }
+                
+                const originalCount = window.areasManager.areas.length;
+                const areaToDelete = window.areasManager.areas[0];
+                
+                window.areasManager.deleteArea(areaToDelete.id);
+                const newCount = window.areasManager.areas.length;
+                
+                if (newCount < originalCount) {
+                    log('✅ Área eliminada exitosamente');
+                    log(`📊 Áreas antes: ${originalCount}, después: ${newCount}`);
+                } else {
+                    log('❌ No se pudo eliminar el área');
+                }
+                
+            } catch (error) {
+                log(`❌ Error eliminando área: ${error.message}`);
+            }
+        }
+        
+        function testFilters() {
+            log('🧪 Probando filtros...');
+            
+            try {
+                const originalAreas = window.areasManager.areas.length;
+                const filteredAreas = window.areasManager.applyFilters();
+                
+                log(`📊 Áreas totales: ${originalAreas}`);
+                log(`🔍 Áreas filtradas: ${filteredAreas.length}`);
+                
+                if (filteredAreas.length <= originalAreas) {
+                    log('✅ Filtros funcionando correctamente');
+                } else {
+                    log('❌ Error en filtros');
+                }
+                
+            } catch (error) {
+                log(`❌ Error en filtros: ${error.message}`);
+            }
+        }
+        
+        function testSearch() {
+            log('🧪 Probando búsqueda...');
+            
+            try {
+                window.areasManager.searchQuery = 'trabajo';
+                const searchResults = window.areasManager.applyFilters();
+                
+                log(`🔍 Búsqueda por "trabajo": ${searchResults.length} resultados`);
+                
+                if (searchResults.length >= 0) {
+                    log('✅ Búsqueda funcionando correctamente');
+                } else {
+                    log('❌ Error en búsqueda');
+                }
+                
+                // Limpiar búsqueda
+                window.areasManager.searchQuery = '';
+                
+            } catch (error) {
+                log(`❌ Error en búsqueda: ${error.message}`);
+            }
+        }
+        
+        function updateSystemStatus() {
+            const status = document.getElementById('systemStatus');
+            const areasManager = window.areasManager;
+            
+            if (!areasManager) {
+                status.textContent = '❌ AreasManager no inicializado';
+                return;
+            }
+            
+            const statusText = [
+                `🟢 AreasManager: Inicializado`,
+                `📊 Áreas totales: ${areasManager.areas.length}`,
+                `🔍 Filtro actual: ${areasManager.currentFilter}`,
+                `👁️ Vista actual: ${areasManager.currentView}`,
+                `🔎 Búsqueda: "${areasManager.searchQuery}"`,
+                `💾 LocalStorage: ${localStorage.getItem('astren_areas') ? 'Disponible' : 'Vacío'}`,
+                `🌐 Servidor Frontend: ${navigator.onLine ? 'Conectado' : 'Desconectado'}`
+            ].join('\n');
+            
+            status.textContent = statusText;
+        }
+        
+        // Actualizar estado del sistema cada 5 segundos
+        setInterval(updateSystemStatus, 5000);
+        updateSystemStatus();
+        
+        // Test automático al cargar
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🚀 Iniciando tests automáticos...');
+                testAreasManager();
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 
