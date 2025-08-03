@@ -15,14 +15,14 @@ class HeaderButtonsManager {
         this.setupEventListeners();
         
         this.isInitialized = true;
-        console.log('Header buttons manager initialized');
+        Logger.info('Header buttons manager initialized', null, 'UI');
     }
 
     findButtons() {
         this.mobileMenuBtn = document.getElementById('mobileMenuBtn');
         this.profileBtn = document.getElementById('profileBtn');
         
-        console.log('Header buttons found:', {
+        Logger.debug('Header buttons found', {
             mobileMenuBtn: !!this.mobileMenuBtn,
             profileBtn: !!this.profileBtn
         });
@@ -76,7 +76,7 @@ class HeaderButtonsManager {
     }
 
     toggleProfileMenu() {
-        console.log('Profile button clicked');
+        Logger.debug('Profile button clicked', null, 'UI');
         const profileDropdown = document.getElementById('profileDropdown');
         if (profileDropdown) {
             const isVisible = profileDropdown.classList.contains('show');

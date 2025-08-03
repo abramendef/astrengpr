@@ -2,36 +2,36 @@
 
 class SidebarManager {
     constructor() {
-        console.log('🔧 SidebarManager constructor iniciado');
+        Logger.debug('SidebarManager constructor iniciado', null, 'UI');
         this.sidebar = null;
         this.overlay = null;
         this.isInitialized = false;
         this.isOpen = false;
         this.currentPage = this.getCurrentPage();
-        console.log('📄 Página actual detectada:', this.currentPage);
+        Logger.debug('Página actual detectada', this.currentPage, 'UI');
         this.init();
     }
 
     init() {
-        console.log('🚀 Iniciando SidebarManager...');
+        Logger.info('Iniciando SidebarManager', null, 'UI');
         if (this.isInitialized) {
-            console.log('⚠️ Sidebar ya inicializado, saltando...');
+            Logger.warn('Sidebar ya inicializado, saltando', null, 'UI');
             return;
         }
         
-        console.log('🔨 Creando sidebar...');
+        Logger.debug('Creando sidebar', null, 'UI');
         this.createSidebar();
-        console.log('🎯 Configurando event listeners...');
+        Logger.debug('Configurando event listeners', null, 'UI');
         this.setupEventListeners();
-        console.log('📍 Configurando enlace activo...');
+        Logger.debug('Configurando enlace activo', null, 'UI');
         this.setActiveLink();
-        console.log('📱 Configurando vista móvil...');
+        Logger.debug('Configurando vista móvil', null, 'UI');
         this.handleMobileView();
-        console.log('🏷️ Actualizando badges...');
+        Logger.debug('Actualizando badges', null, 'UI');
         this.updateBadges();
         
         this.isInitialized = true;
-        console.log('✅ Sidebar unificado inicializado correctamente');
+        Logger.info('Sidebar unificado inicializado correctamente', null, 'UI');
     }
 
     getCurrentPage() {

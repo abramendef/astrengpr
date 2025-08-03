@@ -15,10 +15,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- CSS -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=6">
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/tasks.css">
+    <link rel="stylesheet" href="css/tasks.css?v=8">
     <link rel="stylesheet" href="css/notifications.css">
 
     <!-- Flatpickr DateTime Picker -->
@@ -96,7 +96,7 @@
                 </section>
 
                 <!-- Task Stats (Contadores de estadísticas) -->
-                <section class="stats-grid">
+                <section class="stats-grid tasks-stats-grid">
                     <div class="stat-item">
                         <div class="stat-icon stat-icon--today">
                             <i class="fas fa-calendar-day"></i>
@@ -236,11 +236,134 @@
         </div>
     </div>
 
+    <!-- Modal de vista detallada de tarea -->
+    <div id="taskViewModal" class="modal">
+        <div class="modal-content task-view-modal">
+            <div class="modal-header">
+                <h2 id="taskViewTitle">Vista de Tarea</h2>
+                <button class="modal-close" onclick="hideModal('taskViewModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="task-view-content">
+                    <!-- Información principal de la tarea -->
+                    <div class="task-view-main">
+                        <div class="task-view-header">
+                            <div class="task-view-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="task-view-info">
+                                <h3 id="taskViewName"></h3>
+                                <p id="taskViewDescription"></p>
+                                <div class="task-view-meta">
+                                    <span id="taskViewArea"></span>
+                                    <span id="taskViewDue"></span>
+                                    <span id="taskViewStatus"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pestañas para notas y evidencias -->
+                    <div class="task-view-tabs">
+                        <button class="tab-btn active" data-tab="notes">
+                            <i class="fas fa-sticky-note"></i>
+                            Notas
+                        </button>
+                        <button class="tab-btn" data-tab="evidence">
+                            <i class="fas fa-file-alt"></i>
+                            Evidencias
+                        </button>
+                    </div>
+
+                    <!-- Contenido de las pestañas -->
+                    <div class="tab-content">
+                        <!-- Pestaña de Notas -->
+                        <div id="notesTab" class="tab-pane active">
+                            <div class="notes-container">
+                                <div class="notes-header">
+                                    <h4>Notas de la tarea</h4>
+                                    <button class="btn btn-primary" onclick="showAddNoteForm()">
+                                        <i class="fas fa-plus"></i>
+                                        Agregar Nota
+                                    </button>
+                                </div>
+                                
+                                <!-- Formulario para agregar nota -->
+                                <div id="addNoteForm" class="note-form" style="display: none;">
+                                    <div class="note-form-header">
+                                        <h5>Nueva Nota</h5>
+                                        <button class="btn btn-ghost" onclick="hideAddNoteForm()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="noteType">Tipo de nota:</label>
+                                        <select id="noteType" class="form-control">
+                                            <option value="text">Texto</option>
+                                            <option value="link">Enlace</option>
+                                            <option value="file">Archivo</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="noteContent">Contenido:</label>
+                                        <textarea id="noteContent" class="form-control" rows="4" placeholder="Escribe tu nota aquí..."></textarea>
+                                    </div>
+                                    <div id="noteFileInput" class="form-group" style="display: none;">
+                                        <label for="noteFile">Archivo:</label>
+                                        <input type="file" id="noteFile" class="form-control">
+                                    </div>
+                                    <div class="form-actions">
+                                        <button class="btn btn-primary" onclick="saveNote()">
+                                            <i class="fas fa-save"></i>
+                                            Guardar Nota
+                                        </button>
+                                        <button class="btn btn-ghost" onclick="hideAddNoteForm()">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Lista de notas -->
+                                <div id="notesList" class="notes-list">
+                                    <!-- Las notas se cargarán dinámicamente -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pestaña de Evidencias -->
+                        <div id="evidenceTab" class="tab-pane">
+                            <div class="evidence-container">
+                                <div class="evidence-header">
+                                    <h4>Evidencias de la tarea</h4>
+                                    <div class="evidence-status">
+                                        <span class="status-badge status-pending">Pendiente</span>
+                                        <span class="status-badge status-approved">Aprobada</span>
+                                        <span class="status-badge status-rejected">Rechazada</span>
+                                    </div>
+                                </div>
+                                <div id="evidenceList" class="evidence-list">
+                                    <!-- Las evidencias se cargarán dinámicamente -->
+                                </div>
+                                <div class="evidence-placeholder">
+                                    <i class="fas fa-file-alt"></i>
+                                    <p>Las evidencias estarán disponibles en la versión premium</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
+    <script src="js/config.js"></script>
     <script src="js/sidebar-new.js"></script>
     <script src="js/scripts.js"></script>
     <script src="js/dashboard.js"></script>
-    <script src="js/tasks.js?v=6"></script>
+    <script src="js/tasks.js?v=12"></script>
     <script src="js/header-buttons.js"></script>
     <script src="js/notifications.js"></script>
     

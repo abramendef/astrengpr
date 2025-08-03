@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis Áreas - Astren</title>
-    <meta name="description" content="Gestiona tus áreas de trabajo en Astren - Organiza tu productividad por categorías.">
+    <title>Áreas - Astren</title>
+    <meta name="description" content="Gestiona todas tus áreas en Astren - Organizadas por categorías y tareas.">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,10 +15,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- CSS -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=6">
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/areas.css?v=3">
+    <link rel="stylesheet" href="css/tasks.css">
+    <link rel="stylesheet" href="css/areas.css?v=20">
     <link rel="stylesheet" href="css/notifications.css">
 </head>
 <body class="dashboard-body">
@@ -34,16 +35,16 @@
                         <button class="mobile-menu-btn" id="mobileMenuBtn">
                             <i class="fas fa-bars"></i>
                         </button>
-                        <h1 class="header__title">Mis Áreas</h1>
+                        <h1 class="header__title">Áreas</h1>
                     </div>
 
                     <div class="header__right">
                         <div class="header__search">
                             <i class="fas fa-search"></i>
-                            <input type="text" placeholder="Buscar áreas..." class="search__input" id="searchInput">
+                            <input type="text" placeholder="Buscar áreas..." class="search__input">
                         </div>
 
-                        <button class="header__notification" id="notificationBtn">
+                        <button class="header__notification">
                             <i class="fas fa-bell"></i>
                             <span class="notification__badge">3</span>
                         </button>
@@ -57,14 +58,21 @@
 
             <!-- Areas Content -->
             <div class="dashboard__content">
-                <!-- Areas Actions Bar -->
-                <div class="areas-actions-bar">
+                <!-- Area Actions Bar -->
+                <section class="areas-actions">
                     <div class="actions-left">
                         <button class="button button--primary" id="newAreaBtn">
                             <i class="fas fa-plus"></i>
                             Nueva Área
                         </button>
-                        <div class="tasks-filters">
+                        
+                        <div class="areas-filters">
+                            <select class="filter-select" id="categoryFilter">
+                                <option value="">Todas las categorías</option>
+                                <option value="personal">Personal</option>
+                                <option value="work">Trabajo</option>
+                                <option value="school">Escuela</option>
+                            </select>
                             <select class="filter-select" id="statusFilter">
                                 <option value="">Todos los estados</option>
                                 <option value="active">Activas</option>
@@ -72,136 +80,186 @@
                             </select>
                         </div>
                     </div>
-                </div>
+                    <div class="actions-right">
+                        <!-- Botones de vista eliminados -->
+                    </div>
+                </section>
 
-                <!-- Areas Stats -->
-                <section class="stats-grid">
+                <!-- Area Stats (Contadores de estadísticas) -->
+                <section class="areas-stats">
                     <div class="stat-item">
-                        <div class="stat-icon stat-icon--today">
+                        <div class="stat-icon stat-icon--total">
                             <i class="fas fa-layer-group"></i>
                         </div>
                         <div class="stat-content">
-                            <span class="stat-value" id="totalAreas">0</span>
-                            <span class="stat-label">Todas</span>
+                            <span class="stat-value" id="total-areas">0</span>
+                            <span class="stat-label">Total Áreas</span>
                         </div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-icon stat-icon--active">
-                            <i class="fas fa-bolt"></i>
+                            <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="stat-content">
-                            <span class="stat-value" id="activeAreas">0</span>
-                            <span class="stat-label">Activas</span>
+                            <span class="stat-value" id="active-areas">0</span>
+                            <span class="stat-label">Áreas Activas</span>
                         </div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-icon stat-icon--completed">
+                        <div class="stat-icon stat-icon--pending">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="total-tasks">0</span>
+                            <span class="stat-label">Tareas Pendientes</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon stat-icon--archived">
                             <i class="fas fa-archive"></i>
                         </div>
                         <div class="stat-content">
-                            <span class="stat-value" id="archivedAreas">0</span>
-                            <span class="stat-label">Archivadas</span>
-                        </div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-icon stat-icon--reputation">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-value" id="noDescriptionAreas">0</span>
-                            <span class="stat-label">Reputación General</span>
+                            <span class="stat-value" id="archived-areas">0</span>
+                            <span class="stat-label">Áreas Archivadas</span>
                         </div>
                     </div>
                 </section>
 
-                <!-- Areas Grid -->
-                <section class="areas-container">
-                    <div class="areas-grid" id="areasGrid">
-                        <!-- Las áreas se cargarán dinámicamente aquí -->
+                <!-- Areas List -->
+                <section class="tasks-container">
+                    <div class="tasks-section" id="active">
+                        <h2 class="section-title">
+                            <i class="fas fa-check-circle"></i>
+                            Áreas Activas
+                        </h2>
+                        <div class="tasks-grid" id="activeAreas"></div>
                     </div>
-                    
-                    <!-- Empty State -->
-                    <div class="empty-state" id="emptyState" style="display: none;">
-                        <div class="empty-state__icon">
-                            <i class="fas fa-layer-group"></i>
-                        </div>
-                        <h3 class="empty-state__title">No tienes áreas aún</h3>
-                        <p class="empty-state__description">
-                            Crea tu primera área para comenzar a organizar tus tareas por categorías.
-                        </p>
-                        <button class="button button--primary" id="createFirstAreaBtn">
-                            <i class="fas fa-plus"></i>
-                            Crear Primera Área
+
+                    <!-- Botón de toggle para áreas archivadas -->
+                    <div class="archived-toggle-container">
+                        <button class="toggle-section-btn" id="toggleArchivedAreasBtn">
+                            <i class="fas fa-chevron-down"></i>
+                            Mostrar Áreas Archivadas
                         </button>
+                    </div>
+
+                    <div class="tasks-section" id="archived">
+                        <h2 class="section-title">
+                            <i class="fas fa-archive"></i>
+                            Áreas Archivadas
+                        </h2>
+                        <div class="tasks-grid" id="archivedAreas"></div>
                     </div>
                 </section>
             </div>
         </main>
     </div>
 
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
     <!-- New Area Modal -->
     <div class="modal" id="newAreaModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Nueva Área</h2>
-                <button class="modal-close" id="closeNewAreaModal">
+                <button class="modal-close" id="closeModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <form class="task-form" id="newAreaForm">
                 <div class="form-group">
-                    <label for="areaName">Nombre del Área</label>
-                    <input type="text" id="areaName" name="areaName" required>
+                    <label for="areaName">Nombre del área</label>
+                    <input type="text" id="areaName" name="name" required>
                 </div>
                 <div class="form-group">
                     <label for="areaDescription">Descripción</label>
-                    <textarea id="areaDescription" name="areaDescription" rows="3"></textarea>
+                    <textarea id="areaDescription" name="description" rows="3"></textarea>
                 </div>
+                
+                <!-- Color Picker -->
                 <div class="form-group">
-                    <label>Icono del Área</label>
-                    <div class="icon-picker" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="radio" id="iconBriefcase" name="areaIcon" value="fa-briefcase" checked>
-                        <label for="iconBriefcase"><i class="fas fa-briefcase"></i></label>
-                        <input type="radio" id="iconUser" name="areaIcon" value="fa-user">
-                        <label for="iconUser"><i class="fas fa-user"></i></label>
-                        <input type="radio" id="iconGraduation" name="areaIcon" value="fa-graduation-cap">
-                        <label for="iconGraduation"><i class="fas fa-graduation-cap"></i></label>
-                        <input type="radio" id="iconHome" name="areaIcon" value="fa-home">
-                        <label for="iconHome"><i class="fas fa-home"></i></label>
-                        <input type="radio" id="iconStar" name="areaIcon" value="fa-star">
-                        <label for="iconStar"><i class="fas fa-star"></i></label>
-                        <input type="radio" id="iconHeart" name="areaIcon" value="fa-heart">
-                        <label for="iconHeart"><i class="fas fa-heart"></i></label>
-                        <input type="radio" id="iconLightbulb" name="areaIcon" value="fa-lightbulb"><label for="iconLightbulb"><i class="fas fa-lightbulb"></i></label>
-                        <input type="radio" id="iconBook" name="areaIcon" value="fa-book">
-                        <label for="iconBook"><i class="fas fa-book"></i></label>
+                    <label>Color del área</label>
+                    <div class="color-picker">
+                        <input type="radio" id="color-blue" name="areaColor" value="blue" checked>
+                        <label for="color-blue" class="color-label color-blue" title="Azul"></label>
+                        
+                        <input type="radio" id="color-green" name="areaColor" value="green">
+                        <label for="color-green" class="color-label color-green" title="Verde"></label>
+                        
+                        <input type="radio" id="color-purple" name="areaColor" value="purple">
+                        <label for="color-purple" class="color-label color-purple" title="Morado"></label>
+                        
+                        <input type="radio" id="color-orange" name="areaColor" value="orange">
+                        <label for="color-orange" class="color-label color-orange" title="Naranja"></label>
+                        
+                        <input type="radio" id="color-red" name="areaColor" value="red">
+                        <label for="color-red" class="color-label color-red" title="Rojo"></label>
+                        
+                        <input type="radio" id="color-pink" name="areaColor" value="pink">
+                        <label for="color-pink" class="color-label color-pink" title="Rosa"></label>
+                        
+                        <input type="radio" id="color-yellow" name="areaColor" value="yellow">
+                        <label for="color-yellow" class="color-label color-yellow" title="Amarillo"></label>
+                        
+                        <input type="radio" id="color-mint" name="areaColor" value="mint">
+                        <label for="color-mint" class="color-label color-mint" title="Menta"></label>
+                        
+                        <input type="radio" id="color-sky" name="areaColor" value="sky">
+                        <label for="color-sky" class="color-label color-sky" title="Cielo"></label>
+                        
+                        <input type="radio" id="color-coral" name="areaColor" value="coral">
+                        <label for="color-coral" class="color-label color-coral" title="Coral"></label>
+                        
+                        <input type="radio" id="color-lavender" name="areaColor" value="lavender">
+                        <label for="color-lavender" class="color-label color-lavender" title="Lavanda"></label>
                     </div>
                 </div>
+                
+                <!-- Icon Picker -->
                 <div class="form-group">
-                    <label>Color del Área</label>
-                    <div class="color-picker" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="radio" id="colorPink" name="areaColor" value="pink" class="color-option" checked>
-                        <label for="colorPink" class="color-label color-pink"></label>
-                        <input type="radio" id="colorYellow" name="areaColor" value="yellow" class="color-option">
-                        <label for="colorYellow" class="color-label color-yellow"></label>
-                        <input type="radio" id="colorMint" name="areaColor" value="mint" class="color-option">
-                        <label for="colorMint" class="color-label color-mint"></label>
-                        <input type="radio" id="colorSky" name="areaColor" value="sky" class="color-option">
-                        <label for="colorSky" class="color-label color-sky"></label>
-                        <input type="radio" id="colorCoral" name="areaColor" value="coral" class="color-option">
-                        <label for="colorCoral" class="color-label color-coral"></label>
-                        <input type="radio" id="colorLavender" name="areaColor" value="lavender" class="color-option">
-                        <label for="colorLavender" class="color-label color-lavender"></label>
-                        <input type="radio" id="colorGreen" name="areaColor" value="green" class="color-option">
-                        <label for="colorGreen" class="color-label color-green"></label>
-                        <input type="radio" id="colorPurple" name="areaColor" value="purple" class="color-option">
-                        <label for="colorPurple" class="color-label color-purple"></label>
-                        <input type="radio" id="colorOrange" name="areaColor" value="orange" class="color-option">
-                        <label for="colorOrange" class="color-label color-orange"></label>
+                    <label>Icono del área</label>
+                    <div class="icon-picker">
+                        <input type="radio" id="icon-briefcase" name="areaIcon" value="fa-briefcase" checked>
+                        <label for="icon-briefcase" title="Maletín"><i class="fas fa-briefcase"></i></label>
+                        
+                        <input type="radio" id="icon-home" name="areaIcon" value="fa-home">
+                        <label for="icon-home" title="Casa"><i class="fas fa-home"></i></label>
+                        
+                        <input type="radio" id="icon-graduation-cap" name="areaIcon" value="fa-graduation-cap">
+                        <label for="icon-graduation-cap" title="Graduación"><i class="fas fa-graduation-cap"></i></label>
+                        
+                        <input type="radio" id="icon-users" name="areaIcon" value="fa-users">
+                        <label for="icon-users" title="Usuarios"><i class="fas fa-users"></i></label>
+                        
+                        <input type="radio" id="icon-heart" name="areaIcon" value="fa-heart">
+                        <label for="icon-heart" title="Corazón"><i class="fas fa-heart"></i></label>
+                        
+                        <input type="radio" id="icon-star" name="areaIcon" value="fa-star">
+                        <label for="icon-star" title="Estrella"><i class="fas fa-star"></i></label>
+                        
+                        <input type="radio" id="icon-book" name="areaIcon" value="fa-book">
+                        <label for="icon-book" title="Libro"><i class="fas fa-book"></i></label>
+                        
+                        <input type="radio" id="icon-laptop" name="areaIcon" value="fa-laptop">
+                        <label for="icon-laptop" title="Laptop"><i class="fas fa-laptop"></i></label>
+                        
+                        <input type="radio" id="icon-dumbbell" name="areaIcon" value="fa-dumbbell">
+                        <label for="icon-dumbbell" title="Pesas"><i class="fas fa-dumbbell"></i></label>
+                        
+                        <input type="radio" id="icon-music" name="areaIcon" value="fa-music">
+                        <label for="icon-music" title="Música"><i class="fas fa-music"></i></label>
+                        
+                        <input type="radio" id="icon-palette" name="areaIcon" value="fa-palette">
+                        <label for="icon-palette" title="Paleta"><i class="fas fa-palette"></i></label>
+                        
+                        <input type="radio" id="icon-gamepad" name="areaIcon" value="fa-gamepad">
+                        <label for="icon-gamepad" title="Gamepad"><i class="fas fa-gamepad"></i></label>
                     </div>
                 </div>
+                
                 <div class="form-actions">
-                    <button type="button" class="button button--ghost" id="cancelNewArea">Cancelar</button>
+                    <button type="button" class="button button--ghost" id="cancelArea">Cancelar</button>
                     <button type="submit" class="button button--primary">Crear Área</button>
                 </div>
             </form>
@@ -218,67 +276,130 @@
                 </button>
             </div>
             <form class="task-form" id="editAreaForm">
-                <input type="hidden" id="editAreaId" name="areaId">
                 <div class="form-group">
-                    <label for="editAreaName">Nombre del Área</label>
-                    <input type="text" id="editAreaName" name="areaName" required>
+                    <label for="editAreaName">Nombre del área</label>
+                    <input type="text" id="editAreaName" name="name" required>
                 </div>
-
                 <div class="form-group">
                     <label for="editAreaDescription">Descripción</label>
-                    <textarea id="editAreaDescription" name="areaDescription" rows="3"></textarea>
+                    <textarea id="editAreaDescription" name="description" rows="3"></textarea>
                 </div>
+                
+                <!-- Color Picker -->
                 <div class="form-group">
-                    <label for="editAreaColor">Color del Área</label>
+                    <label>Color del área</label>
                     <div class="color-picker">
-                        <input type="radio" id="editColorBlue" name="areaColor" value="blue" class="color-option">
-                        <label for="editColorBlue" class="color-label color-blue"></label>
-                        <input type="radio" id="editColorGreen" name="areaColor" value="green" class="color-option">
-                        <label for="editColorGreen" class="color-label color-green"></label>
-                        <input type="radio" id="editColorPurple" name="areaColor" value="purple" class="color-option">
-                        <label for="editColorPurple" class="color-label color-purple"></label>
-                        <input type="radio" id="editColorOrange" name="areaColor" value="orange" class="color-option">
-                        <label for="editColorOrange" class="color-label color-orange"></label>
-                        <input type="radio" id="editColorRed" name="areaColor" value="red" class="color-option">
-                        <label for="editColorRed" class="color-label color-red"></label>
+                        <input type="radio" id="edit-color-blue" name="editAreaColor" value="blue">
+                        <label for="edit-color-blue" class="color-label color-blue" title="Azul"></label>
+                        
+                        <input type="radio" id="edit-color-green" name="editAreaColor" value="green">
+                        <label for="edit-color-green" class="color-label color-green" title="Verde"></label>
+                        
+                        <input type="radio" id="edit-color-purple" name="editAreaColor" value="purple">
+                        <label for="edit-color-purple" class="color-label color-purple" title="Morado"></label>
+                        
+                        <input type="radio" id="edit-color-orange" name="editAreaColor" value="orange">
+                        <label for="edit-color-orange" class="color-label color-orange" title="Naranja"></label>
+                        
+                        <input type="radio" id="edit-color-red" name="editAreaColor" value="red">
+                        <label for="edit-color-red" class="color-label color-red" title="Rojo"></label>
+                        
+                        <input type="radio" id="edit-color-pink" name="editAreaColor" value="pink">
+                        <label for="edit-color-pink" class="color-label color-pink" title="Rosa"></label>
+                        
+                        <input type="radio" id="edit-color-yellow" name="editAreaColor" value="yellow">
+                        <label for="edit-color-yellow" class="color-label color-yellow" title="Amarillo"></label>
+                        
+                        <input type="radio" id="edit-color-mint" name="editAreaColor" value="mint">
+                        <label for="edit-color-mint" class="color-label color-mint" title="Menta"></label>
+                        
+                        <input type="radio" id="edit-color-sky" name="editAreaColor" value="sky">
+                        <label for="edit-color-sky" class="color-label color-sky" title="Cielo"></label>
+                        
+                        <input type="radio" id="edit-color-coral" name="editAreaColor" value="coral">
+                        <label for="edit-color-coral" class="color-label color-coral" title="Coral"></label>
+                        
+                        <input type="radio" id="edit-color-lavender" name="editAreaColor" value="lavender">
+                        <label for="edit-color-lavender" class="color-label color-lavender" title="Lavanda"></label>
                     </div>
                 </div>
+                
+                <!-- Icon Picker -->
+                <div class="form-group">
+                    <label>Icono del área</label>
+                    <div class="icon-picker">
+                        <input type="radio" id="edit-icon-briefcase" name="editAreaIcon" value="fa-briefcase">
+                        <label for="edit-icon-briefcase" title="Maletín"><i class="fas fa-briefcase"></i></label>
+                        
+                        <input type="radio" id="edit-icon-home" name="editAreaIcon" value="fa-home">
+                        <label for="edit-icon-home" title="Casa"><i class="fas fa-home"></i></label>
+                        
+                        <input type="radio" id="edit-icon-graduation-cap" name="editAreaIcon" value="fa-graduation-cap">
+                        <label for="edit-icon-graduation-cap" title="Graduación"><i class="fas fa-graduation-cap"></i></label>
+                        
+                        <input type="radio" id="edit-icon-users" name="editAreaIcon" value="fa-users">
+                        <label for="edit-icon-users" title="Usuarios"><i class="fas fa-users"></i></label>
+                        
+                        <input type="radio" id="edit-icon-heart" name="editAreaIcon" value="fa-heart">
+                        <label for="edit-icon-heart" title="Corazón"><i class="fas fa-heart"></i></label>
+                        
+                        <input type="radio" id="edit-icon-star" name="editAreaIcon" value="fa-star">
+                        <label for="edit-icon-star" title="Estrella"><i class="fas fa-star"></i></label>
+                        
+                        <input type="radio" id="edit-icon-book" name="editAreaIcon" value="fa-book">
+                        <label for="edit-icon-book" title="Libro"><i class="fas fa-book"></i></label>
+                        
+                        <input type="radio" id="edit-icon-laptop" name="editAreaIcon" value="fa-laptop">
+                        <label for="edit-icon-laptop" title="Laptop"><i class="fas fa-laptop"></i></label>
+                        
+                        <input type="radio" id="edit-icon-dumbbell" name="editAreaIcon" value="fa-dumbbell">
+                        <label for="edit-icon-dumbbell" title="Pesas"><i class="fas fa-dumbbell"></i></label>
+                        
+                        <input type="radio" id="edit-icon-music" name="editAreaIcon" value="fa-music">
+                        <label for="edit-icon-music" title="Música"><i class="fas fa-music"></i></label>
+                        
+                        <input type="radio" id="edit-icon-palette" name="editAreaIcon" value="fa-palette">
+                        <label for="edit-icon-palette" title="Paleta"><i class="fas fa-palette"></i></label>
+                        
+                        <input type="radio" id="edit-icon-gamepad" name="editAreaIcon" value="fa-gamepad">
+                        <label for="edit-icon-gamepad" title="Gamepad"><i class="fas fa-gamepad"></i></label>
+                    </div>
+                </div>
+                
                 <div class="form-actions">
                     <button type="button" class="button button--ghost" id="cancelEditArea">Cancelar</button>
-                    <button type="submit" class="button button--primary">Guardar Cambios</button>
+                    <button type="submit" class="button button--primary">Actualizar Área</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
+    <!-- Modal de confirmación para eliminar área -->
     <div class="modal" id="deleteAreaModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Eliminar Área</h2>
+                <h2>¿Eliminar área?</h2>
                 <button class="modal-close" id="closeDeleteAreaModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <p class="delete-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    ¿Estás seguro de que quieres eliminar el área "<span id="deleteAreaName"></span>"?
-                </p>
-                <p class="delete-description">
-                    Esta acción no se puede deshacer. Todas las tareas asociadas a esta área se moverán a "Sin área".
-                </p>
+                <p>¿Estás seguro de que quieres eliminar esta área? Esta acción no se puede deshacer.</p>
             </div>
             <div class="form-actions">
                 <button type="button" class="button button--ghost" id="cancelDeleteArea">Cancelar</button>
-                <button type="button" class="button button--danger" id="confirmDeleteArea">Eliminar Área</button>
+                <button type="button" class="button button--danger" id="confirmDeleteArea">Eliminar</button>
             </div>
         </div>
     </div>
 
     <!-- Scripts -->
+    <script src="js/config.js"></script>
     <script src="js/sidebar-new.js"></script>
-    <script src="js/areas.js?v=1"></script>
+    <script src="js/scripts.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/areas.js?v=2"></script>
+    <script src="js/header-buttons.js"></script>
     <script src="js/notifications.js"></script>
 </body>
 </html>

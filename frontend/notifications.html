@@ -113,16 +113,16 @@
     
     <!-- Notification Settings Modal -->
     <div class="modal" id="notification-settings-modal">
-        <div class="modal__content">
-            <div class="modal__header">
-                <h2 class="modal__title">Configuración de Notificaciones</h2>
-                <button class="modal__close" onclick="closeNotificationSettingsModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Configuración de Notificaciones</h2>
+                <button class="modal-close" onclick="closeNotificationSettingsModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
-            <div class="modal__body">
-                <form class="modal__form" id="notification-settings-form">
+            <div class="modal-body">
+                <form class="modal-form" id="notification-settings-form">
                     <div class="settings__section">
                         <h3 class="settings__section-title">
                             <i class="fas fa-bell"></i>
@@ -269,7 +269,7 @@
                 </form>
             </div>
             
-            <div class="modal__footer">
+            <div class="modal-footer">
                 <button type="button" class="button button--ghost" onclick="closeNotificationSettingsModal()">
                     Cancelar
                 </button>
@@ -284,6 +284,7 @@
     </div>
     
     <!-- JavaScript -->
+    <script src="js/config.js"></script>
     <script src="js/sidebar-new.js"></script>
     <script src="js/scripts.js"></script>
     <script src="js/notifications.js"></script>

@@ -198,7 +198,7 @@
 }
 
 /*===== MAIN CONTENT =====*/
-.main-content {
+/* .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -206,12 +206,12 @@
   min-height: 100vh;
   margin-left: 0;
   transition: margin-left 0.3s ease;
-}
+} */
 
 /*===== DASHBOARD HEADER =====*/
 .dashboard__header {
   background-color: hsl(var(--surface));
-  border-bottom: 1px solid hsl(var(--border));
+  border-bottom: 2px solid rgba(0, 0, 0, 0.25);
   height: 70px;
   display: flex;
   align-items: center;
@@ -460,44 +460,95 @@
   overflow-y: auto;
 }
 
+
+
 /*===== STATS GRID =====*/
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  margin-top: 0; /* Eliminar margen superior */
-  padding-top: 0 !important; /* Eliminar padding superior */
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
 }
+
+/* Estilos específicos para contadores del dashboard */
+.dashboard-stats-grid {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.dashboard-stats-grid .stat-item {
+  flex: 1 !important;
+  min-width: 200px !important;
+  width: auto !important;
+  max-width: none !important;
+}
+
+/* Responsive para contadores del dashboard */
+@media (max-width: 768px) {
+  .dashboard-stats-grid {
+    flex-direction: column !important;
+    gap: var(--space-3);
+  }
+  
+  .dashboard-stats-grid .stat-item {
+    min-width: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
+/* Animaciones de contadores */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stats-grid .stat-item {
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+}
+
+.stats-grid .stat-item:nth-child(1) { animation-delay: 0.1s; }
+.stats-grid .stat-item:nth-child(2) { animation-delay: 0.2s; }
+.stats-grid .stat-item:nth-child(3) { animation-delay: 0.3s; }
+.stats-grid .stat-item:nth-child(4) { animation-delay: 0.4s; }
 
 .stat-item {
-  background-color: hsl(var(--surface));
-  border: 1px solid hsl(var(--border));
-  border-radius: 0.75rem;
-  padding: 1rem;
-  display: flex;
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 1rem;
+  padding: 0.875rem;
+  display: flex !important;
   align-items: center;
   gap: 1rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  flex: 1 !important;
+  min-width: 200px !important;
+  width: auto !important;
+  max-width: none !important;
 }
 
-.stat-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.stat-item:hover,
+.dashboard-stats-grid .stat-item:hover,
+.stats-grid .stat-item:hover {
+  transform: translateY(-3px) scale(1.02) !important;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.12) !important;
+  border-color: rgba(0,0,0,0.2) !important;
+  background: #f8fafc !important;
 }
 
 /* Estilos para elementos clickeables del dashboard */
-.stat-item {
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.stat-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  background-color: hsl(var(--surface-hover));
-}
 
 /* Progreso de reputación clickeable */
 .dashboard-row-grid > .dashboard-card:nth-child(2) {
@@ -544,6 +595,10 @@
   color: white;
 }
 
+.stat-icon--total {
+  background: linear-gradient(135deg, hsl(var(--primary-color)), hsl(var(--primary-light)));
+}
+
 .stat-icon--today {
   background: linear-gradient(135deg, hsl(var(--primary-color)), hsl(var(--primary-light)));
 }
@@ -563,14 +618,15 @@
 .stat-content {
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 }
 
 .stat-value {
-  font-size: var(--font-size-2xl);
+  font-size: 1.5rem !important;
   font-weight: var(--font-weight-bold);
   color: hsl(var(--text-primary));
   line-height: 1;
-  margin-bottom: var(--space-1);
+  margin-bottom: 0.25rem;
 }
 
 .stat-label {
@@ -588,7 +644,7 @@
 
 .dashboard-card {
   background-color: hsl(var(--surface));
-  border: 1px solid hsl(var(--border));
+  border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 0.75rem;
   padding: 1rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
@@ -627,7 +683,7 @@
 
 .card__header {
   padding: var(--space-6);
-  border-bottom: 3px solid hsl(var(--border-light));
+  border-bottom: 3px solid rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -635,7 +691,7 @@
 
 .card__header--compact {
   padding: var(--space-6); /* Mismo padding que el header normal */
-  border-bottom: 3px solid hsl(var(--border-light));
+  border-bottom: 3px solid rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -648,6 +704,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+}
+
+/* Colores específicos para iconos de secciones del dashboard que coincidan con los contadores */
+.dashboard-card .card__title i {
+  color: hsl(var(--primary-color));
 }
 
 .task-counter {
@@ -1015,7 +1076,7 @@
 }
 
 .area-card {
-  background-color: hsl(var(--surface));
+  background-color: #fcfcfc;
   border: 1px solid hsl(var(--border));
   border-radius: 0.75rem;
   padding: 1rem;
@@ -1166,7 +1227,8 @@
   }
 
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
   }
 
   .search__input {
@@ -1210,10 +1272,6 @@
   
   .dashboard__content {
     padding: 0.75rem;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
   }
   
   .dashboard-row-grid {
@@ -1277,12 +1335,12 @@
     padding: 0.5rem;
   }
   
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .stat-item {
-    padding: 0.75rem;
+    padding: 0.75rem !important;
+    flex: 1 !important;
+    min-width: 200px !important;
+    width: auto !important;
+    max-width: none !important;
   }
   
   .dashboard-card {
@@ -1709,7 +1767,9 @@
 }
 
 .stats-grid {
-  display: grid !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
   width: 100% !important;
 }
 
@@ -1830,6 +1890,10 @@
   
   .stat-item {
     padding: 0.5rem !important;
+    flex: 1 !important;
+    min-width: 200px !important;
+    width: auto !important;
+    max-width: none !important;
   }
 }
 
@@ -1843,6 +1907,8 @@
     padding: 0.5rem !important;
   }
 }
+
+
 
 /* Asegurar que los iconos se vean bien */
 @media (max-width: 480px) {
@@ -2874,17 +2940,13 @@
     padding: var(--space-2) 0;
     position: relative;
     min-height: 200px;
-    max-width: calc(3 * 380px + 2 * 16px); /* Exactamente 3 tarjetas ligeramente más grandes + gaps */
-    width: calc(3 * 380px + 2 * 16px);
 }
 
 /* Asegurar que las tarjetas mantengan su tamaño */
-.area-card,
-.group-card {
+.area-card {
     flex-shrink: 0;
-    min-width: 380px;
-    max-width: 380px;
-    width: 380px; /* Tamaño fijo ligeramente más grande */
+    min-width: 350px;
+    max-width: 350px;
 }
 
 /* Contenedor principal del dashboard */
@@ -2954,12 +3016,7 @@
     margin-bottom: 0;
 }
 
-/* Secciones con posición relativa */
-.areas-section,
-.groups-section {
-    position: relative;
-    margin-bottom: var(--space-6);
-}
+
 
 /* Contenedor de las cards para posicionar flechas */
 .card__content {
@@ -2967,7 +3024,6 @@
     width: 100%;
     max-width: 100%;
     position: relative; /* Para posicionar las flechas */
-    padding: 0 20px; /* Un poco de padding para mejor balance */
 }
 
 /* Estilos para las secciones de áreas y grupos */
@@ -3000,6 +3056,67 @@
     margin-top: 1rem; /* Espacio arriba de cada tarjeta de área */
 }
 
-.dashboard .group-card {
-    margin-top: 1rem; /* Espacio arriba de cada tarjeta de grupo */
+
+
+/* SOLUCIÓN DEFINITIVA PARA CONTADORES DEL DASHBOARD */
+/* .dashboard .dashboard-stats-grid .stat-item,
+.dashboard .stats-grid .stat-item,
+.dashboard-stats-grid .stat-item,
+.stats-grid .stat-item {
+  flex: 1 !important;
+  min-width: 200px !important;
+  width: auto !important;
+  max-width: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  padding: 0.875rem !important;
+  background-color: white !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.3s ease !important;
+} */
+
+/* Responsive definitivo para dashboard */
+/* @media (max-width: 768px) {
+  .dashboard .dashboard-stats-grid .stat-item,
+  .dashboard .stats-grid .stat-item,
+  .dashboard-stats-grid .stat-item,
+  .stats-grid .stat-item {
+    min-width: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
 }
+
+@media (max-width: 480px) {
+  .dashboard .dashboard-stats-grid .stat-item,
+  .dashboard .stats-grid .stat-item,
+  .dashboard-stats-grid .stat-item,
+  .stats-grid .stat-item {
+    min-width: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0.75rem !important;
+  }
+} */
+
+/* Estilos específicos para valores y etiquetas de contadores del dashboard */
+/* .dashboard .stat-value,
+.dashboard-stats-grid .stat-value,
+.stats-grid .stat-value {
+  font-size: 1.5rem !important;
+  font-weight: var(--font-weight-bold) !important;
+  color: hsl(var(--text-primary)) !important;
+  line-height: 1 !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.dashboard .stat-label,
+.dashboard-stats-grid .stat-label,
+.stats-grid .stat-label {
+  font-size: var(--font-size-sm) !important;
+  color: hsl(var(--text-secondary)) !important;
+  font-weight: var(--font-weight-medium) !important;
+} */

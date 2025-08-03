@@ -417,7 +417,7 @@ function formatAchievementDate(dateString) {
     return `Hace ${Math.ceil(diffDays / 30)} meses`;
 }
 
-console.log('⭐ Módulo de reputación de Astren cargado correctamente');
+        Logger.info('Módulo de reputación de Astren cargado correctamente', null, 'UI');
 
 // Sistema de Reputación Completo y Robusto de Astren
 class ReputationManager {
@@ -433,7 +433,7 @@ class ReputationManager {
         this.renderReputation();
         this.setupCharts();
         this.setupGlobalEvents();
-        console.log('⭐ Reputation Manager inicializado');
+        Logger.info('Reputation Manager inicializado', null, 'UI');
     }
 
     loadReputation() {
@@ -1190,7 +1190,7 @@ function showEvidenceModal(achievementId = null) {
             // Load specific achievement evidence
             const achievement = window.reputationManager?.reputation.achievements.find(a => a.id == achievementId);
             if (achievement) {
-                const content = modal.querySelector('.modal__content');
+                const content = modal.querySelector('.modal-content');
                 if (content) {
                     content.innerHTML = `
                         <div class="evidence__header">

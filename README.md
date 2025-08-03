@@ -27,13 +27,13 @@
 - **Archivado** de grupos
 
 ### 🏆 **Sistema de Reputación por Estrellas**
-- **Reputación por área** (Personal, Trabajo, Escuela, etc.)
-- **Reputación por grupo** (Plan Empresarial)
-- **Reputación general** como promedio equilibrado
-- **Calificación automática** (usuarios normales)
-- **Calificación manual** (grupos empresariales)
-- **Reputación mensual protegida**
-- **Período de prueba** de 7 días para nuevos usuarios
+- **Reputación general** con decaimiento exponencial (promedio ponderado)
+- **Reputación por área** independiente con decaimiento exponencial
+- **Reputación por grupo** (Plan Empresarial) con modelos configurables
+- **Reputación inicial** de 5 estrellas (sin período de prueba)
+- **Nivel de consolidación** basado en antigüedad, racha y tareas cumplidas
+- **Peso personalizado** de tareas en grupos empresariales
+- **Calificación automática** (usuarios normales) y manual (empresariales)
 
 ### 🎯 **Áreas Personales**
 - **Organización** por contextos (Personal, Trabajo, Escuela)
@@ -81,8 +81,6 @@ astren/
 │   └── register.html        # Registro
 ├── backend/                  # Servidor y API
 │   ├── app.py              # API principal (2,467 líneas)
-│   ├── main_app.py         # Configuración adicional
-│   ├── google_classroom.py # Integración Google Classroom
 │   ├── requirements.txt    # Dependencias Python
 │   └── env.example        # Variables de entorno
 ├── docs/                   # Documentación
@@ -91,7 +89,6 @@ astren/
 │   └── INICIAR_ASTREN.md            # Guía de inicio
 ├── scripts/                # Scripts de configuración
 ├── utils/                  # Utilidades
-├── attached_assets/        # Assets adjuntos
 └── README.md              # Este archivo
 ```
 
@@ -145,23 +142,52 @@ python app.py
 - **python-dotenv 1.0.0** - Variables de entorno
 
 ### **Integraciones**
-- **Google Classroom API** - Integración educativa
-- **CalDAV 1.3.9** - Calendarios
+- **Sistema de notificaciones** - Notificaciones en tiempo real
 
 ## 📊 Sistema de Reputación
 
 ### **Características Principales**
-- **Reputación por área** obligatoria (Personal, Trabajo, Escuela)
-- **Reputación por grupo** (Plan Empresarial)
-- **Reputación general** como promedio equilibrado
-- **Calificación automática** (1.0-5.0 estrellas)
-- **Calificación manual** para grupos empresariales
-- **Reputación mensual protegida**
-- **Período de prueba** de 7 días
+- **Reputación general** con decaimiento exponencial (factor 0.9)
+- **Reputación por área** independiente con decaimiento exponencial
+- **Reputación por grupo** (Plan Empresarial) con modelos configurables
+- **Reputación inicial** de 5 estrellas (sin período de prueba)
+- **Nivel de consolidación** basado en antigüedad, racha y tareas cumplidas
+- **Multiplicadores configurables** de tareas (x2, x3, etc.) en el plan empresarial: permiten que ciertas tareas tengan mayor impacto en la reputación grupal, sin alterar el modelo base (decay o simple)
+- **Calificación automática** (1.0-5.0 estrellas) y manual (empresariales)
+
+### **Fórmula de Reputación General**
+```
+Reputación General = Σ(Reputación_m × decay^(m-1)) / Σ(decay^(m-1))
+```
+
+> Esta fórmula da mayor peso a las tareas más recientes sin eliminar el valor de las anteriores.
+
+### **Eliminación del Período de Prueba**
+Gracias al nivel de consolidación (basado en antigüedad, racha y tareas cumplidas), la reputación visible desde el inicio es confiable y evaluable.
 
 ### **Tipos de Usuario**
 - **Usuarios Normales**: Calificación automática, sin evidencias
-- **Grupos Empresariales**: Calificación manual, evidencias obligatorias
+- **Grupos Empresariales**: Calificación manual, evidencias obligatorias, multiplicadores configurables
+
+### **Comparativa de Tipos de Reputación**
+
+| Tipo de Reputación    | Basada en...                   | Modelo de cálculo           | Personalizable |
+|------------------------|--------------------------------|------------------------------|----------------|
+| General                | Todas las tareas del usuario   | Decaimiento exponencial      | No             |
+| Por Área               | Tareas en un área específica   | Decaimiento exponencial      | No             |
+| Por Grupo (Empresarial)| Tareas dentro de un grupo      | Decaimiento o promedio simple| Sí             |
+
+### **📊 Reputación en Grupos**
+En Astren, cada grupo maneja dos tipos de reputación:
+
+**Reputación individual en el grupo**: Cada miembro del grupo tiene una reputación específica basada únicamente en las tareas asignadas en ese grupo. Esta reputación puede calcularse con decaimiento exponencial o promedio simple, según lo defina el administrador del grupo.
+
+**Reputación del grupo completo**: Es el promedio de las reputaciones individuales de todos los miembros. Representa el rendimiento global del grupo y puede usarse para comparar equipos dentro de una empresa o institución.
+
+💡 Ambas métricas pueden visualizarse según la configuración del administrador del grupo.
+
+💼 **Ventaja competitiva para empresas**  
+El sistema de reputación empresarial permite control total: selección del modelo, uso de evidencias, calificación manual y ponderación diferenciada. Una herramienta de evaluación profesional poderosa.
 
 ## ✅ Sistema de Tareas
 
@@ -192,6 +218,7 @@ python app.py
 - **Gestión de permisos** por rol
 - **Tareas grupales** con asignación
 - **Archivado** de grupos
+- **Modelos de reputación** por grupo: las empresas pueden elegir entre cálculo con decaimiento (prioriza meses recientes) o promedio simple (valor igual para todas las tareas históricas)
 
 ### **Roles y Permisos**
 - **Líder**: Control total del grupo
@@ -233,6 +260,11 @@ DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=tu_password
 DB_NAME=astren
+
+# Parámetro de reputación
+DECAY_FACTOR=0.9  # Puede ser ajustado dinámicamente para modificar la influencia del historial
+
+> Este valor puede cambiarse con el tiempo según las necesidades del sistema, tal como los bancos ajustan las tasas de interés.
 ```
 
 ### **Base de Datos**
@@ -248,33 +280,41 @@ DB_NAME=astren
 - Métricas básicas
 
 ### **Fase 2 (Próxima) 🔄**
-- Reputación por área obligatoria
-- Calificación automática de tareas
-- Reputación general por promedio
-- Sistema de estrellas (1.0-5.0)
+- Sistema de decaimiento exponencial (factor 0.9)
+- Reputación inicial de 5 estrellas
+- Nivel de consolidación basado en antigüedad y racha
+- Historial mensual de reputaciones
+- Peso personalizado de tareas en grupos empresariales
 
 ### **Fase 3 (Futuro) 📋**
-- Grupos empresariales con calificación manual
+- Modelos de cálculo configurables por grupo
 - Sistema de evidencias para empresas
-- Reputación mensual protegida
-- Plan empresarial completo
+- Calificación manual por supervisores
+- Plan empresarial completo con funcionalidades avanzadas
 
 ### **Fase 4 (Largo Plazo) 🌐**
 - Perfiles públicos con reputación
 - Rankings por área/industria
 - IA integrada para análisis predictivo
 - Reportes ejecutivos avanzados
+- **Evolución hacia modelos predictivos** y reputacionales personalizados usando IA, aprovechando el historial y nivel de consolidación
 
 ## 🎯 Objetivo
 
 **Astren** está diseñado para convertirse en el **estándar global de medición de productividad**, proporcionando:
 
-- **Sistema justo** y protegido contra manipulación
-- **Motivación** para desarrollo personal
-- **Escalabilidad** para uso empresarial
-- **Sostenibilidad** en términos de recursos
-- **Flexibilidad** para futuras expansiones
+- **Sistema justo** con decaimiento exponencial y protección contra manipulación
+- **Motivación** para desarrollo personal con reputación inicial de 5 estrellas
+- **Escalabilidad** para uso empresarial con multiplicadores configurables
+- **Sostenibilidad** en términos de recursos con consolidación inteligente
+- **Flexibilidad** para futuras expansiones con modelos configurables
+- **DECAY_FACTOR configurable**: ajustable como las tasas bancarias, para dar más o menos peso al historial
 
 ---
 
-**🌟 Este sistema sentará las bases para convertir Astren en el estándar global de medición de productividad.** 
+**🌟 Este sistema con decaimiento exponencial y consolidación inteligente sentará las bases para convertir Astren en el estándar global de medición de productividad.**
+
+---
+
+📄 **Documento actualizado por última vez**: Julio 2025  
+🧩 **Versión del sistema**: v2.3 - Reputación con decaimiento y consolidación 

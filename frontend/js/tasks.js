@@ -44,7 +44,7 @@ class TasksManager {
             }
         }
         this.populateTaskAreaSelect();
-                // Cargar tareas desde el backend y renderizar
+        // Cargar tareas desde el backend y renderizar
         this.loadTasks().then(tasks => {
             this.tasks = tasks;
             this.renderTasks();
@@ -95,7 +95,7 @@ class TasksManager {
         }
 
         // Crear una nueva promesa para la carga de tareas
-        this._loadTasksPromise = fetch(`http://localhost:8000/tareas/${this.getUserId()}`)
+        this._loadTasksPromise = fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS, `/${this.getUserId()}`))
             .then(response => {
                 // Verificar si la respuesta es válida
                 if (!response.ok) {
@@ -104,7 +104,7 @@ class TasksManager {
                 return response.json();
             })
             .then(tareas => {
-                console.log('📥 [DEBUG] Tareas recibidas del backend:', tareas);
+                Logger.debug('Tareas recibidas del backend', tareas, 'API');
                 
                 // Mapear tareas con estado correcto
                 const mappedTareas = tareas.map(t => ({
@@ -296,12 +296,13 @@ class TasksManager {
             if (e.target.closest('.task-checkbox input')) {
                 const checkbox = e.target.closest('.task-checkbox input');
                 this.toggleTaskCompletion(taskId, checkbox.checked);
+
             } else if (e.target.closest('.task-action--edit')) {
                 this.showEditTaskModal(taskId);
             } else if (e.target.closest('.task-action--evidence')) {
                 this.showEvidenceModal(taskId);
             } else if (e.target.closest('.task-action--delete')) {
-                console.log('🗑️ [DEBUG] Botón de eliminar pulsado. ID de tarea:', taskId);
+                Logger.debug('Botón de eliminar pulsado', { taskId }, 'UI');
                 this.showDeleteTaskModal(taskId);
             }
         });
@@ -383,7 +384,7 @@ class TasksManager {
     }
 
     showDeleteTaskModal(taskId) {
-        console.log('🗑️ [DEBUG] Mostrando modal de eliminación para tarea:', taskId);
+        Logger.debug('Mostrando modal de eliminación para tarea', { taskId }, 'UI');
         
         // Guardar el ID de la tarea actual
         this.currentTaskId = taskId;
@@ -447,7 +448,7 @@ class TasksManager {
 
     handleNewTask(e) {
         e.preventDefault();
-        console.log('🚨 [DEBUG] handleNewTask called - preventing default');
+        Logger.debug('handleNewTask called - preventing default', null, 'UI');
         
         // Añadir un flag para evitar múltiples envíos
         if (this.isSubmitting) {
@@ -465,7 +466,7 @@ class TasksManager {
             dueDate: formData.get('dueDate')
         };
         
-        console.log('🔍 [DEBUG] Task data:', taskData);
+        Logger.debug('Task data', taskData, 'UI');
         
         if (this.validateTaskData(taskData)) {
             this.addTask(taskData);
@@ -477,7 +478,7 @@ class TasksManager {
         }, 2000);
     }
 
-    handleEditTask(e) {
+    async handleEditTask(e) {
         e.preventDefault();
         
         const formData = new FormData(e.target);
@@ -489,9 +490,13 @@ class TasksManager {
         };
 
         if (this.validateTaskData(updates)) {
-            this.updateTask(this.currentTaskId, updates);
-            this.hideModal('editTaskModal');
-            this.showToast('Tarea actualizada exitosamente', 'success');
+            try {
+                await this.updateTask(this.currentTaskId, updates);
+                this.hideModal('editTaskModal');
+                this.showToast('Tarea actualizada exitosamente', 'success');
+            } catch (error) {
+                // El error ya se maneja en updateTask
+            }
         }
     }
 
@@ -581,7 +586,7 @@ class TasksManager {
         }
         this.taskCreationLock = true;
 
-        console.log('🚀 [DEBUG] Método addTask llamado con:', taskData);
+        Logger.debug('Método addTask llamado', taskData, 'API');
 
         // Obtener usuario_id de localStorage o sessionStorage
         let usuario_id = localStorage.getItem('astren_usuario_id');
@@ -606,9 +611,9 @@ class TasksManager {
             fecha_vencimiento: this.formatDateForBackend(taskData.dueDate)
         };
         
-        console.log('📤 [DEBUG] Enviando tarea al backend:', nuevaTarea);
+        Logger.debug('Enviando tarea al backend', nuevaTarea, 'API');
         
-        fetch('http://localhost:8000/tareas', {
+        fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -616,12 +621,12 @@ class TasksManager {
             body: JSON.stringify(nuevaTarea)
         })
         .then(async response => {
-            console.log('📥 [DEBUG] Respuesta del backend recibida:', response);
+            Logger.debug('Respuesta del backend recibida', response, 'API');
             
             let data = null;
             try {
                 data = await response.json();
-                console.log('📦 [DEBUG] Datos del backend:', data);
+                Logger.debug('Datos del backend', data, 'API');
             } catch (e) {
                 console.error('❌ [ERROR] Respuesta inválida del servidor:', e);
                 
@@ -689,13 +694,42 @@ class TasksManager {
         return `${year}-${month}-${day} ${hours}:${minutes}`;
     }
 
-    updateTask(taskId, updates) {
-        const taskIndex = this.tasks.findIndex(t => t.id === taskId);
-        if (taskIndex !== -1) {
-            this.tasks[taskIndex] = { ...this.tasks[taskIndex], ...updates };
-            this.saveTasks();
-            this.renderTasks();
-            this.updateTaskCounts();
+    async updateTask(taskId, updates) {
+        try {
+            // Preparar los datos para el backend
+            const backendData = {
+                titulo: updates.title,
+                descripcion: updates.description,
+                area_id: updates.area ? parseInt(updates.area) : null,
+                fecha_vencimiento: updates.dueDate ? this.formatDateForBackend(updates.dueDate) : null
+            };
+            
+            // Enviar actualización al backend
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS, `/${taskId}`), {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(backendData)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error al actualizar la tarea');
+            }
+            
+            // Actualizar localmente después de confirmar que el backend se actualizó
+            const taskIndex = this.tasks.findIndex(t => t.id === taskId);
+            if (taskIndex !== -1) {
+                this.tasks[taskIndex] = { ...this.tasks[taskIndex], ...updates };
+                this.saveTasks();
+                this.renderTasks();
+                this.updateTaskCounts();
+            }
+            
+        } catch (error) {
+            console.error('❌ [ERROR] Error al actualizar tarea:', error);
+            this.showToast(error.message, 'error');
         }
     }
 
@@ -729,7 +763,7 @@ class TasksManager {
                 }
 
                 // Realizar la solicitud de eliminación
-        fetch(`http://localhost:8000/tareas/${taskId}`, {
+        fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS, `/${taskId}`), {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -815,7 +849,7 @@ class TasksManager {
                 task.reputationImpact = this.calculateReputationImpact(task);
             }
             // Actualizar en backend
-            fetch(`http://localhost:8000/tareas/${taskId}/estado`, {
+            fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS, `/${taskId}/estado`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ estado: task.estado })
@@ -993,24 +1027,66 @@ class TasksManager {
         const areaColor = task.area_color || task.color || null;
         const areaIcono = task.area_icono || task.icono || null;
         const areaNombre = task.area_nombre || task.nombre || area;
+        
+        // Información del grupo
+        const grupoNombre = task.grupo_nombre || null;
+        const grupoColor = task.grupo_color || null;
+        const grupoIcono = task.grupo_icono || 'fa-users';
+        
         // Usar status en inglés para la lógica, pero mostrar en español
         const estado = task.status || 'pending';
         
-        // Mapa de colores para áreas
+        // Mapa de colores para áreas y grupos (unificados con el color picker de grupos)
         const colorMap = {
-            'blue': '#3b82f6', 'green': '#10b981', 'purple': '#8b5cf6',
-            'orange': '#f59e0b', 'red': '#ef4444', 'pink': '#ffb6c1', 
-            'yellow': '#ffe066', 'mint': '#98ff98', 'sky': '#87ceeb',
-            'coral': '#ff7f50', 'lavender': '#e6e6fa'
+            'blue': '#93c5fd',      // Azul
+            'green': '#86efac',      // Verde
+            'purple': '#c4b5fd',     // Púrpura
+            'orange': '#fed7aa',     // Naranja
+            'red': '#fca5a5',        // Rojo
+            'pink': '#f9a8d4',       // Rosa
+            'yellow': '#fef3c7',     // Amarillo
+            'mint': '#a7f3d0',       // Menta
+            'sky': '#bae6fd',        // Cielo
+            'coral': '#fecaca',      // Coral
+            'lavender': '#e9d5ff'    // Lavanda
         };
 
-        // Área con color
+        // Función para intensificar colores
+        const intensifyColor = (hexColor) => {
+            // Convertir hex a RGB
+            const r = parseInt(hexColor.slice(1, 3), 16);
+            const g = parseInt(hexColor.slice(3, 5), 16);
+            const b = parseInt(hexColor.slice(5, 7), 16);
+            
+            // Intensificar el color (hacerlo más oscuro)
+            const factor = 0.9; // 0.9 = 10% más oscuro
+            const newR = Math.round(r * factor);
+            const newG = Math.round(g * factor);
+            const newB = Math.round(b * factor);
+            
+            // Convertir de vuelta a hex
+            return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+        };
+
+        // Área con color intensificado
         let areaHtml = '';
         if (area && (areaColor || areaIcono)) {
             const color = colorMap[areaColor] || areaColor || '#666';
+            const intensifiedColor = intensifyColor(color);
             const icon = areaIcono || 'fa-tasks';
             areaHtml = `<span class="task-area-badge" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.87rem; border-radius: 1rem; padding: 0.13rem 0.7rem; font-weight: 500; background: none; color: #666; margin-left: -0.7rem;">
-                <i class="fas ${icon}" style="font-size: 1rem; color: ${color};"></i> ${areaNombre}
+                <i class="fas ${icon}" style="font-size: 1rem; color: ${intensifiedColor};"></i> ${areaNombre}
+            </span>`;
+        }
+
+        // Grupo con color intensificado
+        let grupoHtml = '';
+        if (grupoNombre && grupoColor) {
+            const color = colorMap[grupoColor] || grupoColor || '#666';
+            const intensifiedColor = intensifyColor(color);
+            const icon = grupoIcono || 'fa-users';
+            grupoHtml = `<span class="task-group-badge" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.87rem; border-radius: 1rem; padding: 0.13rem 0.7rem; font-weight: 500; background: none; color: #666; margin-left: 0.5rem;">
+                <i class="fas ${icon}" style="font-size: 1rem; color: ${intensifiedColor};"></i> ${grupoNombre}
             </span>`;
         }
 
@@ -1018,6 +1094,7 @@ class TasksManager {
         const completedClass = estado === 'completed' ? 'task-card--completed' : '';
         const overdueClass = estado === 'overdue' ? 'task-card--overdue' : '';
         const pendingClass = estado === 'pending' ? 'task-card--pending' : '';
+        
         // Etiqueta visual del estado
         let estadoHtml = '';
         if (estado === 'completed') {
@@ -1027,36 +1104,52 @@ class TasksManager {
         } else {
             estadoHtml = '<span class="task-status task-status--pending">Pendiente</span>';
         }
+
+        // Determinar el color del icono basado en el estado
+        let iconColor = '#3b82f6'; // Color por defecto
+        if (estado === 'completed') {
+            iconColor = '#10b981'; // Verde para completadas
+        } else if (estado === 'overdue') {
+            iconColor = '#ef4444'; // Rojo para vencidas
+        } else if (estado === 'pending') {
+            iconColor = '#f59e0b'; // Amarillo para pendientes
+        }
+
         return `
             <div class="task-card ${completedClass} ${overdueClass} ${pendingClass}" data-task-id="${task.id || ''}">
                 <div class="task-header">
-                    <div class="task-checkbox">
-                        <input type="checkbox" id="task-${task.id || ''}" ${estado === 'completed' ? 'checked' : ''}>
-                        <label for="task-${task.id || ''}"></label>
+                    <div style="display: flex; align-items: center; gap: 0.2rem;">
+                        <div class="task-checkbox">
+                            <input type="checkbox" id="task-${task.id || ''}" ${estado === 'completed' ? 'checked' : ''}>
+                            <label for="task-${task.id || ''}"></label>
+                        </div>
+                        <div class="task-actions">
+                            <button class="task-action task-action--edit" title="Editar tarea">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="task-action task-action--delete" title="Eliminar tarea">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="task-icon" style="background: linear-gradient(135deg, ${iconColor}, ${this.adjustColor ? this.adjustColor(iconColor, -20) : iconColor});">
+                        <i class="fas fa-tasks"></i>
                     </div>
                     ${estadoHtml}
                 </div>
-                <div class="task-content">
+                <div class="task-info">
                     <h3 class="task-title">${this.escapeHtml(titulo)}</h3>
                     <p class="task-description">${this.escapeHtml(descripcion)}</p>
                     <div class="task-meta">
-                        ${areaHtml}
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
+                            ${areaHtml}
+                            ${grupoHtml}
+                        </div>
                         <span class="task-due ${this.getDueClass ? this.getDueClass(task) : ''}" style="color: #666;">
                             <i class="fas fa-calendar" style="color: #666;"></i>
                             ${fechaVencimiento ? this.formatDateForInput(fechaVencimiento) : ''}
                         </span>
                     </div>
-                </div>
-                <div class="task-actions">
-                    <button class="task-action task-action--edit" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="task-action task-action--evidence" title="Subir evidencia">
-                        <i class="fas fa-camera"></i>
-                    </button>
-                    <button class="task-action task-action--delete" title="Eliminar">
-                        <i class="fas fa-trash"></i>
-                    </button>
                 </div>
             </div>
         `;
@@ -1162,22 +1255,41 @@ class TasksManager {
             overdue: this.tasks.filter(task => task.status === 'overdue').length
         };
 
-        // Usar setTimeout para actualizar la UI
-        setTimeout(() => {
-        const statElements = {
-            today: document.getElementById('statToday'),
-            pending: document.getElementById('statPending'),
-            completed: document.getElementById('statCompleted'),
-            overdue: document.getElementById('statOverdue')
+        // Calcular porcentajes
+        const totalTasks = counts.pending + counts.completed + counts.overdue;
+        const todayPercentage = totalTasks > 0 ? Math.round((counts.today / totalTasks) * 100) : 0;
+        const pendingPercentage = totalTasks > 0 ? Math.round((counts.pending / totalTasks) * 100) : 0;
+        const completedPercentage = totalTasks > 0 ? Math.round((counts.completed / totalTasks) * 100) : 0;
+        const overduePercentage = totalTasks > 0 ? Math.round((counts.overdue / totalTasks) * 100) : 0;
+
+        // Función de animación
+        const updateStatWithAnimation = (elementId, value) => {
+            const statElement = document.getElementById(elementId);
+            if (!statElement) return;
+
+            // Siempre empezar desde 0 para que la animación sea visible
+            const currentValue = 0;
+            const animationDuration = 800; // Aumentar duración para mejor efecto
+            const increment = value / (animationDuration / 16); // 16ms es aproximadamente un frame
+
+            let currentDisplayValue = currentValue;
+            const updateValue = () => {
+                currentDisplayValue += increment;
+                if (currentDisplayValue >= value) {
+                    statElement.textContent = value;
+                    return;
+                }
+                statElement.textContent = Math.round(currentDisplayValue);
+                requestAnimationFrame(updateValue);
+            };
+            updateValue();
         };
 
-        Object.keys(counts).forEach(key => {
-            const element = statElements[key];
-            if (element) {
-                element.textContent = counts[key];
-            }
-        });
-        }, 0);
+        // Actualizar cada estadística con animación
+        updateStatWithAnimation('statToday', counts.today);
+        updateStatWithAnimation('statPending', counts.pending);
+        updateStatWithAnimation('statCompleted', counts.completed);
+        updateStatWithAnimation('statOverdue', counts.overdue);
     }
 
     checkEmptyState() {
@@ -1230,6 +1342,21 @@ class TasksManager {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    adjustColor(hex, percent) {
+        // Convertir hex a RGB
+        let r = parseInt(hex.slice(1, 3), 16);
+        let g = parseInt(hex.slice(3, 5), 16);
+        let b = parseInt(hex.slice(5, 7), 16);
+
+        // Ajustar brillo
+        r = Math.max(0, Math.min(255, r + (r * percent / 100)));
+        g = Math.max(0, Math.min(255, g + (g * percent / 100)));
+        b = Math.max(0, Math.min(255, b + (b * percent / 100)));
+
+        // Convertir de vuelta a hex
+        return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     }
 
     showToast(message, type = 'info') {
@@ -1658,6 +1785,445 @@ class TasksManager {
             console.warn('⚠️ Sección no encontrada:', sectionId);
         }
     }
+
+        // Métodos para el modal de vista detallada
+    showTaskViewModal(taskId) {
+        const task = this.tasks.find(t => t.id == taskId);
+        if (!task) return;
+
+        // Llenar información de la tarea
+        const titleElement = document.getElementById('taskViewTitle');
+        const nameElement = document.getElementById('taskViewName');
+        const descriptionElement = document.getElementById('taskViewDescription');
+        
+        if (titleElement) titleElement.textContent = `Vista de Tarea`;
+        if (nameElement) nameElement.textContent = task.title;
+        if (descriptionElement) descriptionElement.textContent = task.description || 'Sin descripción';
+        
+        // Información del área
+        const areaText = task.area ? this.getAreaText(task.area) : 'Sin área';
+        const areaElement = document.getElementById('taskViewArea');
+        if (areaElement) areaElement.textContent = areaText;
+        
+        // Fecha de vencimiento
+        const dueDate = task.dueDate ? this.formatDateForInput(task.dueDate) : 'Sin fecha';
+        const dueElement = document.getElementById('taskViewDue');
+        if (dueElement) dueElement.textContent = `Vence: ${dueDate}`;
+        
+        // Estado
+        const statusText = this.getStatusText(task.status);
+        const statusElement = document.getElementById('taskViewStatus');
+        if (statusElement) statusElement.textContent = statusText;
+
+        // Cargar notas
+        this.loadTaskNotes(taskId);
+        
+        // Crear modal completamente nuevo desde cero
+        console.log('Datos de la tarea:', task);
+        
+        // Alert temporal para verificar que se ejecuta
+        alert('Creando modal de vista de tarea...');
+        
+        const newModal = document.createElement('div');
+        newModal.id = 'newTaskViewModal';
+        newModal.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: red;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 999999;
+            ">
+                <div style="
+                    background: white;
+                    border-radius: 12px;
+                    padding: 20px;
+                    max-width: 500px;
+                    width: 90%;
+                ">
+                    <h2>¡MODAL DE PRUEBA!</h2>
+                    <p><strong>Título:</strong> ${task.titulo || task.title || 'Tarea sin título'}</p>
+                    <p><strong>Descripción:</strong> ${task.descripcion || task.description || 'Sin descripción'}</p>
+                    <p><strong>Área:</strong> ${task.area_nombre || task.area || 'Sin área'}</p>
+                    <p><strong>Estado:</strong> ${this.getStatusText(task.estado || task.status)}</p>
+                    <button onclick="document.getElementById('newTaskViewModal').remove()" style="
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    ">Cerrar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(newModal);
+        document.body.style.overflow = 'hidden';
+        
+        // Alert temporal para verificar que se agregó al DOM
+        setTimeout(() => {
+            const modal = document.getElementById('newTaskViewModal');
+            if (modal) {
+                alert('Modal creado y agregado al DOM correctamente');
+                console.log('Modal en DOM:', modal);
+                console.log('Display del modal:', modal.style.display);
+                console.log('Z-index del modal:', modal.style.zIndex);
+            } else {
+                alert('ERROR: Modal no encontrado en DOM');
+            }
+        }, 100);
+        
+        // Cargar notas después de crear el modal
+        this.loadTaskNotesForNewModal(taskId);
+    }
+
+    async loadTaskNotes(taskId) {
+        try {
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASK_NOTES, `/${taskId}`));
+            if (response.ok) {
+                const notes = await response.json();
+                this.renderTaskNotes(notes);
+            } else {
+                console.error('Error al cargar notas:', response.statusText);
+                this.renderTaskNotes([]);
+            }
+        } catch (error) {
+            console.error('Error al cargar notas:', error);
+            this.renderTaskNotes([]);
+        }
+    }
+
+    renderTaskNotes(notes) {
+        const notesList = document.getElementById('notesList');
+        
+        if (notes.length === 0) {
+            notesList.innerHTML = `
+                <div class="empty-notes">
+                    <i class="fas fa-sticky-note"></i>
+                    <p>No hay notas para esta tarea</p>
+                </div>
+            `;
+            return;
+        }
+
+        notesList.innerHTML = notes.map(note => `
+            <div class="note-item" data-note-id="${note.id}">
+                <div class="note-header">
+                    <div class="note-meta">
+                        <span class="note-author">${note.user_name}</span>
+                        <span class="note-date">${this.formatDate(note.created_at)}</span>
+                        <span class="note-type">${this.getNoteTypeText(note.note_type)}</span>
+                    </div>
+                    <div class="note-actions">
+                        <button class="note-action" onclick="tasksManager.editNote(${note.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="note-action" onclick="tasksManager.deleteNote(${note.id})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="note-content">
+                    ${this.renderNoteContent(note)}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    renderNoteContent(note) {
+        switch (note.note_type) {
+            case 'link':
+                return `<a href="${note.content}" class="note-link" target="_blank">${note.content}</a>`;
+            case 'file':
+                return `
+                    <div class="note-content">${note.content}</div>
+                    <div class="note-file">
+                        <i class="fas fa-file"></i>
+                        <div class="note-file-info">
+                            <div class="note-file-name">${note.file_name}</div>
+                            <div class="note-file-size">${this.formatFileSize(note.file_size)}</div>
+                        </div>
+                    </div>
+                `;
+            default:
+                return `<div class="note-content">${note.content}</div>`;
+        }
+    }
+
+    getNoteTypeText(type) {
+        const types = {
+            'text': 'Texto',
+            'link': 'Enlace',
+            'file': 'Archivo'
+        };
+        return types[type] || type;
+    }
+
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    formatFileSize(bytes) {
+        if (!bytes) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    showAddNoteForm() {
+        document.getElementById('addNoteForm').style.display = 'block';
+        document.getElementById('noteContent').focus();
+    }
+
+    hideAddNoteForm() {
+        document.getElementById('addNoteForm').style.display = 'none';
+        document.getElementById('noteContent').value = '';
+        document.getElementById('noteFile').value = '';
+        document.getElementById('noteType').value = 'text';
+        document.getElementById('noteFileInput').style.display = 'none';
+    }
+
+    async saveNote() {
+        const noteType = document.getElementById('noteType').value;
+        const noteContent = document.getElementById('noteContent').value.trim();
+        const noteFile = document.getElementById('noteFile').files[0];
+
+        if (!noteContent) {
+            this.showToast('El contenido de la nota es requerido', 'error');
+            return;
+        }
+
+        const currentTaskId = this.currentViewTaskId;
+        if (!currentTaskId) {
+            this.showToast('Error: No se encontró la tarea', 'error');
+            return;
+        }
+
+        try {
+            const noteData = {
+                task_id: currentTaskId,
+                user_id: this.getUserId(),
+                content: noteContent,
+                note_type: noteType
+            };
+
+            // Si es un archivo, procesar el archivo
+            if (noteType === 'file' && noteFile) {
+                // Por ahora, solo guardamos el nombre del archivo
+                // En una implementación completa, subiríamos el archivo al servidor
+                noteData.file_name = noteFile.name;
+                noteData.file_size = noteFile.size;
+            }
+
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASK_NOTES), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(noteData)
+            });
+
+            if (response.ok) {
+                this.showToast('Nota guardada exitosamente', 'success');
+                this.hideAddNoteForm();
+                this.loadTaskNotes(currentTaskId);
+            } else {
+                const error = await response.json();
+                this.showToast(`Error: ${error.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error al guardar nota:', error);
+            this.showToast('Error al guardar la nota', 'error');
+        }
+    }
+
+    async editNote(noteId) {
+        const noteItem = document.querySelector(`[data-note-id="${noteId}"]`);
+        const noteContent = noteItem.querySelector('.note-content');
+        const currentContent = noteContent.textContent.trim();
+
+        const newContent = prompt('Editar nota:', currentContent);
+        if (newContent === null || newContent.trim() === '') return;
+
+        try {
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASK_NOTES, `/${noteId}`), {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: newContent.trim() })
+            });
+
+            if (response.ok) {
+                this.showToast('Nota actualizada exitosamente', 'success');
+                this.loadTaskNotes(this.currentViewTaskId);
+            } else {
+                const error = await response.json();
+                this.showToast(`Error: ${error.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error al actualizar nota:', error);
+            this.showToast('Error al actualizar la nota', 'error');
+        }
+    }
+
+    async deleteNote(noteId) {
+        if (!confirm('¿Estás seguro de que quieres eliminar esta nota?')) return;
+
+        try {
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASK_NOTES, `/${noteId}`), {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                this.showToast('Nota eliminada exitosamente', 'success');
+                this.loadTaskNotes(this.currentViewTaskId);
+            } else {
+                const error = await response.json();
+                this.showToast(`Error: ${error.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error al eliminar nota:', error);
+            this.showToast('Error al eliminar la nota', 'error');
+        }
+    }
+
+    setupTaskViewEvents() {
+        // Eventos para las pestañas
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tabName = e.target.dataset.tab;
+                this.switchTab(tabName);
+            });
+        });
+
+        // Evento para cambiar tipo de nota
+        document.getElementById('noteType').addEventListener('change', (e) => {
+            const noteType = e.target.value;
+            const fileInput = document.getElementById('noteFileInput');
+            
+            if (noteType === 'file') {
+                fileInput.style.display = 'block';
+            } else {
+                fileInput.style.display = 'none';
+            }
+        });
+    }
+
+    switchTab(tabName) {
+        // Remover clase active de todas las pestañas
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+        });
+
+        // Activar la pestaña seleccionada
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        document.getElementById(`${tabName}Tab`).classList.add('active');
+    }
+
+    getStatusText(status) {
+        const statuses = {
+            'pending': 'Pendiente',
+            'in-progress': 'En progreso',
+            'completed': 'Completada',
+            'overdue': 'Vencida'
+        };
+        return statuses[status] || status;
+    }
+    
+    // Funciones para el nuevo modal de notas
+    async loadTaskNotesForNewModal(taskId) {
+        try {
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASK_NOTES, `/${taskId}`));
+            if (response.ok) {
+                const notes = await response.json();
+                this.renderTaskNotesForNewModal(notes);
+            } else {
+                console.error('Error al cargar notas:', response.statusText);
+                this.renderTaskNotesForNewModal([]);
+            }
+        } catch (error) {
+            console.error('Error al cargar notas:', error);
+            this.renderTaskNotesForNewModal([]);
+        }
+    }
+    
+    renderTaskNotesForNewModal(notes) {
+        const notesList = document.getElementById('notesList');
+        
+        if (notes.length === 0) {
+            notesList.innerHTML = `
+                <div class="empty-notes">
+                    <i class="fas fa-sticky-note"></i>
+                    <p>No hay notas para esta tarea</p>
+                </div>
+            `;
+            return;
+        }
+        
+        notesList.innerHTML = notes.map(note => `
+            <div class="note-item" data-note-id="${note.id}">
+                <div class="note-header">
+                    <div class="note-meta">
+                        <span class="note-author">${note.user_name}</span>
+                        <span class="note-date">${this.formatDate(note.created_at)}</span>
+                        <span class="note-type">${this.getNoteTypeText(note.note_type)}</span>
+                    </div>
+                    <div class="note-actions">
+                        <button class="note-action" onclick="editNoteInNewModal(${note.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="note-action" onclick="deleteNoteInNewModal(${note.id})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="note-content">
+                    ${this.renderNoteContentForNewModal(note)}
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    renderNoteContentForNewModal(note) {
+        switch (note.note_type) {
+            case 'link':
+                return `<a href="${note.content}" target="_blank" style="color: #007bff; text-decoration: none;">${note.content}</a>`;
+            case 'file':
+                return `
+                    <div>${note.content}</div>
+                    <div style="
+                        background: #e9ecef;
+                        padding: 8px;
+                        border-radius: 4px;
+                        margin-top: 5px;
+                        font-size: 12px;
+                    ">
+                        <div style="font-weight: bold;">${note.file_name}</div>
+                        <div style="color: #666;">${this.formatFileSize(note.file_size)}</div>
+                    </div>
+                `;
+            default:
+                return `<div>${note.content}</div>`;
+        }
+    }
 }
 
 async function populateTaskAreaSelect() {
@@ -1670,7 +2236,7 @@ async function populateTaskAreaSelect() {
     }
     if (!usuario_id) return;
     try {
-        const url = `http://localhost:8000/areas/${usuario_id}`;
+        const url = buildApiUrl(CONFIG.API_ENDPOINTS.AREAS, `/${usuario_id}`);
         console.log('URL fetch:', url);
         const response = await fetch(url);
         if (response.ok) {
@@ -1731,3 +2297,124 @@ document.addEventListener('DOMContentLoaded', function() {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = TasksManager;
 }
+
+// Funciones globales para el modal de vista detallada
+function showAddNoteForm() {
+    tasksManager.showAddNoteForm();
+}
+
+function hideAddNoteForm() {
+    tasksManager.hideAddNoteForm();
+}
+
+function saveNote() {
+    tasksManager.saveNote();
+}
+
+// Funciones para el nuevo modal
+function showAddNoteForm() {
+    const form = document.getElementById('addNoteForm');
+    if (form) {
+        form.style.display = 'block';
+    }
+}
+
+function hideAddNoteForm() {
+    const form = document.getElementById('addNoteForm');
+    if (form) {
+        form.style.display = 'none';
+        // Limpiar campos
+        document.getElementById('noteContent').value = '';
+        document.getElementById('noteType').value = 'text';
+        document.getElementById('noteFileInput').style.display = 'none';
+    }
+}
+
+function switchTab(tabName) {
+    // Por ahora solo tenemos la pestaña de notas
+    console.log('Cambiando a pestaña:', tabName);
+}
+
+async function saveNote() {
+    const noteType = document.getElementById('noteType').value;
+    const noteContent = document.getElementById('noteContent').value;
+    
+    if (!noteContent.trim()) {
+        alert('Por favor ingresa el contenido de la nota');
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('note_type', noteType);
+        formData.append('content', noteContent);
+        
+        if (noteType === 'file') {
+            const fileInput = document.getElementById('noteFile');
+            if (fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+            }
+        }
+        
+        const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASK_NOTES, `/${window.tasksManager.currentViewTaskId}`), {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            // Recargar notas
+            window.tasksManager.loadTaskNotesForNewModal(window.tasksManager.currentViewTaskId);
+            hideAddNoteForm();
+            alert('Nota guardada correctamente');
+        } else {
+            alert('Error al guardar la nota');
+        }
+    } catch (error) {
+        console.error('Error al guardar nota:', error);
+        alert('Error al guardar la nota');
+    }
+}
+
+async function editNoteInNewModal(noteId) {
+    // Implementar edición de nota
+    alert('Función de edición en desarrollo');
+}
+
+async function deleteNoteInNewModal(noteId) {
+    if (confirm('¿Estás seguro de que quieres eliminar esta nota?')) {
+        try {
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASK_NOTES, `/${noteId}`), {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                // Recargar notas
+                window.tasksManager.loadTaskNotesForNewModal(window.tasksManager.currentViewTaskId);
+                alert('Nota eliminada correctamente');
+            } else {
+                alert('Error al eliminar la nota');
+            }
+        } catch (error) {
+            console.error('Error al eliminar nota:', error);
+            alert('Error al eliminar la nota');
+        }
+    }
+}
+
+function toggleNoteFileInput() {
+    const noteType = document.getElementById('noteType').value;
+    const fileInput = document.getElementById('noteFileInput');
+    
+    if (noteType === 'file') {
+        fileInput.style.display = 'block';
+    } else {
+        fileInput.style.display = 'none';
+    }
+}
+
+// Inicializar eventos del modal de vista detallada
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof tasksManager !== 'undefined') {
+        tasksManager.setupTaskViewEvents();
+    }
+});

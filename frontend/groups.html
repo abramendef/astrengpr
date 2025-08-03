@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grupos - Astren</title>
-    <meta name="description" content="Gestiona tus grupos de trabajo en Astren - Colabora y organiza tareas en equipo.">
+    <meta name="description" content="Gestiona todos tus grupos en Astren - Organizados por áreas y miembros.">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,11 +20,84 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
     <!-- CSS -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=6">
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/groups.css?v=32">
+    <link rel="stylesheet" href="css/groups.css?v=84">
     <link rel="stylesheet" href="css/notifications.css">
+    
+    <!-- CSS Crítico para evitar parpadeo -->
+    <style>
+        .group-card {
+            background-color: hsl(var(--background));
+            border: 2px solid hsl(var(--border));
+            border-radius: var(--radius-xl);
+            padding: 2.1rem 1.3rem 1.3rem 1.3rem;
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-bottom: 0.7rem;
+            width: 100%;
+            max-width: 380px;
+        }
+        
+        .group-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background-color: hsl(var(--border));
+        }
+        
+        .group-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-large);
+        }
+        
+        .tasks-grid, .groups-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            justify-items: center;
+            justify-content: center;
+        }
+        
+        /* Estilos específicos para modales */
+        #newGroupModal,
+        #editGroupModal,
+        #deleteConfirmModal,
+        #groupMembersModal,
+        #createGroupTaskModal {
+            background: rgba(0, 0, 0, 0.5) !important;
+            backdrop-filter: blur(4px) !important;
+            z-index: 9999 !important;
+        }
+        
+        #newGroupModal.active,
+        #editGroupModal.active,
+        #deleteConfirmModal.active,
+        #groupMembersModal.active,
+        #createGroupTaskModal.active {
+            display: flex !important;
+        }
+        
+        /* Asegurar que el contenido del modal tenga fondo blanco */
+        #newGroupModal .modal-content,
+        #editGroupModal .modal-content,
+        #deleteConfirmModal .modal-content,
+        #groupMembersModal .modal-content,
+        #createGroupTaskModal .modal-content {
+            background: white !important;
+            border-radius: 12px !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important;
+        }
+    </style>
 </head>
 <body class="dashboard-body">
     <div class="dashboard">
@@ -45,10 +118,10 @@
                     <div class="header__right">
                         <div class="header__search">
                             <i class="fas fa-search"></i>
-                            <input type="text" placeholder="Buscar grupos..." class="search__input" id="searchInput">
+                            <input type="text" placeholder="Buscar grupos..." class="search__input">
                         </div>
 
-                        <button class="header__notification" id="notificationBtn">
+                        <button class="header__notification">
                             <i class="fas fa-bell"></i>
                             <span class="notification__badge">3</span>
                         </button>
@@ -62,7 +135,7 @@
 
             <!-- Groups Content -->
             <div class="dashboard__content">
-                <!-- Groups Actions Bar -->
+                <!-- Group Actions Bar -->
                 <section class="groups-actions">
                     <div class="actions-left">
                         <button class="button button--primary" id="newGroupBtn">
@@ -71,11 +144,11 @@
                         </button>
                         
                         <div class="groups-filters">
-                            <select class="filter-select" id="roleFilter">
-                                <option value="">Todos los roles</option>
-                                <option value="owner">Propietario</option>
-                                <option value="admin">Administrador</option>
-                                <option value="member">Miembro</option>
+                            <select class="filter-select" id="areaFilter">
+                                <option value="">Todas las áreas</option>
+                                <option value="personal">Personal</option>
+                                <option value="work">Trabajo</option>
+                                <option value="school">Escuela</option>
                             </select>
                             <select class="filter-select" id="statusFilter">
                                 <option value="">Todos los estados</option>
@@ -84,9 +157,12 @@
                             </select>
                         </div>
                     </div>
+                    <div class="actions-right">
+                        <!-- Botones de vista eliminados -->
+                    </div>
                 </section>
 
-                <!-- Groups Stats -->
+                <!-- Group Stats (Contadores de estadísticas) -->
                 <section class="groups-stats">
                     <div class="stat-item">
                         <div class="stat-icon stat-icon--total">
@@ -98,83 +174,75 @@
                         </div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-icon stat-icon--activos">
-                            <i class="fas fa-check-circle"></i>
+                        <div class="stat-icon stat-icon--active">
+                            <i class="fas fa-lightbulb"></i>
                         </div>
                         <div class="stat-content">
                             <span class="stat-value" id="activeGroups">0</span>
-                            <span class="stat-label">Activos</span>
+                            <span class="stat-label">Grupos Activos</span>
                         </div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-icon stat-icon--invitaciones">
+                        <div class="stat-icon stat-icon--pending">
                             <i class="fas fa-envelope"></i>
                         </div>
                         <div class="stat-content">
                             <span class="stat-value" id="invitations">0</span>
-                            <span class="stat-label">Invitaciones</span>
+                            <span class="stat-label">Invitaciones Pendientes</span>
                         </div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-icon stat-icon--archivados">
+                        <div class="stat-icon stat-icon--archived">
                             <i class="fas fa-archive"></i>
                         </div>
                         <div class="stat-content">
                             <span class="stat-value" id="archivedGroups">0</span>
-                            <span class="stat-label">Archivados</span>
+                            <span class="stat-label">Grupos Archivados</span>
                         </div>
                     </div>
                 </section>
 
-                <!-- Groups Grid -->
-                <section class="groups-container">
-                    <div class="groups-grid" id="groupsGrid">
-                        <!-- Los grupos se cargarán dinámicamente aquí -->
-                    </div>
-                    
-                    <!-- Empty State -->
-                    <div class="empty-state" id="emptyState" style="display: none;">
-                        <div class="empty-state__icon">
-                            <i class="fas fa-users"></i>
+                <!-- Groups List -->
+                <section class="tasks-container">
+                    <!-- Sección de Grupos Activos -->
+                    <div class="tasks-section" id="active">
+                        <h2 class="section-title">
+                            <i class="fas fa-lightbulb"></i>
+                            Grupos Activos
+                        </h2>
+                        <div class="tasks-grid" id="groupsGrid"></div>
+                        <!-- Estado vacío para grupos activos -->
+                        <div class="empty-state" id="emptyState" style="display: none;">
                         </div>
-                        <h3 class="empty-state__title">No tienes grupos aún</h3>
-                        <p class="empty-state__description">
-                            Crea tu primer grupo para comenzar a colaborar con tu equipo.
-                        </p>
-                        <button class="button button--primary" id="createFirstGroupBtn">
-                            <i class="fas fa-plus"></i>
-                            Crear Primer Grupo
+                    </div>
+
+                    <!-- Sección de Invitaciones -->
+                    <div class="tasks-section" id="invitations-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-envelope"></i>
+                            Invitaciones Pendientes
+                        </h2>
+                        <div class="tasks-grid" id="invitationsGrid"></div>
+
+                    </div>
+
+                    <!-- Botón de toggle para grupos archivados -->
+                    <div class="archived-toggle-container">
+                        <button class="toggle-section-btn" id="toggleArchivedGroupsBtn">
+                            <i class="fas fa-chevron-down"></i>
+                            Mostrar Grupos Archivados
                         </button>
                     </div>
-                </section>
 
-                <!-- Archived Groups Section -->
-                <section class="archived-groups-section" id="archivedGroupsSection" style="display: none;">
-                    <div class="section-header">
+                    <!-- Sección de Grupos Archivados -->
+                    <div class="tasks-section" id="archived">
                         <h2 class="section-title">
                             <i class="fas fa-archive"></i>
                             Grupos Archivados
                         </h2>
-                        <button class="button button--ghost" id="toggleArchivedBtn">
-                            <i class="fas fa-chevron-down"></i>
-                            Mostrar/Ocultar
-                        </button>
-                    </div>
-                    
-                    <div class="archived-groups-container" id="archivedGroupsContainer" style="display: none;">
-                        <div class="groups-grid" id="archivedGroupsGrid">
-                            <!-- Los grupos archivados se cargarán dinámicamente aquí -->
-                        </div>
-                        
-                        <!-- Empty State for Archived -->
+                        <div class="tasks-grid" id="archivedGroupsGrid"></div>
+                        <!-- Estado vacío para grupos archivados -->
                         <div class="empty-state" id="emptyArchivedState" style="display: none;">
-                            <div class="empty-state__icon">
-                                <i class="fas fa-archive"></i>
-                            </div>
-                            <h3 class="empty-state__title">No hay grupos archivados</h3>
-                            <p class="empty-state__description">
-                                Los grupos que archives aparecerán aquí.
-                            </p>
                         </div>
                     </div>
                 </section>
@@ -182,72 +250,165 @@
         </main>
     </div>
 
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
     <!-- New Group Modal -->
     <div class="modal" id="newGroupModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Nuevo Grupo</h2>
-                <button class="modal-close" id="closeNewGroupModal">
+                <button class="modal-close" id="closeModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <form class="task-form" id="newGroupForm">
                 <div class="form-group">
-                    <label for="groupName">Nombre del Grupo</label>
-                    <input type="text" id="groupName" name="groupName" required>
+                    <label for="groupName">Nombre del grupo</label>
+                    <input type="text" id="groupName" name="name" required>
                 </div>
                 <div class="form-group">
                     <label for="groupDescription">Descripción</label>
-                    <textarea id="groupDescription" name="groupDescription" rows="3"></textarea>
+                    <textarea id="groupDescription" name="description" rows="3"></textarea>
                 </div>
-                <div class="form-group">
-                    <label>Icono del Grupo</label>
-                    <div class="icon-picker" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="radio" id="icon-users" name="groupIcon" value="fa-users" checked>
-                        <label for="icon-users"><i class="fas fa-users"></i></label>
-                        
-                        <input type="radio" id="icon-user-friends" name="groupIcon" value="fa-user-friends">
-                        <label for="icon-user-friends"><i class="fas fa-user-friends"></i></label>
-                        
-                        <input type="radio" id="icon-user-tie" name="groupIcon" value="fa-user-tie">
-                        <label for="icon-user-tie"><i class="fas fa-user-tie"></i></label>
-                        
-                        <input type="radio" id="icon-user-graduate" name="groupIcon" value="fa-user-graduate">
-                        <label for="icon-user-graduate"><i class="fas fa-user-graduate"></i></label>
-                        
-                        <input type="radio" id="icon-users-gear" name="groupIcon" value="fa-users-gear">
-                        <label for="icon-users-gear"><i class="fas fa-users-gear"></i></label>
-                        
-                        <input type="radio" id="icon-user-group" name="groupIcon" value="fa-user-group">
-                        <label for="icon-user-group"><i class="fas fa-user-group"></i></label>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="groupArea">Área</label>
+                        <select id="groupArea" name="area" required>
+                            <option value="">Seleccionar área</option>
+                            <option value="personal">Área Personal</option>
+                            <option value="work">Área Trabajo</option>
+                            <option value="school">Área Escuela</option>
+                        </select>
                     </div>
                 </div>
+                
+                <!-- Color Picker -->
                 <div class="form-group">
-                    <label>Color del Grupo</label>
-                    <div class="color-picker" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="radio" id="colorBlue" name="groupColor" value="blue" class="color-option" checked>
-                        <label for="colorBlue" class="color-label color-blue"></label>
-                        <input type="radio" id="colorGreen" name="groupColor" value="green" class="color-option">
-                        <label for="colorGreen" class="color-label color-green"></label>
-                        <input type="radio" id="colorPurple" name="groupColor" value="purple" class="color-option">
-                        <label for="colorPurple" class="color-label color-purple"></label>
-                        <input type="radio" id="colorOrange" name="groupColor" value="orange" class="color-option">
-                        <label for="colorOrange" class="color-label color-orange"></label>
-                        <input type="radio" id="colorRed" name="groupColor" value="red" class="color-option">
-                        <label for="colorRed" class="color-label color-red"></label>
-                        <input type="radio" id="colorPink" name="groupColor" value="pink" class="color-option">
-                        <label for="colorPink" class="color-label color-pink"></label>
+                    <label>Color del grupo</label>
+                    <div class="color-picker">
+                        <input type="radio" id="group-color-blue" name="groupColor" value="blue" checked>
+                        <label for="group-color-blue" class="color-label color-blue" title="Azul"></label>
+                        
+                        <input type="radio" id="group-color-green" name="groupColor" value="green">
+                        <label for="group-color-green" class="color-label color-green" title="Verde"></label>
+                        
+                        <input type="radio" id="group-color-purple" name="groupColor" value="purple">
+                        <label for="group-color-purple" class="color-label color-purple" title="Morado"></label>
+                        
+                        <input type="radio" id="group-color-orange" name="groupColor" value="orange">
+                        <label for="group-color-orange" class="color-label color-orange" title="Naranja"></label>
+                        
+                        <input type="radio" id="group-color-red" name="groupColor" value="red">
+                        <label for="group-color-red" class="color-label color-red" title="Rojo"></label>
+                        
+                        <input type="radio" id="group-color-pink" name="groupColor" value="pink">
+                        <label for="group-color-pink" class="color-label color-pink" title="Rosa"></label>
+                        
+                        <input type="radio" id="group-color-yellow" name="groupColor" value="yellow">
+                        <label for="group-color-yellow" class="color-label color-yellow" title="Amarillo"></label>
+                        
+                        <input type="radio" id="group-color-mint" name="groupColor" value="mint">
+                        <label for="group-color-mint" class="color-label color-mint" title="Menta"></label>
+                        
+                        <input type="radio" id="group-color-sky" name="groupColor" value="sky">
+                        <label for="group-color-sky" class="color-label color-sky" title="Cielo"></label>
+                        
+                        <input type="radio" id="group-color-coral" name="groupColor" value="coral">
+                        <label for="group-color-coral" class="color-label color-coral" title="Coral"></label>
+                        
+                        <input type="radio" id="group-color-lavender" name="groupColor" value="lavender">
+                        <label for="group-color-lavender" class="color-label color-lavender" title="Lavanda"></label>
+                    </div>
+                </div>
+                
+                <!-- Icon Picker -->
+                <div class="form-group">
+                    <label>Icono del grupo</label>
+                    <div class="icon-picker">
+                        <input type="radio" id="group-icon-users" name="groupIcon" value="fa-users" checked>
+                        <label for="group-icon-users" title="Usuarios"><i class="fas fa-users"></i></label>
+                        
+                        <input type="radio" id="group-icon-user-friends" name="groupIcon" value="fa-user-friends">
+                        <label for="group-icon-user-friends" title="Amigos"><i class="fas fa-user-friends"></i></label>
+                        
+                        <input type="radio" id="group-icon-user-tie" name="groupIcon" value="fa-user-tie">
+                        <label for="group-icon-user-tie" title="Profesional"><i class="fas fa-user-tie"></i></label>
+                        
+                        <input type="radio" id="group-icon-user-graduate" name="groupIcon" value="fa-user-graduate">
+                        <label for="group-icon-user-graduate" title="Graduado"><i class="fas fa-user-graduate"></i></label>
+                        
+                        <input type="radio" id="group-icon-user-ninja" name="groupIcon" value="fa-user-ninja">
+                        <label for="group-icon-user-ninja" title="Ninja"><i class="fas fa-user-ninja"></i></label>
+                        
+                        <input type="radio" id="group-icon-user-astronaut" name="groupIcon" value="fa-user-astronaut">
+                        <label for="group-icon-user-astronaut" title="Astronauta"><i class="fas fa-user-astronaut"></i></label>
+                        
+
+                        
+                        <input type="radio" id="group-icon-user-secret" name="groupIcon" value="fa-user-secret">
+                        <label for="group-icon-user-secret" title="Secreto"><i class="fas fa-user-secret"></i></label>
+                        
+                        <input type="radio" id="group-icon-user-shield" name="groupIcon" value="fa-user-shield">
+                        <label for="group-icon-user-shield" title="Escudo"><i class="fas fa-user-shield"></i></label>
+                        
+                        <input type="radio" id="group-icon-user-tag" name="groupIcon" value="fa-user-tag">
+                        <label for="group-icon-user-tag" title="Etiqueta"><i class="fas fa-user-tag"></i></label>
+                        
+                        <input type="radio" id="group-icon-user-check" name="groupIcon" value="fa-user-check">
+                        <label for="group-icon-user-check" title="Verificado"><i class="fas fa-user-check"></i></label>
+                        
+                        <input type="radio" id="group-icon-user-clock" name="groupIcon" value="fa-user-clock">
+                        <label for="group-icon-user-clock" title="Reloj"><i class="fas fa-user-clock"></i></label>
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="button button--ghost" id="cancelNewGroup">Cancelar</button>
+                    <button type="button" class="button button--ghost" id="cancelGroup">Cancelar</button>
                     <button type="submit" class="button button--primary">Crear Grupo</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Edit Group Modal -->
+    <!-- Modal de confirmación para eliminar grupo -->
+    <div class="modal" id="deleteConfirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>¿Eliminar grupo?</h2>
+                <button class="modal-close" id="closeDeleteModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="button button--ghost" id="cancelDeleteGroup">Cancelar</button>
+                <button type="button" class="button button--danger" id="confirmDeleteGroup">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación para abandonar grupo -->
+    <div class="modal" id="leaveConfirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>¿Abandonar grupo?</h2>
+                <button class="modal-close" id="closeLeaveModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres abandonar este grupo? Ya no tendrás acceso a las tareas y conversaciones del grupo.</p>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="button button--ghost" id="cancelLeaveGroup">Cancelar</button>
+                <button type="button" class="button button--warning" id="confirmLeaveGroup">Abandonar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar grupo -->
     <div class="modal" id="editGroupModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -257,52 +418,104 @@
                 </button>
             </div>
             <form class="task-form" id="editGroupForm">
+                <!-- Campo oculto necesario -->
                 <input type="hidden" id="editGroupId" name="groupId">
+                
                 <div class="form-group">
-                    <label for="editGroupName">Nombre del Grupo</label>
-                    <input type="text" id="editGroupName" name="groupName" required>
+                    <label for="editGroupName">Nombre del grupo</label>
+                    <input type="text" id="editGroupName" name="name" required>
                 </div>
                 <div class="form-group">
                     <label for="editGroupDescription">Descripción</label>
-                    <textarea id="editGroupDescription" name="groupDescription" rows="3"></textarea>
+                    <textarea id="editGroupDescription" name="description" rows="3"></textarea>
                 </div>
-                <div class="form-group">
-                    <label>Icono del Grupo</label>
-                    <div class="icon-picker" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="radio" id="edit-icon-users" name="editGroupIcon" value="fa-users">
-                        <label for="edit-icon-users"><i class="fas fa-users"></i></label>
-                        
-                        <input type="radio" id="edit-icon-user-friends" name="editGroupIcon" value="fa-user-friends">
-                        <label for="edit-icon-user-friends"><i class="fas fa-user-friends"></i></label>
-                        
-                        <input type="radio" id="edit-icon-user-tie" name="editGroupIcon" value="fa-user-tie">
-                        <label for="edit-icon-user-tie"><i class="fas fa-user-tie"></i></label>
-                        
-                        <input type="radio" id="edit-icon-user-graduate" name="editGroupIcon" value="fa-user-graduate">
-                        <label for="edit-icon-user-graduate"><i class="fas fa-user-graduate"></i></label>
-                        
-                        <input type="radio" id="edit-icon-users-gear" name="editGroupIcon" value="fa-users-gear">
-                        <label for="edit-icon-users-gear"><i class="fas fa-users-gear"></i></label>
-                        
-                        <input type="radio" id="edit-icon-user-group" name="editGroupIcon" value="fa-user-group">
-                        <label for="edit-icon-user-group"><i class="fas fa-user-group"></i></label>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editGroupArea">Área</label>
+                        <select id="editGroupArea" name="area" required>
+                            <option value="">Seleccionar área</option>
+                            <option value="personal">Área Personal</option>
+                            <option value="work">Área Trabajo</option>
+                            <option value="school">Área Escuela</option>
+                        </select>
                     </div>
                 </div>
+                
+                <!-- Color Picker -->
                 <div class="form-group">
-                    <label>Color del Grupo</label>
-                    <div class="color-picker" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="radio" id="edit-color-blue" name="editGroupColor" value="blue" class="color-option">
-                        <label for="edit-color-blue" class="color-label color-blue"></label>
-                        <input type="radio" id="edit-color-green" name="editGroupColor" value="green" class="color-option">
-                        <label for="edit-color-green" class="color-label color-green"></label>
-                        <input type="radio" id="edit-color-purple" name="editGroupColor" value="purple" class="color-option">
-                        <label for="edit-color-purple" class="color-label color-purple"></label>
-                        <input type="radio" id="edit-color-orange" name="editGroupColor" value="orange" class="color-option">
-                        <label for="edit-color-orange" class="color-label color-orange"></label>
-                        <input type="radio" id="edit-color-red" name="editGroupColor" value="red" class="color-option">
-                        <label for="edit-color-red" class="color-label color-red"></label>
-                        <input type="radio" id="edit-color-pink" name="editGroupColor" value="pink" class="color-option">
-                        <label for="edit-color-pink" class="color-label color-pink"></label>
+                    <label>Color del grupo</label>
+                    <div class="color-picker">
+                        <input type="radio" id="edit-group-color-blue" name="editGroupColor" value="blue">
+                        <label for="edit-group-color-blue" class="color-label color-blue" title="Azul"></label>
+                        
+                        <input type="radio" id="edit-group-color-green" name="editGroupColor" value="green">
+                        <label for="edit-group-color-green" class="color-label color-green" title="Verde"></label>
+                        
+                        <input type="radio" id="edit-group-color-purple" name="editGroupColor" value="purple">
+                        <label for="edit-group-color-purple" class="color-label color-purple" title="Morado"></label>
+                        
+                        <input type="radio" id="edit-group-color-orange" name="editGroupColor" value="orange">
+                        <label for="edit-group-color-orange" class="color-label color-orange" title="Naranja"></label>
+                        
+                        <input type="radio" id="edit-group-color-red" name="editGroupColor" value="red">
+                        <label for="edit-group-color-red" class="color-label color-red" title="Rojo"></label>
+                        
+                        <input type="radio" id="edit-group-color-pink" name="editGroupColor" value="pink">
+                        <label for="edit-group-color-pink" class="color-label color-pink" title="Rosa"></label>
+                        
+                        <input type="radio" id="edit-group-color-yellow" name="editGroupColor" value="yellow">
+                        <label for="edit-group-color-yellow" class="color-label color-yellow" title="Amarillo"></label>
+                        
+                        <input type="radio" id="edit-group-color-mint" name="editGroupColor" value="mint">
+                        <label for="edit-group-color-mint" class="color-label color-mint" title="Menta"></label>
+                        
+                        <input type="radio" id="edit-group-color-sky" name="editGroupColor" value="sky">
+                        <label for="edit-group-color-sky" class="color-label color-sky" title="Cielo"></label>
+                        
+                        <input type="radio" id="edit-group-color-coral" name="editGroupColor" value="coral">
+                        <label for="edit-group-color-coral" class="color-label color-coral" title="Coral"></label>
+                        
+                        <input type="radio" id="edit-group-color-lavender" name="editGroupColor" value="lavender">
+                        <label for="edit-group-color-lavender" class="color-label color-lavender" title="Lavanda"></label>
+                    </div>
+                </div>
+                
+                <!-- Icon Picker -->
+                <div class="form-group">
+                    <label>Icono del grupo</label>
+                    <div class="icon-picker">
+                        <input type="radio" id="edit-group-icon-users" name="editGroupIcon" value="fa-users">
+                        <label for="edit-group-icon-users" title="Usuarios"><i class="fas fa-users"></i></label>
+                        
+                        <input type="radio" id="edit-group-icon-user-friends" name="editGroupIcon" value="fa-user-friends">
+                        <label for="edit-group-icon-user-friends" title="Amigos"><i class="fas fa-user-friends"></i></label>
+                        
+                        <input type="radio" id="edit-group-icon-user-tie" name="editGroupIcon" value="fa-user-tie">
+                        <label for="edit-group-icon-user-tie" title="Profesional"><i class="fas fa-user-tie"></i></label>
+                        
+                        <input type="radio" id="edit-group-icon-user-graduate" name="editGroupIcon" value="fa-user-graduate">
+                        <label for="edit-group-icon-user-graduate" title="Graduado"><i class="fas fa-user-graduate"></i></label>
+                        
+                        <input type="radio" id="edit-group-icon-user-ninja" name="editGroupIcon" value="fa-user-ninja">
+                        <label for="edit-group-icon-user-ninja" title="Ninja"><i class="fas fa-user-ninja"></i></label>
+                        
+                        <input type="radio" id="edit-group-icon-user-astronaut" name="editGroupIcon" value="fa-user-astronaut">
+                        <label for="edit-group-icon-user-astronaut" title="Astronauta"><i class="fas fa-user-astronaut"></i></label>
+                        
+                        <input type="radio" id="edit-group-icon-user-secret" name="editGroupIcon" value="fa-user-secret">
+                        <label for="edit-group-icon-user-secret" title="Secreto"><i class="fas fa-user-secret"></i></label>
+                        
+                        <input type="radio" id="edit-group-icon-user-shield" name="editGroupIcon" value="fa-user-shield">
+                        <label for="edit-group-icon-user-shield" title="Escudo"><i class="fas fa-user-shield"></i></label>
+                        
+                        <input type="radio" id="edit-group-icon-user-tag" name="editGroupIcon" value="fa-user-tag">
+                        <label for="edit-group-icon-user-tag" title="Etiqueta"><i class="fas fa-user-tag"></i></label>
+                        
+                        <input type="radio" id="edit-group-icon-user-check" name="editGroupIcon" value="fa-user-check">
+                        <label for="edit-group-icon-user-check" title="Verificado"><i class="fas fa-user-check"></i></label>
+                        
+                        <input type="radio" id="edit-group-icon-user-clock" name="editGroupIcon" value="fa-user-clock">
+                        <label for="edit-group-icon-user-clock" title="Reloj"><i class="fas fa-user-clock"></i></label>
                     </div>
                 </div>
                 <div class="form-actions">
@@ -313,32 +526,7 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div class="modal" id="deleteGroupModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Eliminar Grupo</h2>
-                <button class="modal-close" id="closeDeleteGroupModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p class="delete-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    ¿Estás seguro de que quieres eliminar el grupo "<span id="deleteGroupName"></span>"?
-                </p>
-                <p class="delete-description">
-                    Esta acción no se puede deshacer. Todos los miembros serán removidos y las tareas asociadas se archivarán.
-                </p>
-            </div>
-            <div class="form-actions">
-                <button type="button" class="button button--ghost" id="cancelDeleteGroup">Cancelar</button>
-                <button type="button" class="button button--danger" id="confirmDeleteGroup">Eliminar Grupo</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Group Members Modal -->
+    <!-- Modal para ver miembros del grupo -->
     <div class="modal" id="groupMembersModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -348,63 +536,51 @@
                 </button>
             </div>
             <div class="modal-body">
-                <!-- Add Member Section -->
+                <div id="groupMembersList"></div>
                 <div class="add-member-section">
-                    <h3 class="section-subtitle">Agregar Miembro</h3>
-                    <form class="task-form" id="addMemberForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="memberEmail">Email del Usuario</label>
-                                <input type="email" id="memberEmail" name="memberEmail" placeholder="usuario@ejemplo.com" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="memberRole">Rol</label>
-                                <select id="memberRole" name="memberRole">
-                                    <option value="miembro">Miembro</option>
-                                    <option value="administrador">Administrador</option>
-                                    <option value="lider">Líder</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <button type="submit" class="button button--primary" style="margin-top: 24px;">
-                                    <i class="fas fa-plus"></i>
-                                    Agregar Miembro
-                                </button>
-                            </div>
+                    <h3>Invitar Miembro</h3>
+                    <form id="addMemberForm">
+                        <div class="form-group">
+                            <label for="memberEmail">Email del usuario</label>
+                            <input type="email" id="memberEmail" name="memberEmail" required>
                         </div>
+                        <div class="form-group">
+                            <label for="memberRole">Rol</label>
+                            <select id="memberRole" name="memberRole" required>
+                                <option value="miembro">Miembro</option>
+                                <option value="administrador">Administrador</option>
+                                <option value="lider">Líder</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="button button--primary">Invitar Miembro</button>
                     </form>
-                </div>
-
-                <!-- Members List -->
-                <div class="members-section">
-                    <h3 class="section-subtitle">Miembros Actuales</h3>
-                    <div id="membersList" class="members-list">
-                        <!-- Members will be loaded here -->
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Change Role Modal -->
+    <!-- Modal para cambiar rol de miembro -->
     <div class="modal" id="changeRoleModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Cambiar Rol</h2>
+                <h2>Cambiar Rol de Miembro</h2>
                 <button class="modal-close" id="closeChangeRoleModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <form class="task-form" id="changeRoleForm">
                 <input type="hidden" id="changeRoleUserId" name="userId">
+                <input type="hidden" id="changeRoleGroupId" name="groupId">
+                
                 <div class="form-group">
                     <label for="changeRoleSelect">Nuevo Rol</label>
                     <select id="changeRoleSelect" name="newRole" required>
-                        <option value="miembro">Miembro</option>
-                        <option value="administrador">Administrador</option>
                         <option value="lider">Líder</option>
+                        <option value="administrador">Administrador</option>
+                        <option value="miembro">Miembro</option>
                     </select>
                 </div>
+                
                 <div class="form-actions">
                     <button type="button" class="button button--ghost" id="cancelChangeRole">Cancelar</button>
                     <button type="submit" class="button button--primary">Cambiar Rol</button>
@@ -413,51 +589,57 @@
         </div>
     </div>
 
-    <!-- Create Group Task Modal -->
+    <!-- Modal para crear tarea en grupo -->
     <div class="modal" id="createGroupTaskModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Crear Tarea de Grupo</h2>
+                <h2>Crear Tarea en Grupo</h2>
                 <button class="modal-close" id="closeCreateGroupTaskModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <form class="task-form" id="createGroupTaskForm">
+                <!-- Campos ocultos necesarios -->
                 <input type="hidden" id="taskGroupId" name="groupId">
+                <input type="hidden" id="taskUserId" name="userId">
+                
                 <div class="form-group">
-                    <label for="taskTitle">Título de la tarea</label>
-                    <input type="text" id="taskTitle" name="title" required>
+                    <label for="groupTaskTitle">Título de la tarea</label>
+                    <input type="text" id="groupTaskTitle" name="title" required>
                 </div>
                 <div class="form-group">
-                    <label for="taskDescription">Descripción</label>
-                    <textarea id="taskDescription" name="description" rows="3"></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="taskArea">Área</label>
-                        <select id="taskArea" name="area">
-                            <option value="">Seleccionar área</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="taskDueDate">Fecha de vencimiento</label>
-                        <input type="datetime-local" id="taskDueDate" name="dueDate" required>
-                    </div>
+                    <label for="groupTaskDescription">Descripción</label>
+                    <textarea id="groupTaskDescription" name="description" rows="3"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Asignar a</label>
+                    <label for="groupTaskDueDate">Fecha de vencimiento</label>
+                    <input type="text" id="groupTaskDueDate" name="dueDate" placeholder="">
+                </div>
+                
+                <!-- Opciones de asignación -->
+                <div class="form-group">
+                    <label>Asignar tarea a:</label>
                     <div class="assignment-options">
-                        <label class="radio-option">
-                            <input type="radio" name="assignmentType" value="all" checked>
-                            <span class="radio-label">Todos los miembros</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="assignmentType" value="specific">
-                            <span class="radio-label">Seleccionar miembros específicos</span>
-                        </label>
+                        <div class="assignment-option">
+                            <input type="radio" id="assignToSelf" name="assignmentType" value="self" checked>
+                            <label for="assignToSelf">Solo para mí</label>
+                        </div>
+                        <div class="assignment-option">
+                            <input type="radio" id="assignToAll" name="assignmentType" value="all">
+                            <label for="assignToAll">Todos los miembros del grupo</label>
+                        </div>
+                        <div class="assignment-option">
+                            <input type="radio" id="assignToSpecific" name="assignmentType" value="specific">
+                            <label for="assignToSpecific">Miembros específicos</label>
+                        </div>
                     </div>
-                    <div id="memberSelection" class="member-selection" style="display: none;">
-                        <!-- Member checkboxes will be loaded here -->
+                </div>
+                
+                <!-- Sección de miembros específicos (inicialmente oculta) -->
+                <div id="specificMembersSection" style="display: none;">
+                    <div class="form-group">
+                        <label>Seleccionar miembros:</label>
+                        <div id="memberSelection"></div>
                     </div>
                 </div>
                 <div class="form-actions">
@@ -468,9 +650,38 @@
         </div>
     </div>
 
+    <!-- Modal para aceptar invitación -->
+    <div class="modal" id="acceptInvitationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Aceptar Invitación</h2>
+                <button class="modal-close" id="closeAcceptInvitationModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="task-form">
+                <div class="form-group">
+                    <label for="acceptInvitationArea">Asignar a área (opcional)</label>
+                    <select id="acceptInvitationArea" name="area">
+                        <option value="">Selecciona un área (opcional)</option>
+                    </select>
+                    <small class="form-help">Puedes asignar este grupo a una de tus áreas personales para organizarlo mejor.</small>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="button button--ghost" id="cancelAcceptInvitation">Cancelar</button>
+                    <button type="button" class="button button--primary" id="confirmAcceptInvitation">Aceptar Invitación</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
+    <script src="js/config.js"></script>
     <script src="js/sidebar-new.js"></script>
-    <script src="js/groups.js?v=16"></script>
+    <script src="js/scripts.js"></script>
+    <script src="js/groups.js?v=77"></script>
+    <script src="js/header-buttons.js"></script>
     <script src="js/notifications.js"></script>
 </body>
 </html>

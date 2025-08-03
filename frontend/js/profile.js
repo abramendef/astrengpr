@@ -13,7 +13,7 @@ class ProfileManager {
         this.renderProfile();
         this.loadUserData();
         this.setupGlobalEvents();
-        console.log('👤 Profile Manager inicializado');
+        Logger.info('Profile Manager inicializado', null, 'UI');
     }
 
     loadProfile() {

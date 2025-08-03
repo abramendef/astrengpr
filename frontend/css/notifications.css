@@ -264,37 +264,40 @@
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
 }
 
 .modal--show {
-    opacity: 1;
-    visibility: visible;
+    display: flex;
 }
 
-.modal__content {
-    background: var(--card-bg);
+.modal-content {
+    background: white;
     border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     max-width: 500px;
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
-    transform: scale(0.9);
-    transition: transform 0.3s ease;
+    position: relative;
+    /* Ocultar scrollbar pero mantener funcionalidad */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
 }
 
-.modal--show .modal__content {
-    transform: scale(1);
+.modal-content::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
 }
 
-.modal__header {
+.modal--show .modal-content {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+.modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -302,14 +305,14 @@
     border-bottom: 1px solid var(--border-color);
 }
 
-.modal__title {
+.modal-header h2 {
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--text-color);
     margin: 0;
 }
 
-.modal__close {
+.modal-close {
     width: 32px;
     height: 32px;
     border: none;
@@ -323,16 +326,16 @@
     transition: all 0.2s ease;
 }
 
-.modal__close:hover {
+.modal-close:hover {
     background: var(--danger-color);
     color: white;
 }
 
-.modal__body {
+.modal-body {
     padding: 1.5rem;
 }
 
-.modal__form {
+.modal-form {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -503,7 +506,7 @@
         flex-wrap: wrap;
     }
     
-    .modal__content {
+    .modal-content {
         width: 95%;
         margin: 1rem;
     }
@@ -548,7 +551,7 @@
         background: var(--card-bg-secondary-dark);
     }
     
-    .modal__content {
+    .modal-content {
         background: var(--card-bg-dark);
     }
     
@@ -587,7 +590,7 @@
 /* Focus States for Accessibility */
 .filter-tab:focus,
 .notification__action:focus,
-.modal__close:focus,
+.modal-close:focus,
 #load-more-btn:focus {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
