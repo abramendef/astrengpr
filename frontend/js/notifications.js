@@ -47,35 +47,35 @@ class NotificationManager {
 
     async loadNotifications() {
         try {
-            console.log('📡 Cargando notificaciones...');
-            const response = await fetch(`http://localhost:8000/notificaciones/${this.userId}`);
+            Logger.info('Cargando notificaciones', null, 'API');
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.NOTIFICATIONS, `/${this.userId}`));
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             this.notifications = await response.json();
-            console.log('✅ Notificaciones cargadas:', this.notifications.length);
+            Logger.info(`Notificaciones cargadas: ${this.notifications.length}`, null, 'API');
             
             // Contar no leídas
             this.unreadCount = this.notifications.filter(n => !n.leida).length;
             this.updateNotificationBadge();
             
         } catch (error) {
-            console.error('❌ Error al cargar notificaciones:', error);
+            Logger.error('Error al cargar notificaciones', error, 'API');
         }
     }
 
     async loadUnreadCount() {
         try {
-            const response = await fetch(`http://localhost:8000/notificaciones/${this.userId}/contar-no-leidas`);
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.NOTIFICATIONS, `/${this.userId}/contar-no-leidas`));
             if (response.ok) {
                 const data = await response.json();
                 this.unreadCount = data.count;
                 this.updateNotificationBadge();
             }
         } catch (error) {
-            console.error('❌ Error al cargar contador de notificaciones:', error);
+            Logger.error('Error al cargar contador de notificaciones', error, 'API');
         }
     }
 
@@ -217,16 +217,16 @@ class NotificationManager {
                     <h4 class="notification-item__title">${this.escapeHtml(notification.titulo)}</h4>
                     <p class="notification-item__message">${this.escapeHtml(notification.mensaje)}</p>
                     <span class="notification-item__time">${timeAgo}</span>
-                </div>
+                    </div>
                 <div class="notification-item__actions">
                     ${isUnread ? `
                         <button class="notification-action" title="Marcar como leída" data-action="mark-read">
-                            <i class="fas fa-check"></i>
-                        </button>
-                    ` : ''}
+                                <i class="fas fa-check"></i>
+                            </button>
+                        ` : ''}
                     <button class="notification-action notification-action--danger" title="Eliminar" data-action="delete">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                            <i class="fas fa-trash"></i>
+                        </button>
                 </div>
             </div>
         `;
@@ -290,7 +290,7 @@ class NotificationManager {
 
     async markAsRead(notificationId) {
         try {
-            const response = await fetch(`http://localhost:8000/notificaciones/${notificationId}/leer`, {
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.NOTIFICATIONS, `/${notificationId}/leer`), {
                 method: 'PUT'
             });
 
@@ -312,7 +312,7 @@ class NotificationManager {
 
     async markAllAsRead() {
         try {
-            const response = await fetch(`http://localhost:8000/notificaciones/${this.userId}/leer-todas`, {
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.NOTIFICATIONS, `/${this.userId}/leer-todas`), {
                 method: 'PUT'
             });
 
@@ -321,7 +321,7 @@ class NotificationManager {
                 this.notifications.forEach(n => n.leida = true);
                 this.unreadCount = 0;
                 this.updateNotificationBadge();
-                this.renderNotifications();
+            this.renderNotifications();
             }
         } catch (error) {
             console.error('❌ Error al marcar todas las notificaciones como leídas:', error);
@@ -334,7 +334,7 @@ class NotificationManager {
         }
 
         try {
-            const response = await fetch(`http://localhost:8000/notificaciones/${notificationId}`, {
+            const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.NOTIFICATIONS, `/${notificationId}`), {
                 method: 'DELETE'
             });
 
@@ -406,7 +406,7 @@ class NotificationManager {
         toast.className = `toast toast--${type}`;
         toast.innerHTML = `
             <div class="toast__content">
-                <span>${this.escapeHtml(message)}</span>
+            <span>${this.escapeHtml(message)}</span>
                 <button class="toast__close">
                     <i class="fas fa-times"></i>
                 </button>

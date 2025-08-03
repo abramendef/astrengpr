@@ -119,7 +119,7 @@ loginForm.addEventListener('submit', function(e) {
     };
     
     // Nuevo flujo: usar endpoint real de login
-    fetch('http://localhost:8000/login', {
+    fetch(buildApiUrl(CONFIG.API_ENDPOINTS.LOGIN), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // Auto-login after a short delay
             setTimeout(() => {
-                console.log('Auto-login iniciado...');
+                Logger.info('Auto-login iniciado', null, 'UI');
                 loginForm.dispatchEvent(new Event('submit'));
             }, 1000);
         }
@@ -353,7 +353,7 @@ function showSessionConflictModal(currentUser, newEmail) {
         // Clear current session and proceed with auto-login
         sessionStorage.clear();
         setTimeout(() => {
-            console.log('Auto-login con nuevo usuario iniciado...');
+                            Logger.info('Auto-login con nuevo usuario iniciado', null, 'UI');
             loginForm.dispatchEvent(new Event('submit'));
         }, 500);
     });
@@ -465,7 +465,7 @@ document.head.appendChild(style);
 /*===== ANALYTICS TRACKING =====*/
 function trackLoginAttempt(method) {
     // Track login attempts (would integrate with analytics service)
-    console.log(`Login attempt: ${method}`);
+            Logger.info(`Login attempt: ${method}`, null, 'API');
     
     // Call the existing trackEvent function from main scripts
     if (typeof trackEvent === 'function') {
@@ -512,4 +512,4 @@ window.addEventListener('error', function(e) {
     }
 });
 
-console.log('Login functionality initialized');
+        Logger.info('Login functionality initialized', null, 'UI');

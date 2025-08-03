@@ -6,7 +6,6 @@ import json
 from datetime import datetime, timezone
 import base64
 from dotenv import load_dotenv
-from google_classroom import google_bp
 import mysql.connector
 import re
 import bcrypt
@@ -18,8 +17,6 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Almacenamiento temporal de tokens (en producción usar base de datos)
 tokens = {}
-
-app.register_blueprint(google_bp)
 
 def get_db_connection():
     try:
@@ -184,12 +181,29 @@ def crear_tarea_grupo_multiple(usuario_id, titulo, descripcion, grupo_id, asigna
                 print(f"⚠️ [WARN] Usuario {asignado_id} no es miembro del grupo {grupo_id}")
                 continue
             
-            # Insertar la tarea para este usuario
+            # Obtener el área personal del usuario asignado para este grupo
+            area_personal_id = None
+            if area_id is None:  # Solo buscar área personal si no se especificó una
+                sql_area = """
+                    SELECT area_id FROM grupo_areas_usuario 
+                    WHERE grupo_id = %s AND usuario_id = %s
+                """
+                cursor.execute(sql_area, (grupo_id, asignado_id))
+                result = cursor.fetchone()
+                if result:
+                    area_personal_id = result['area_id']
+                    print(f"🔍 [DEBUG] Área personal encontrada para usuario {asignado_id}: {area_personal_id}")
+                else:
+                    print(f"⚠️ [WARN] No se encontró área personal para usuario {asignado_id} en grupo {grupo_id}")
+            else:
+                area_personal_id = area_id
+            
+            # Insertar la tarea para este usuario con su área personal
             sql = """
                 INSERT INTO tareas (usuario_id, area_id, grupo_id, asignado_a_id, titulo, descripcion, fecha_vencimiento, estado)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(sql, (asignado_id, area_id, grupo_id, asignado_id, titulo, descripcion, fecha_vencimiento, estado))
+            cursor.execute(sql, (asignado_id, area_personal_id, grupo_id, asignado_id, titulo, descripcion, fecha_vencimiento, estado))
             task_id = cursor.lastrowid
             
             # Crear notificación si no es el mismo usuario
@@ -197,7 +211,7 @@ def crear_tarea_grupo_multiple(usuario_id, titulo, descripcion, grupo_id, asigna
                 notificar_tarea_asignada(task_id, grupo_id, asignado_id, titulo)
             
             tareas_creadas.append(task_id)
-            print(f"✅ [SUCCESS] Tarea creada con ID: {task_id} para usuario {asignado_id}")
+            print(f"✅ [SUCCESS] Tarea creada con ID: {task_id} para usuario {asignado_id} con área {area_personal_id}")
         
         conn.commit()
         cursor.close()
@@ -218,15 +232,16 @@ def obtener_tareas_usuario(usuario_id):
     cursor = conn.cursor(dictionary=True)
     sql = '''
         SELECT t.*, a.nombre AS area_nombre, a.color AS area_color, a.icono AS area_icono,
-               g.nombre AS grupo_nombre, u.nombre AS asignado_nombre, u.apellido AS asignado_apellido
+               g.nombre AS grupo_nombre, g.color AS grupo_color, g.icono AS grupo_icono,
+               u.nombre AS asignado_nombre, u.apellido AS asignado_apellido
         FROM tareas t
         LEFT JOIN areas a ON t.area_id = a.id
         LEFT JOIN grupos g ON t.grupo_id = g.id
         LEFT JOIN usuarios u ON t.asignado_a_id = u.id
-        WHERE t.usuario_id = %s AND t.estado != 'eliminada'
+        WHERE (t.usuario_id = %s OR t.asignado_a_id = %s) AND t.estado != 'eliminada'
         ORDER BY t.fecha_creacion DESC
     '''
-    cursor.execute(sql, (usuario_id,))
+    cursor.execute(sql, (usuario_id, usuario_id))
     tareas = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -616,6 +631,77 @@ def actualizar_estado_tarea(tarea_id):
     conn.close()
     return jsonify({'mensaje': 'Estado actualizado', 'id': tarea_id, 'estado': nuevo_estado})
 
+@app.route('/tareas/<int:tarea_id>', methods=['PUT'])
+def actualizar_tarea(tarea_id):
+    try:
+        data = request.get_json()
+        titulo = data.get('titulo')
+        descripcion = data.get('descripcion')
+        area_id = data.get('area_id')
+        fecha_vencimiento = data.get('fecha_vencimiento')
+        
+        # Validar que la tarea existe
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM tareas WHERE id = %s AND estado != 'eliminada'", (tarea_id,))
+        tarea_existente = cursor.fetchone()
+        
+        if not tarea_existente:
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'Tarea no encontrada'}), 404
+        
+        # Verificar si ya existe otra tarea con el mismo título (excluyendo la actual)
+        if titulo:
+            cursor.execute("SELECT id FROM tareas WHERE titulo = %s AND id != %s AND estado != 'eliminada'", (titulo, tarea_id))
+            tarea_duplicada = cursor.fetchone()
+            if tarea_duplicada:
+                cursor.close()
+                conn.close()
+                return jsonify({'error': 'Ya existe una tarea con ese nombre'}), 400
+        
+        # Construir la consulta de actualización
+        update_fields = []
+        update_values = []
+        
+        if titulo is not None:
+            update_fields.append("titulo = %s")
+            update_values.append(titulo)
+        
+        if descripcion is not None:
+            update_fields.append("descripcion = %s")
+            update_values.append(descripcion)
+        
+        if area_id is not None:
+            update_fields.append("area_id = %s")
+            update_values.append(area_id)
+        
+        if fecha_vencimiento is not None:
+            update_fields.append("fecha_vencimiento = %s")
+            update_values.append(fecha_vencimiento)
+        
+        if not update_fields:
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'No se proporcionaron campos para actualizar'}), 400
+        
+        # Agregar el ID de la tarea al final de los valores
+        update_values.append(tarea_id)
+        
+        # Ejecutar la actualización
+        sql = f"UPDATE tareas SET {', '.join(update_fields)} WHERE id = %s"
+        cursor.execute(sql, update_values)
+        conn.commit()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'mensaje': 'Tarea actualizada exitosamente', 'id': tarea_id}), 200
+        
+    except Exception as e:
+        print(f"❌ [ERROR] Error al actualizar tarea {tarea_id}: {e}")
+        return jsonify({'error': 'Error al actualizar la tarea'}), 500
+
 @app.route('/tareas/<int:tarea_id>', methods=['DELETE'])
 def eliminar_tarea(tarea_id):
     conn = get_db_connection()
@@ -657,39 +743,173 @@ def listar_tareas_area(usuario_id, area_id):
 @app.route('/areas/<int:usuario_id>', methods=['GET'])
 def listar_areas(usuario_id):
     areas = obtener_areas_usuario(usuario_id)
-    print('[DEBUG] /areas/<usuario_id> devuelve:', areas)
     return jsonify(areas)
+
+@app.route('/areas/<int:usuario_id>/con-tareas', methods=['GET'])
+def listar_areas_con_tareas(usuario_id):
+    """Endpoint optimizado para obtener áreas con estadísticas de tareas incluidas"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Consulta optimizada con JOIN para evitar N+1
+        query = """
+            SELECT 
+                a.id,
+                a.nombre,
+                a.descripcion,
+                a.color,
+                a.icono,
+                a.estado,
+                a.fecha_creacion,
+                COALESCE(COUNT(t.id), 0) as total_tareas,
+                COALESCE(SUM(CASE WHEN t.estado = 'completada' THEN 1 ELSE 0 END), 0) as tareas_completadas,
+                COALESCE(SUM(CASE WHEN t.estado = 'pendiente' THEN 1 ELSE 0 END), 0) as tareas_pendientes,
+                COALESCE(SUM(CASE WHEN t.estado = 'vencida' THEN 1 ELSE 0 END), 0) as tareas_vencidas
+            FROM areas a
+            LEFT JOIN tareas t ON a.id = t.area_id AND t.estado != 'eliminada'
+            WHERE a.usuario_id = %s AND a.estado = 'activa'
+            GROUP BY a.id, a.nombre, a.descripcion, a.color, a.icono, a.estado, a.fecha_creacion
+            ORDER BY a.fecha_creacion DESC
+        """
+        
+        cursor.execute(query, [usuario_id])
+        areas = cursor.fetchall()
+        
+        print(f"🔍 [DEBUG] Áreas con tareas para usuario {usuario_id}: {len(areas)}")
+        for area in areas:
+            print(f"   - Área: {area['nombre']}, Total tareas: {area['total_tareas']}")
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify(areas)
+        
+    except Exception as e:
+        print(f"❌ Error en listar_areas_con_tareas: {e}")
+        # Fallback: usar el método original
+        areas = obtener_areas_usuario(usuario_id)
+        return jsonify(areas)
 
 @app.route('/areas/<int:area_id>', methods=['DELETE'])
 def eliminar_area(area_id):
-    print(f"[DEBUG] Eliminando área con id: {area_id}")  # DEPURACIÓN
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    sql = "UPDATE areas SET estado = 'eliminada' WHERE id = %s"
-    cursor.execute(sql, (area_id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return jsonify({'mensaje': 'Área eliminada (soft delete)', 'id': area_id})
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM areas WHERE id = %s", (area_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"message": "Área eliminada correctamente"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/areas/<int:area_id>/estado', methods=['PUT'])
+def cambiar_estado_area(area_id):
+    try:
+        data = request.get_json()
+        nuevo_estado = data.get('estado')
+        
+        if nuevo_estado not in ['activa', 'archivada', 'eliminada']:
+            return jsonify({"error": "Estado no válido. Debe ser 'activa', 'archivada' o 'eliminada'"}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE areas SET estado = %s WHERE id = %s", (nuevo_estado, area_id))
+        
+        if cursor.rowcount == 0:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Área no encontrada"}), 404
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"message": f"Estado del área actualizado a '{nuevo_estado}'"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/areas/<int:area_id>', methods=['PUT'])
+def actualizar_area(area_id):
+    try:
+        data = request.get_json()
+        nombre = data.get('nombre')
+        descripcion = data.get('descripcion')
+        color = data.get('color')
+        icono = data.get('icono')
+        
+        if not nombre:
+            return jsonify({"error": "El nombre del área es requerido"}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Construir la consulta SQL dinámicamente
+        update_fields = []
+        update_values = []
+        
+        if nombre is not None:
+            update_fields.append("nombre = %s")
+            update_values.append(nombre)
+        
+        if descripcion is not None:
+            update_fields.append("descripcion = %s")
+            update_values.append(descripcion)
+        
+        if color is not None:
+            update_fields.append("color = %s")
+            update_values.append(color)
+        
+        if icono is not None:
+            update_fields.append("icono = %s")
+            update_values.append(icono)
+        
+        if not update_fields:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "No se proporcionaron datos para actualizar"}), 400
+        
+        # Agregar el ID del área al final de los valores
+        update_values.append(area_id)
+        
+        sql = f"UPDATE areas SET {', '.join(update_fields)} WHERE id = %s"
+        cursor.execute(sql, update_values)
+        
+        if cursor.rowcount == 0:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Área no encontrada"}), 404
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"message": "Área actualizada exitosamente"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/debug/tareas', methods=['GET'])
 def debug_tareas():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tareas")
-    tareas = cursor.fetchall()
+    cursor.execute("SHOW TABLES")
+    tables = cursor.fetchall()
     cursor.close()
     conn.close()
-    return jsonify(tareas)
+    return jsonify({"tables": [list(table.values())[0] for table in tables]})
+
+
 
 # ===== FUNCIONES PARA GRUPOS =====
 
-def crear_grupo(creador_id, nombre, descripcion=None, color='#3b82f6', icono='fa-users'):
+def crear_grupo(creador_id, nombre, descripcion=None, color='#3b82f6', icono='fa-users', area_id=None):
     """Crear un nuevo grupo"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
+        # Crear el grupo sin área (las áreas son personales)
         sql = "INSERT INTO grupos (creador_id, nombre, descripcion, color, icono) VALUES (%s, %s, %s, %s, %s)"
         cursor.execute(sql, (creador_id, nombre, descripcion, color, icono))
         
@@ -699,11 +919,21 @@ def crear_grupo(creador_id, nombre, descripcion=None, color='#3b82f6', icono='fa
         sql_miembro = "INSERT INTO miembros_grupo (grupo_id, usuario_id, rol) VALUES (%s, %s, 'lider')"
         cursor.execute(sql_miembro, (grupo_id, creador_id))
         
+        # Si se proporcionó un área, asignarla como área personal del creador
+        if area_id:
+            print(f"🔍 [DEBUG] Asignando área personal {area_id} al grupo {grupo_id} para usuario {creador_id}")
+            sql_area = """
+                INSERT INTO grupo_areas_usuario (grupo_id, usuario_id, area_id) 
+                VALUES (%s, %s, %s) 
+                ON DUPLICATE KEY UPDATE area_id = VALUES(area_id)
+            """
+            cursor.execute(sql_area, (grupo_id, creador_id, area_id))
+        
         conn.commit()
         cursor.close()
         conn.close()
         
-        print(f"✅ [SUCCESS] Grupo creado exitosamente: {nombre} (ID: {grupo_id})")
+        print(f"✅ [SUCCESS] Grupo creado exitosamente: {nombre} (ID: {grupo_id}, Área personal: {area_id})")
         return grupo_id
     except Exception as e:
         print(f"❌ [ERROR] Error al crear grupo: {e}")
@@ -726,7 +956,7 @@ def obtener_grupos_usuario(usuario_id, incluir_archivados=False):
             estado_condicion += " AND g.estado != 'archivado'"
         
         sql = f"""
-            SELECT g.*, mg.rol, 
+            SELECT g.*, mg.rol, gau.area_id, a.nombre as area_nombre, a.color as area_color, a.icono as area_icono,
                    (SELECT COUNT(*) FROM miembros_grupo WHERE grupo_id = g.id) as total_miembros,
                    (SELECT COUNT(*) FROM tareas WHERE grupo_id = g.id AND estado = 'completada') as tareas_completadas,
                    (SELECT COUNT(*) FROM tareas WHERE grupo_id = g.id AND estado = 'pendiente') as tareas_pendientes,
@@ -735,6 +965,8 @@ def obtener_grupos_usuario(usuario_id, incluir_archivados=False):
                    (SELECT COUNT(*) FROM tareas WHERE grupo_id = g.id AND estado != 'eliminada') as total_tareas
             FROM grupos g
             INNER JOIN miembros_grupo mg ON g.id = mg.grupo_id
+            LEFT JOIN grupo_areas_usuario gau ON g.id = gau.grupo_id AND gau.usuario_id = %s
+            LEFT JOIN areas a ON gau.area_id = a.id
             WHERE mg.usuario_id = %s {estado_condicion}
             ORDER BY g.fecha_creacion DESC
         """
@@ -742,10 +974,13 @@ def obtener_grupos_usuario(usuario_id, incluir_archivados=False):
         print(f"🔍 [DEBUG] SQL ejecutado: {sql}")
         print(f"🔍 [DEBUG] Parámetros: usuario_id = {usuario_id}")
         
-        cursor.execute(sql, (usuario_id,))
+        cursor.execute(sql, (usuario_id, usuario_id))
         grupos = cursor.fetchall()
         
         print(f"🔍 [DEBUG] Resultado de la consulta: {len(grupos)} grupos encontrados")
+        print(f"🔍 [DEBUG] Datos crudos de grupos:")
+        for i, grupo in enumerate(grupos):
+            print(f"   Grupo {i+1}: ID={grupo.get('id')}, Nombre={grupo.get('nombre')}, Estado={grupo.get('estado')}, Rol={grupo.get('rol')}")
         
         # Convertir fechas a string
         for grupo in grupos:
@@ -758,7 +993,7 @@ def obtener_grupos_usuario(usuario_id, incluir_archivados=False):
         
         print(f"🔍 [DEBUG] Grupos para usuario {usuario_id} (incluir_archivados: {incluir_archivados}):")
         for grupo in grupos:
-            print(f"   - ID: {grupo['id']}, Nombre: {grupo['nombre']}, Estado: {grupo['estado']}, Rol: {grupo['rol']}, Miembros: {grupo['total_miembros']}")
+            print(f"   - ID: {grupo['id']}, Nombre: {grupo['nombre']}, Estado: {grupo['estado']}, Rol: {grupo['rol']}, Miembros: {grupo['total_miembros']}, Área: {grupo.get('area_nombre', 'Sin área')}, Area ID: {grupo.get('area_id', 'None')}")
         
         return grupos
     except Exception as e:
@@ -788,6 +1023,50 @@ def obtener_miembros_grupo(grupo_id):
         print(f"❌ [ERROR] Error al obtener miembros del grupo: {e}")
         return []
 
+def asignar_area_grupo_usuario(grupo_id, usuario_id, area_id):
+    """Asignar un área personal a un grupo para un usuario específico"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar que el usuario es miembro del grupo
+        if not verificar_miembro_grupo(grupo_id, usuario_id):
+            print(f"❌ [ERROR] Usuario {usuario_id} no es miembro del grupo {grupo_id}")
+            return False
+        
+        # Insertar o actualizar la asignación de área
+        sql = """
+            INSERT INTO grupo_areas_usuario (grupo_id, usuario_id, area_id) 
+            VALUES (%s, %s, %s) 
+            ON DUPLICATE KEY UPDATE area_id = VALUES(area_id)
+        """
+        print(f"🔍 [DEBUG] Ejecutando SQL: {sql}")
+        print(f"🔍 [DEBUG] Parámetros: grupo_id={grupo_id}, usuario_id={usuario_id}, area_id={area_id}")
+        cursor.execute(sql, (grupo_id, usuario_id, area_id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print(f"✅ [SUCCESS] Área {area_id} asignada al grupo {grupo_id} para usuario {usuario_id}")
+        
+        # Verificar que se guardó correctamente
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM grupo_areas_usuario WHERE grupo_id = %s AND usuario_id = %s", (grupo_id, usuario_id))
+        resultado = cursor.fetchone()
+        print(f"🔍 [DEBUG] Verificación en BD: {resultado}")
+        cursor.close()
+        conn.close()
+        
+        return True
+    except Exception as e:
+        print(f"❌ [ERROR] Error al asignar área al grupo: {e}")
+        if 'conn' in locals():
+            conn.rollback()
+            conn.close()
+        return False
+
 def actualizar_grupo(grupo_id, nombre=None, descripcion=None, estado=None, color=None, icono=None):
     """Actualizar información de un grupo"""
     try:
@@ -816,6 +1095,8 @@ def actualizar_grupo(grupo_id, nombre=None, descripcion=None, estado=None, color
         if icono is not None:
             updates.append("icono = %s")
             values.append(icono)
+            
+        # area_id ya no existe en la tabla grupos, se maneja en grupo_areas_usuario
         
         if not updates:
             return False
@@ -928,9 +1209,12 @@ def verificar_miembro_grupo(grupo_id, usuario_id):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        sql = "SELECT COUNT(*) FROM miembros_grupo WHERE grupo_id = %s AND usuario_id = %s"
+        sql = "SELECT COUNT(*) as count FROM miembros_grupo WHERE grupo_id = %s AND usuario_id = %s"
         cursor.execute(sql, (grupo_id, usuario_id))
-        count = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        count = result['count'] if result else 0
+        
+        print(f"🔍 [DEBUG] verificar_miembro_grupo: grupo_id={grupo_id}, usuario_id={usuario_id}, count={count}")
         
         cursor.close()
         conn.close()
@@ -966,7 +1250,7 @@ def verificar_puede_crear_tareas(grupo_id, usuario_id):
         cursor.close()
         conn.close()
         
-        if resultado and resultado['rol'] in ['lider']:
+        if resultado and resultado['rol'] in ['lider', 'administrador']:
             return True
         return False
     except Exception as e:
@@ -996,12 +1280,13 @@ def agregar_miembro_grupo(grupo_id, usuario_id, rol='miembro'):
         
         if invitacion_existente:
             print(f"⚠️ [WARN] Usuario {usuario_id} ya tiene una invitación pendiente para el grupo {grupo_id}")
-            return False
+            return {"success": False, "reason": "invitacion_pendiente", "message": "El usuario ya tiene una invitación pendiente"}
         
-        # Si hay una invitación rechazada, la eliminamos para crear una nueva
-        cursor.execute("DELETE FROM invitaciones_grupo WHERE grupo_id = %s AND usuario_id = %s AND estado = 'rechazada'", (grupo_id, usuario_id))
+        # Si hay una invitación rechazada o aceptada, la eliminamos para crear una nueva
+        # (solo si el usuario no es miembro actual)
+        cursor.execute("DELETE FROM invitaciones_grupo WHERE grupo_id = %s AND usuario_id = %s AND estado IN ('rechazada', 'aceptada')", (grupo_id, usuario_id))
         if cursor.rowcount > 0:
-            print(f"🗑️ [DEBUG] Eliminada invitación rechazada anterior para usuario {usuario_id}")
+            print(f"🗑️ [DEBUG] Eliminada invitación anterior (rechazada/aceptada) para usuario {usuario_id}")
         
         print(f"✅ [DEBUG] No hay invitación pendiente existente")
         
@@ -1020,8 +1305,12 @@ def agregar_miembro_grupo(grupo_id, usuario_id, rol='miembro'):
         
         print(f"✅ [SUCCESS] Invitación creada para usuario {usuario_id} al grupo {grupo_id} como {rol}")
         
-        # Crear notificación para el usuario invitado
-        notificar_invitacion_grupo(grupo_id, usuario_id, rol)
+        # Crear notificación para el usuario invitado (opcional)
+        try:
+            notificar_invitacion_grupo(grupo_id, usuario_id, rol)
+            print(f"✅ [SUCCESS] Notificación creada para usuario {usuario_id}")
+        except Exception as e:
+            print(f"⚠️ [WARN] Error al crear notificación (no crítico): {e}")
         
         return True
     except Exception as e:
@@ -1448,11 +1737,12 @@ def crear_grupo_endpoint():
         color = data.get('color', '#3b82f6')
         icono = data.get('icono', 'fa-users')
         creador_id = data.get('creador_id')
+        area_id = data.get('area_id')
         
         if not nombre or not creador_id:
             return jsonify({'error': 'Nombre y creador_id son requeridos'}), 400
         
-        grupo_id = crear_grupo(creador_id, nombre, descripcion, color, icono)
+        grupo_id = crear_grupo(creador_id, nombre, descripcion, color, icono, area_id)
         
         if grupo_id:
             return jsonify({
@@ -1468,27 +1758,95 @@ def crear_grupo_endpoint():
 
 @app.route('/grupos/<int:usuario_id>', methods=['GET'])
 def listar_grupos(usuario_id):
-    """Obtener todos los grupos del usuario incluyendo invitaciones pendientes"""
     try:
-        print(f"🔍 [DEBUG] Endpoint /grupos/{usuario_id} llamado")
-        
-        # Obtener grupos normales
-        grupos = obtener_grupos_usuario(usuario_id)
-        
-        # Obtener invitaciones pendientes
+        grupos = obtener_grupos_usuario(usuario_id, incluir_archivados=False)
         invitaciones = obtener_invitaciones_pendientes_usuario(usuario_id)
         
-        # Combinar grupos e invitaciones
-        resultado = {
+        # Combinar grupos e invitaciones en una respuesta
+        response_data = {
             'grupos': grupos,
             'invitaciones': invitaciones
         }
         
-        print(f"📦 [DEBUG] Endpoint devolviendo {len(grupos)} grupos y {len(invitaciones)} invitaciones")
-        return jsonify(resultado)
+        return jsonify(response_data)
+        
     except Exception as e:
-        print(f"❌ [ERROR] Error en listar_grupos: {e}")
-        return jsonify({'error': 'Error al obtener grupos'}), 500
+        print(f"❌ Error en listar_grupos: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/grupos/<int:usuario_id>/con-estadisticas', methods=['GET'])
+def listar_grupos_con_estadisticas(usuario_id):
+    """Endpoint optimizado para obtener grupos con estadísticas de tareas incluidas"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Obtener grupos con estadísticas de tareas y información completa
+        query_grupos = """
+            SELECT 
+                g.id,
+                g.nombre,
+                g.descripcion,
+                g.color,
+                g.icono,
+                g.estado,
+                g.fecha_creacion,
+                g.creador_id,
+                mg.rol,
+                gau.area_id,
+                a.nombre as area_nombre,
+                a.color as area_color,
+                a.icono as area_icono,
+                (SELECT COUNT(*) FROM miembros_grupo WHERE grupo_id = g.id) as total_miembros,
+                COALESCE(COUNT(t.id), 0) as total_tareas,
+                COALESCE(SUM(CASE WHEN t.estado = 'completada' THEN 1 ELSE 0 END), 0) as tareas_completadas,
+                COALESCE(SUM(CASE WHEN t.estado = 'pendiente' THEN 1 ELSE 0 END), 0) as tareas_pendientes,
+                COALESCE(SUM(CASE WHEN t.estado = 'vencida' THEN 1 ELSE 0 END), 0) as tareas_vencidas
+            FROM grupos g
+            INNER JOIN miembros_grupo mg ON g.id = mg.grupo_id
+            LEFT JOIN grupo_areas_usuario gau ON g.id = gau.grupo_id AND gau.usuario_id = %s
+            LEFT JOIN areas a ON gau.area_id = a.id
+            LEFT JOIN tareas t ON g.id = t.grupo_id AND t.estado != 'eliminada'
+            WHERE g.estado = 'activo'
+            AND mg.usuario_id = %s
+            GROUP BY g.id, g.nombre, g.descripcion, g.color, g.icono, g.estado, g.fecha_creacion, g.creador_id, mg.rol, gau.area_id, a.nombre, a.color, a.icono
+            ORDER BY g.fecha_creacion DESC
+        """
+        
+        cursor.execute(query_grupos, [usuario_id, usuario_id])
+        grupos = cursor.fetchall()
+        
+        print(f"🔍 [DEBUG] Grupos activos con estadísticas para usuario {usuario_id}: {len(grupos)}")
+        for grupo in grupos:
+            print(f"   - Grupo: {grupo['nombre']}, Estado: {grupo['estado']}, Miembros: {grupo['total_miembros']}, Rol: {grupo['rol']}, Área: {grupo.get('area_nombre', 'Sin área')}")
+        
+        # Obtener invitaciones pendientes
+        invitaciones = obtener_invitaciones_pendientes_usuario(usuario_id)
+        
+        cursor.close()
+        conn.close()
+        
+        response_data = {
+            'grupos': grupos,
+            'invitaciones': invitaciones
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        print(f"❌ Error en listar_grupos_con_estadisticas: {e}")
+        # Fallback: usar el método original
+        try:
+            grupos = obtener_grupos_usuario(usuario_id, incluir_archivados=False)
+            invitaciones = obtener_invitaciones_pendientes_usuario(usuario_id)
+            response_data = {
+                'grupos': grupos,
+                'invitaciones': invitaciones
+            }
+            return jsonify(response_data)
+        except Exception as fallback_error:
+            print(f"❌ Error en fallback: {fallback_error}")
+            return jsonify({'error': str(e)}), 500
 
 @app.route('/grupos/<int:grupo_id>/miembros', methods=['GET'])
 def listar_miembros_grupo(grupo_id):
@@ -1511,14 +1869,27 @@ def actualizar_grupo_endpoint(grupo_id):
         descripcion = data.get('descripcion')
         color = data.get('color')
         icono = data.get('icono')
+        area_id = data.get('area_id')
         
         print(f"🔍 [DEBUG] Valores extraídos:")
         print(f"  - nombre: {nombre}")
         print(f"  - descripcion: {descripcion}")
         print(f"  - color: {color}")
         print(f"  - icono: {icono}")
+        print(f"  - area_id: {area_id}")
         
+        # Actualizar información básica del grupo (sin área, ya que las áreas son personales)
         success = actualizar_grupo(grupo_id, nombre, descripcion, color=color, icono=icono)
+        
+        # Si se proporcionó un área, actualizar el área personal del usuario actual
+        if area_id:
+            print(f"🔍 [DEBUG] Actualizando área personal del grupo {grupo_id} para usuario actual")
+            # Obtener el usuario_id del token o sesión (asumiendo que está disponible)
+            # Por ahora, necesitamos obtener el usuario_id de alguna manera
+            # Esto debería venir del frontend o del token de autenticación
+            print(f"⚠️ [WARNING] No se puede actualizar área personal sin usuario_id")
+            print(f"🔍 [DEBUG] area_id recibido: {area_id}")
+            print(f"🔍 [DEBUG] El área personal debe actualizarse desde el frontend usando el endpoint /grupos/{grupo_id}/area-usuario")
         if success:
             print(f"✅ [SUCCESS] Grupo {grupo_id} actualizado exitosamente")
             return jsonify({'mensaje': 'Grupo actualizado exitosamente'})
@@ -1592,25 +1963,54 @@ def listar_grupos_archivados(usuario_id):
 def agregar_miembro_endpoint(grupo_id):
     """Agregar un miembro a un grupo por email (crea invitación)"""
     try:
+        print(f"🔍 [DEBUG] agregar_miembro_endpoint llamado con grupo_id: {grupo_id}")
+        
         data = request.json
+        print(f"📦 [DEBUG] Datos recibidos: {data}")
+        
         email = data.get('email')
         rol = data.get('rol', 'miembro')
         
+        print(f"📧 [DEBUG] Email: {email}")
+        print(f"👤 [DEBUG] Rol: {rol}")
+        
         if not email:
+            print(f"❌ [ERROR] Email vacío")
             return jsonify({'error': 'Email es requerido'}), 400
         
         # Buscar usuario por email
+        print(f"🔍 [DEBUG] Buscando usuario con email: {email}")
         usuario = buscar_usuario_por_email(email)
+        print(f"👤 [DEBUG] Usuario encontrado: {usuario}")
+        
         if not usuario:
+            print(f"❌ [ERROR] Usuario no encontrado con email: {email}")
             return jsonify({'error': 'Usuario no encontrado con ese email'}), 404
         
         # Verificar si ya es miembro
+        print(f"🔍 [DEBUG] Verificando si usuario {usuario['id']} ya es miembro del grupo {grupo_id}")
         if verificar_miembro_grupo(grupo_id, usuario['id']):
+            print(f"⚠️ [WARN] Usuario {usuario['id']} ya es miembro del grupo {grupo_id}")
             return jsonify({'error': 'El usuario ya es miembro del grupo'}), 400
         
         # Crear invitación (en lugar de agregar directamente)
-        success = agregar_miembro_grupo(grupo_id, usuario['id'], rol)
-        if success:
+        print(f"📤 [DEBUG] Creando invitación para usuario {usuario['id']} al grupo {grupo_id} como {rol}")
+        result = agregar_miembro_grupo(grupo_id, usuario['id'], rol)
+        
+        if isinstance(result, dict) and not result.get('success', True):
+            # Caso de error específico
+            reason = result.get('reason')
+            message = result.get('message', 'Error al enviar invitación')
+            
+            if reason == 'invitacion_pendiente':
+                print(f"⚠️ [WARN] Usuario ya tiene invitación pendiente")
+                return jsonify({'error': message}), 400
+            else:
+                print(f"❌ [ERROR] Error al crear invitación: {message}")
+                return jsonify({'error': message}), 500
+        elif result is True:
+            # Caso de éxito
+            print(f"✅ [SUCCESS] Invitación creada exitosamente")
             return jsonify({
                 'mensaje': 'Invitación enviada exitosamente',
                 'usuario': {
@@ -1622,10 +2022,14 @@ def agregar_miembro_endpoint(grupo_id):
                 }
             })
         else:
+            print(f"❌ [ERROR] Error al crear invitación")
             return jsonify({'error': 'Error al enviar invitación'}), 500
             
     except Exception as e:
         print(f"❌ [ERROR] Error en agregar_miembro_endpoint: {e}")
+        print(f"❌ [ERROR] Tipo de error: {type(e).__name__}")
+        import traceback
+        print(f"❌ [ERROR] Traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Error al enviar invitación'}), 500
 
 @app.route('/grupos/<int:grupo_id>/miembros/<int:usuario_id>', methods=['DELETE'])
@@ -1652,6 +2056,38 @@ def remover_miembro_endpoint(grupo_id, usuario_id):
     except Exception as e:
         print(f"❌ [ERROR] Error en remover_miembro_endpoint: {e}")
         return jsonify({'error': 'Error al remover miembro'}), 500
+
+@app.route('/grupos/<int:grupo_id>/area-usuario', methods=['PUT'])
+def cambiar_area_grupo_usuario_endpoint(grupo_id):
+    """Cambiar el área personal de un grupo para el usuario actual"""
+    try:
+        print(f"🔍 [DEBUG] Endpoint /grupos/{grupo_id}/area-usuario llamado")
+        data = request.json
+        print(f"🔍 [DEBUG] Datos recibidos: {data}")
+        
+        usuario_id = data.get('usuario_id')
+        area_id = data.get('area_id')
+        
+        print(f"🔍 [DEBUG] Cambiando área del grupo {grupo_id} para usuario {usuario_id} a área {area_id}")
+        
+        if not usuario_id:
+            print(f"❌ [ERROR] Usuario ID no proporcionado")
+            return jsonify({'error': 'Usuario ID requerido'}), 400
+        
+        success = asignar_area_grupo_usuario(grupo_id, usuario_id, area_id)
+        
+        if success:
+            print(f"✅ [SUCCESS] Área actualizada exitosamente")
+            return jsonify({'mensaje': 'Área del grupo actualizada exitosamente'})
+        else:
+            print(f"❌ [ERROR] Error al actualizar área")
+            return jsonify({'error': 'Error al actualizar área del grupo'}), 400
+            
+    except Exception as e:
+        print(f"❌ [ERROR] Error en cambiar_area_grupo_usuario_endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Error al actualizar área del grupo'}), 500
 
 @app.route('/grupos/<int:grupo_id>/miembros/<int:usuario_id>/rol', methods=['PUT'])
 def cambiar_rol_miembro_endpoint(grupo_id, usuario_id):
@@ -1687,6 +2123,7 @@ def cambiar_rol_miembro_endpoint(grupo_id, usuario_id):
         
         # Cambiar rol
         sql = "UPDATE miembros_grupo SET rol = %s WHERE grupo_id = %s AND usuario_id = %s"
+        print(f"🔍 [DEBUG] Ejecutando SQL: {sql} con valores: ({nuevo_rol}, {grupo_id}, {usuario_id})")
         cursor.execute(sql, (nuevo_rol, grupo_id, usuario_id))
         
         # Verificar que se actualizó correctamente
@@ -1777,6 +2214,29 @@ def buscar_usuario_endpoint(email):
     except Exception as e:
         print(f"❌ [ERROR] Error en buscar_usuario_endpoint: {e}")
         return jsonify({'error': 'Error al buscar usuario'}), 500
+
+@app.route('/debug/usuarios', methods=['GET'])
+def debug_usuarios():
+    """Debug: Listar todos los usuarios en la base de datos"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, nombre, apellido, correo FROM usuarios")
+        usuarios = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        print(f"🔍 [DEBUG] Usuarios en la base de datos:")
+        for usuario in usuarios:
+            print(f"   - ID: {usuario['id']}, Nombre: {usuario['nombre']}, Email: {usuario['correo']}")
+        
+        return jsonify({
+            'total_usuarios': len(usuarios),
+            'usuarios': usuarios
+        })
+    except Exception as e:
+        print(f"❌ [ERROR] Error en debug_usuarios: {e}")
+        return jsonify({'error': 'Error al obtener usuarios'}), 500
 
 # ===== ENDPOINTS PARA NOTIFICACIONES =====
 
@@ -2129,14 +2589,14 @@ def listar_miembros_detallados(grupo_id):
         traceback.print_exc()
         return jsonify({'error': 'Error al obtener miembros del grupo'}), 500
 
-def aceptar_invitacion_grupo(invitacion_id, usuario_id):
+def aceptar_invitacion_grupo(invitacion_id, usuario_id, area_id=None):
     """Aceptar una invitación a un grupo"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Obtener información de la invitación
-        cursor.execute("SELECT grupo_id, rol FROM invitaciones_grupo WHERE id = %s AND usuario_id = %s AND estado = 'pendiente'", (invitacion_id, usuario_id))
+        # Obtener información de la invitación (aceptar tanto pendientes como archivadas)
+        cursor.execute("SELECT grupo_id, rol FROM invitaciones_grupo WHERE id = %s AND usuario_id = %s AND estado IN ('pendiente', 'archivada', 'aceptada')", (invitacion_id, usuario_id))
         invitacion = cursor.fetchone()
         
         if not invitacion:
@@ -2157,16 +2617,39 @@ def aceptar_invitacion_grupo(invitacion_id, usuario_id):
         
         # Agregar como miembro
         sql = "INSERT INTO miembros_grupo (grupo_id, usuario_id, rol) VALUES (%s, %s, %s)"
-        cursor.execute(sql, (grupo_id, usuario_id, rol))
+        print(f"🔍 [DEBUG] Ejecutando SQL: {sql}")
+        print(f"🔍 [DEBUG] Parámetros: grupo_id={grupo_id}, usuario_id={usuario_id}, rol={rol}")
+        
+        try:
+            cursor.execute(sql, (grupo_id, usuario_id, rol))
+            print(f"✅ [DEBUG] Usuario {usuario_id} agregado como {rol} al grupo {grupo_id}")
+        except Exception as e:
+            print(f"❌ [DEBUG] Error al insertar miembro: {e}")
+            raise e
+        
+        # Si se proporcionó un área, asignarla al usuario para este grupo
+        if area_id:
+            print(f"🔍 [DEBUG] Asignando área {area_id} al grupo {grupo_id} para usuario {usuario_id}")
+            # Asignar área directamente sin cerrar conexión
+            sql_area = """
+                INSERT INTO grupo_areas_usuario (grupo_id, usuario_id, area_id) 
+                VALUES (%s, %s, %s) 
+                ON DUPLICATE KEY UPDATE area_id = VALUES(area_id)
+            """
+            cursor.execute(sql_area, (grupo_id, usuario_id, area_id))
+            print(f"✅ [DEBUG] Área {area_id} asignada al grupo {grupo_id} para usuario {usuario_id}")
         
         # Marcar invitación como aceptada
         cursor.execute("UPDATE invitaciones_grupo SET estado = 'aceptada', fecha_respuesta = NOW() WHERE id = %s", (invitacion_id,))
         
+        print(f"🔍 [DEBUG] Realizando commit...")
         conn.commit()
+        print(f"✅ [DEBUG] Commit realizado exitosamente")
         cursor.close()
         conn.close()
+        print(f"✅ [DEBUG] Conexiones cerradas")
         
-        print(f"✅ [SUCCESS] Usuario {usuario_id} aceptó invitación al grupo {grupo_id} como {rol}")
+        print(f"✅ [SUCCESS] Usuario {usuario_id} aceptó invitación al grupo {grupo_id} como {rol}" + (f" con área {area_id}" if area_id else ""))
         
         # Crear notificación de aceptación
         notificar_aceptacion_invitacion(grupo_id, usuario_id, rol)
@@ -2174,6 +2657,9 @@ def aceptar_invitacion_grupo(invitacion_id, usuario_id):
         return True
     except Exception as e:
         print(f"❌ [ERROR] Error al aceptar invitación: {e}")
+        import traceback
+        print(f"📋 [DEBUG] Traceback completo:")
+        traceback.print_exc()
         if 'conn' in locals():
             conn.rollback()
             conn.close()
@@ -2257,6 +2743,48 @@ def obtener_invitaciones_pendientes_usuario(usuario_id):
         print(f"❌ [ERROR] Error al obtener invitaciones pendientes: {e}")
         return []
 
+def obtener_todas_invitaciones_usuario(usuario_id):
+    """Obtener todas las invitaciones de un usuario (pendientes y archivadas)"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        sql = """
+        SELECT i.*, g.nombre as grupo_nombre, g.descripcion as grupo_descripcion,
+               u.nombre as creador_nombre, u.apellido as creador_apellido
+        FROM invitaciones_grupo i
+        JOIN grupos g ON i.grupo_id = g.id
+        JOIN usuarios u ON g.creador_id = u.id
+        WHERE i.usuario_id = %s 
+        AND i.estado IN ('pendiente', 'archivada')
+        AND NOT EXISTS (
+            SELECT 1 FROM miembros_grupo mg 
+            WHERE mg.grupo_id = i.grupo_id 
+            AND mg.usuario_id = i.usuario_id
+        )
+        ORDER BY i.fecha_invitacion DESC
+        """
+        
+        cursor.execute(sql, (usuario_id,))
+        invitaciones = cursor.fetchall()
+        
+        # Agregar propiedades necesarias para el frontend
+        for invitacion in invitaciones:
+            invitacion['es_invitacion'] = True
+            invitacion['invitacion_id'] = invitacion['id']
+            invitacion['nombre'] = invitacion['grupo_nombre']
+            invitacion['descripcion'] = invitacion['grupo_descripcion']
+            invitacion['total_miembros'] = 0  # Se puede calcular si es necesario
+            invitacion['total_tareas'] = 0     # Se puede calcular si es necesario
+        
+        cursor.close()
+        conn.close()
+        
+        return invitaciones
+    except Exception as e:
+        print(f"❌ [ERROR] Error al obtener todas las invitaciones: {e}")
+        return []
+
 def notificar_aceptacion_invitacion(grupo_id, usuario_id, rol):
     """Crear notificación cuando se acepta una invitación"""
     try:
@@ -2318,11 +2846,14 @@ def aceptar_invitacion_endpoint(invitacion_id):
     try:
         data = request.json
         usuario_id = data.get('usuario_id')
+        area_id = data.get('area_id')
+        
+        print(f"🔍 [DEBUG] Aceptando invitación {invitacion_id} para usuario {usuario_id} con área {area_id}")
         
         if not usuario_id:
             return jsonify({'error': 'Usuario ID requerido'}), 400
         
-        success = aceptar_invitacion_grupo(invitacion_id, usuario_id)
+        success = aceptar_invitacion_grupo(invitacion_id, usuario_id, area_id)
         
         if success:
             return jsonify({'mensaje': 'Invitación aceptada exitosamente'})
@@ -2386,6 +2917,36 @@ def archivar_invitacion_endpoint(invitacion_id):
             conn.rollback()
             conn.close()
         return jsonify({'error': 'Error al archivar invitación'}), 500
+
+@app.route('/invitaciones/<int:invitacion_id>/desarchivar', methods=['PUT'])
+def desarchivar_invitacion_endpoint(invitacion_id):
+    """Desarchivar una invitación (cambiar estado a 'pendiente')"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar que la invitación existe y está archivada
+        cursor.execute("SELECT * FROM invitaciones_grupo WHERE id = %s AND estado = 'archivada'", (invitacion_id,))
+        invitacion = cursor.fetchone()
+        
+        if not invitacion:
+            return jsonify({'error': 'Invitación no encontrada o no está archivada'}), 404
+        
+        # Cambiar estado a 'pendiente'
+        cursor.execute("UPDATE invitaciones_grupo SET estado = 'pendiente' WHERE id = %s", (invitacion_id,))
+        conn.commit()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'mensaje': 'Invitación desarchivada exitosamente'})
+        
+    except Exception as e:
+        print(f"❌ [ERROR] Error al desarchivar invitación: {e}")
+        if 'conn' in locals():
+            conn.rollback()
+            conn.close()
+        return jsonify({'error': 'Error al desarchivar invitación'}), 500
 
 def notificar_invitacion_archivada(invitacion_id):
     """Crear notificación cuando se archiva una invitación"""
@@ -2461,7 +3022,209 @@ def limpiar_invitaciones_duplicadas_endpoint():
     except Exception as e:
         return jsonify({'error': f'Error al limpiar invitaciones: {e}'}), 500
 
+# Endpoints para notas de tareas
+@app.route('/task-notes/<int:task_id>', methods=['GET'])
+def get_task_notes(task_id):
+    """Obtener todas las notas de una tarea"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT tn.*, u.nombre as user_name 
+            FROM notas_tareas tn 
+            JOIN usuarios u ON tn.id_usuario = u.id 
+            WHERE tn.id_tarea = %s 
+            ORDER BY tn.fecha_creacion DESC
+        ''', (task_id,))
+        
+        notes = cursor.fetchall()
+        conn.close()
+        
+        return jsonify([{
+            'id': note[0],
+            'task_id': note[1],
+            'user_id': note[2],
+            'content': note[3],
+            'note_type': note[4],
+            'file_path': note[5],
+            'file_name': note[6],
+            'file_size': note[7],
+            'created_at': note[8],
+            'updated_at': note[9],
+            'user_name': note[10]
+        } for note in notes])
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
+@app.route('/task-notes', methods=['POST'])
+def create_task_note():
+    """Crear una nueva nota para una tarea"""
+    try:
+        data = request.get_json()
+        task_id = data.get('task_id')
+        user_id = data.get('user_id')
+        content = data.get('content')
+        note_type = data.get('note_type', 'text')
+        file_path = data.get('file_path')
+        file_name = data.get('file_name')
+        file_size = data.get('file_size')
+        
+        if not all([task_id, user_id, content]):
+            return jsonify({'error': 'Faltan campos requeridos'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO notas_tareas (id_tarea, id_usuario, contenido, tipo_nota, ruta_archivo, nombre_archivo, tamano_archivo)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ''', (task_id, user_id, content, note_type, file_path, file_name, file_size))
+        
+        note_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'id': note_id, 'message': 'Nota creada exitosamente'}), 201
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/task-notes/<int:note_id>', methods=['PUT'])
+def update_task_note(note_id):
+    """Actualizar una nota existente"""
+    try:
+        data = request.get_json()
+        content = data.get('content')
+        
+        if not content:
+            return jsonify({'error': 'El contenido es requerido'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE notas_tareas 
+            SET contenido = %s, fecha_actualizacion = CURRENT_TIMESTAMP 
+            WHERE id = %s
+        ''', (content, note_id))
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Nota no encontrada'}), 404
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Nota actualizada exitosamente'})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/task-notes/<int:note_id>', methods=['DELETE'])
+def delete_task_note(note_id):
+    """Eliminar una nota"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM notas_tareas WHERE id = %s', (note_id,))
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Nota no encontrada'}), 404
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Nota eliminada exitosamente'})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Endpoints para evidencias (preparación para futura implementación premium)
+@app.route('/task-evidence/<int:task_id>', methods=['GET'])
+def get_task_evidence(task_id):
+    """Obtener todas las evidencias de una tarea"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT te.*, u.nombre as user_name 
+            FROM evidencias_tareas te 
+            JOIN usuarios u ON te.id_usuario = u.id 
+            WHERE te.id_tarea = %s 
+            ORDER BY te.fecha_creacion DESC
+        ''', (task_id,))
+        
+        evidence = cursor.fetchall()
+        conn.close()
+        
+        return jsonify([{
+            'id': ev[0],
+            'task_id': ev[1],
+            'user_id': ev[2],
+            'evidence_type': ev[3],
+            'file_path': ev[4],
+            'file_name': ev[5],
+            'file_size': ev[6],
+            'mime_type': ev[7],
+            'description': ev[8],
+            'status': ev[9],
+            'approved_by': ev[10],
+            'approved_at': ev[11],
+            'created_at': ev[12],
+            'user_name': ev[13]
+        } for ev in evidence])
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/areas/<int:usuario_id>/archivadas', methods=['GET'])
+def listar_areas_archivadas(usuario_id):
+    """Endpoint para obtener áreas archivadas del usuario"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Consulta para áreas archivadas
+        query = """
+            SELECT 
+                a.id,
+                a.nombre,
+                a.descripcion,
+                a.color,
+                a.icono,
+                a.estado,
+                a.fecha_creacion,
+                COALESCE(COUNT(t.id), 0) as total_tareas,
+                COALESCE(SUM(CASE WHEN t.estado = 'completada' THEN 1 ELSE 0 END), 0) as tareas_completadas,
+                COALESCE(SUM(CASE WHEN t.estado = 'pendiente' THEN 1 ELSE 0 END), 0) as tareas_pendientes,
+                COALESCE(SUM(CASE WHEN t.estado = 'vencida' THEN 1 ELSE 0 END), 0) as tareas_vencidas
+            FROM areas a
+            LEFT JOIN tareas t ON a.id = t.area_id AND t.estado != 'eliminada'
+            WHERE a.usuario_id = %s AND a.estado = 'archivada'
+            GROUP BY a.id, a.nombre, a.descripcion, a.color, a.icono, a.estado, a.fecha_creacion
+            ORDER BY a.fecha_creacion DESC
+        """
+        
+        cursor.execute(query, [usuario_id])
+        areas = cursor.fetchall()
+        
+        print(f"🔍 [DEBUG] Áreas archivadas para usuario {usuario_id}: {len(areas)}")
+        for area in areas:
+            print(f"   - Área archivada: {area['nombre']}, Total tareas: {area['total_tareas']}")
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify(areas)
+        
+    except Exception as e:
+        print(f"❌ Error en listar_areas_archivadas: {e}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000, host='0.0.0.0') 

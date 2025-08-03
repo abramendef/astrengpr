@@ -303,7 +303,7 @@ function validateForm() {
 
 /*===== FORM SUBMISSION =====*/
 function registrarUsuario(formData) {
-    fetch('http://localhost:8000/usuarios', {
+            fetch(buildApiUrl(CONFIG.API_ENDPOINTS.REGISTER), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -517,7 +517,7 @@ function clearForm() {
 
 /*===== ANALYTICS TRACKING =====*/
 function trackRegistrationAttempt() {
-    console.log('Registration attempt');
+            Logger.info('Registration attempt', null, 'API');
     
     if (typeof trackEvent === 'function') {
         trackEvent('Authentication', 'registration_attempt', 'email');
@@ -562,4 +562,4 @@ window.addEventListener('error', function(e) {
     }
 });
 
-console.log('Register functionality initialized');
+        Logger.info('Register functionality initialized', null, 'UI');

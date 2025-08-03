@@ -526,7 +526,7 @@ class UtilityManager {
 class AnalyticsManager {
     static trackEvent(category, action, label = null, value = null) {
         // In a real application, this would send data to Google Analytics or similar
-        console.log('Analytics Event:', { category, action, label, value });
+        Logger.debug('Analytics Event', { category, action, label, value }, 'PERFORMANCE');
         
         // Simulate analytics tracking
         if (typeof gtag !== 'undefined') {
@@ -556,7 +556,7 @@ class PerformanceManager {
     static measurePageLoad() {
         window.addEventListener('load', () => {
             const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-            console.log(`Page load time: ${loadTime}ms`);
+            Logger.info(`Page load time: ${loadTime}ms`, null, 'PERFORMANCE');
             
             if (loadTime > 3000) {
                 console.warn('Page load time is slow. Consider optimizing assets.');
@@ -568,7 +568,7 @@ class PerformanceManager {
         const start = performance.now();
         callback();
         const end = performance.now();
-        console.log(`${name} took ${end - start}ms`);
+                    Logger.debug(`${name} took ${end - start}ms`, null, 'PERFORMANCE');
     }
 }
 
@@ -729,7 +729,7 @@ class AppInitializer {
         const pageName = this.getCurrentPageName();
         AnalyticsManager.trackPageView(pageName);
 
-        console.log('Astren app initialized successfully');
+        Logger.info('Astren app initialized successfully', null, 'UI');
     }
 
     getCurrentPageName() {

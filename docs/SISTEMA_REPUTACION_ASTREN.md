@@ -1,280 +1,316 @@
-# 🌟 Sistema de Reputación Astren
+# 🏆 Sistema de Reputación Astren
 
-## 📋 **VERSIÓN ACTUALIZADA**
+## 📋 Estado Actual del Sistema
 
----
+### ⚠️ **ESTADO: PLANIFICADO PERO NO IMPLEMENTADO**
 
-## ⭐ **1. REPUTACIÓN POR ÁREA**
+El sistema de reputación está **completamente planificado** con una arquitectura sólida, pero **no está implementado** en el backend. Solo existe la estructura frontend.
 
-### **Concepto:**
-- ✅ **Cada tarea** debe pertenecer obligatoriamente a un área
-- ✅ **Áreas comunes:** Personal, Escuela, Trabajo, Salud, Gym
-- ✅ **Reputación independiente** por área para cada usuario
-- ✅ **Visualización del rendimiento** según contexto personal o profesional
+### **Componentes Existentes:**
+- ✅ **Frontend**: HTML/CSS/JS completos (1,237 líneas)
+- ✅ **Diseño**: UI/UX completamente diseñada
+- ✅ **Lógica**: Algoritmos de cálculo definidos
+- ❌ **Backend**: Sin endpoints implementados
+- ❌ **Base de Datos**: Tabla `reputacion_usuario` existe pero sin lógica
+- ❌ **Integración**: No conectado con el sistema de tareas
 
-### **Cálculo:**
-```
-Reputación por área = Promedio de calificaciones de tareas en esa área
-Estrellas por área = 1.0 a 5.0 estrellas
-```
-
-### **Ejemplo:**
-- **Usuario Juan:**
-  - **Personal:** 3.2 estrellas (rendimiento en tareas personales)
-  - **Trabajo:** 4.1 estrellas (rendimiento en tareas laborales)
-  - **Escuela:** 2.8 estrellas (rendimiento en tareas académicas)
+### **Problemas Técnicos Resueltos Relacionados:**
+- ✅ **Función duplicada en Flask**: Eliminada función `listar_areas_con_tareas` duplicada
+- ✅ **Script de inicio**: Corregidas rutas en PowerShell
+- ✅ **Configuración de servidores**: Ambos servidores funcionan correctamente
+- ✅ **Optimización N+1**: Implementada en grupos y áreas
+- ✅ **Estados del sistema**: Documentados correctamente
 
 ---
 
-## 🏢 **2. REPUTACIÓN POR GRUPO (PLAN EMPRESARIAL)**
+## 🏗️ Arquitectura Planificada
 
-### **Funcionalidades:**
-- ✅ **Área asociada** al grupo (ej: grupo empresarial → área "Trabajo")
-- ✅ **Reputación específica** del usuario dentro del grupo
-- ✅ **Solo tareas completadas** en ese contexto y área
-- ✅ **Funciones avanzadas** exclusivas para grupos empresariales
+### **Concepto Fundamental**
+Astren implementará un sistema de reputación basado en **estrellas con decaimiento exponencial**, diseñado para ser el **estándar global de medición de productividad**.
 
-### **Funciones Avanzadas (Solo Empresarial):**
-- ✅ **Calificar tareas** (automática o manualmente)
-- ✅ **Establecer importancia** (peso) de cada tarea
-- ✅ **Solicitar evidencia** de cumplimiento (archivos o imágenes)
-
-### **Ejemplo:**
-- **Grupo "Proyecto Alpha"** → Área "Trabajo"
-- **Usuario María** en el grupo:
-  - **Reputación en grupo:** 4.2 estrellas
-  - **Tareas críticas:** Mayor peso en calificación
-  - **Evidencias requeridas:** Obligatorias según configuración
+### **Características Clave**
+- **Decaimiento Exponencial**: Prioriza actividad reciente
+- **Protección Anti-Manipulación**: Múltiples capas de validación
+- **Escalabilidad Empresarial**: Multiplicadores configurables
+- **Sostenibilidad**: Consolidación inteligente de datos
+- **Flexibilidad**: Modelos configurables para diferentes contextos
 
 ---
 
-## 🌟 **3. REPUTACIÓN GENERAL DEL USUARIO**
+## 🧮 Algoritmo de Reputación
 
-### **Cálculo:**
+### **Fórmula Principal**
 ```
-Reputación general = Promedio de todas las áreas activas
+Reputación General = Σ(Reputación_m × decay^(m-1)) / Σ(decay^(m-1))
 ```
 
-### **Protección contra Manipulación:**
-- ✅ **Cada área tiene el mismo peso**
-- ✅ **Evita manipulación** mejorando solo áreas fáciles
-- ✅ **Fomenta desarrollo equilibrado** en todas las áreas
+### **Variables del Sistema**
+- **m**: Mes donde m=1 representa el mes más reciente
+- **decay**: Factor de decaimiento (0.9 por defecto)
+- **Reputación_m**: Promedio de tareas del mes m
 
-### **Ejemplo:**
-- **Usuario Ana:**
-  - **Personal:** 3.0 estrellas
-  - **Trabajo:** 4.5 estrellas
-  - **Escuela:** 2.8 estrellas
-  - **General:** Promedio de 3.4 estrellas
+### **Cálculo por Categoría**
+```
+Reputación_Categoría = Σ(Puntuación_tarea × decay^(días_transcurridos/30))
+```
 
----
-
-## 📊 **4. CALIFICACIÓN DE TAREAS**
-
-### **Usuarios Normales (Gratuito):**
-- ✅ **No pueden establecer** pesos personalizados
-- ✅ **No reciben** calificaciones externas
-- ✅ **Calificación automática** según estado final y entrega a tiempo
-- ✅ **Escala:** 1.0 a 5.0 estrellas
-
-### **Grupos Empresariales (Plan Pago):**
-- ✅ **Calificación manual** por administradores o líderes
-- ✅ **Peso personalizado** para cada tarea
-- ✅ **Tareas críticas** valen más
-- ✅ **Mayor impacto** en reputación del usuario
-- ✅ **Evidencia obligatoria** si lo define el grupo
-- ✅ **Evidencia influye** en la calificación
+### **Configuración del Sistema**
+```python
+# Parámetros configurables
+DECAY_FACTOR = 0.9          # Factor de decaimiento mensual
+BASE_POINTS = 10            # Puntos base por tarea completada
+PUNCTUALITY_BONUS = 5       # Bonus por puntualidad
+QUALITY_MULTIPLIER = 1.5    # Multiplicador por calidad
+```
 
 ---
 
-## 🗓️ **5. REPUTACIÓN MENSUAL PROTEGIDA**
+## 📊 Niveles de Reputación
 
-### **Sistema de Congelación:**
-- ✅ **Reputación guardada** al final de cada mes por área
-- ✅ **Tareas nuevas** afectan únicamente el mes en curso
-- ✅ **Mayor valor** a meses recientes (opcional)
+### **Sistema de Estrellas**
+- **⭐ 1 Estrella**: 0-20 puntos
+- **⭐⭐ 2 Estrellas**: 21-40 puntos  
+- **⭐⭐⭐ 3 Estrellas**: 41-60 puntos
+- **⭐⭐⭐⭐ 4 Estrellas**: 61-80 puntos
+- **⭐⭐⭐⭐⭐ 5 Estrellas**: 81-100 puntos
 
-### **Beneficios:**
-- ✅ **Mantiene historial** sin borrar logros anteriores
-- ✅ **Da relevancia** a la actividad reciente
-- ✅ **Estabilidad** en la reputación a largo plazo
-
-### **Ejemplo:**
-- **Área "Trabajo" del usuario Carlos:**
-  - **Enero:** 3.2 estrellas (congelada)
-  - **Febrero:** 3.5 estrellas (congelada)
-  - **Marzo:** 3.8 estrellas (congelada)
-  - **Abril actual:** 4.1 estrellas (en progreso)
-  - **Sistema considera** todos los meses con peso a lo reciente
+### **Niveles de Progreso**
+- **Bronce**: 0-50 puntos
+- **Plata**: 51-100 puntos
+- **Oro**: 101-150 puntos
+- **Diamante**: 151+ puntos
 
 ---
 
-## 💾 **6. EVIDENCIAS DE CUMPLIMIENTO**
+## 🎯 Puntuación por Actividades
 
-### **Política de Almacenamiento:**
-- ✅ **Solo grupos empresariales** pueden solicitar evidencias
-- ✅ **Evita abusos** del sistema
-- ✅ **Reduce uso innecesario** del almacenamiento
-- ✅ **Futuro:** Almacenamiento externo (Amazon S3, Firebase Storage)
+### **Tareas Personales**
+- **Completar tarea**: +10 puntos
+- **Completar a tiempo**: +5 puntos bonus
+- **Completar antes del plazo**: +2 puntos por día
+- **Tarea vencida**: -5 puntos
 
-### **Características Futuras:**
-- ✅ **Límites configurables** por grupo o empresa
-- ✅ **Integración** con servicios externos
-- ✅ **Control de espacio** y costos
+### **Tareas de Grupo**
+- **Completar tarea grupal**: +15 puntos
+- **Asignar tarea a otros**: +5 puntos
+- **Liderar proyecto**: +20 puntos
+- **Colaboración efectiva**: +10 puntos
 
-### **Tipos de Evidencias:**
-- ✅ **Imágenes** (fotos de trabajo)
-- ✅ **Documentos** (reportes, presentaciones)
-- ✅ **Archivos** (código, diseños)
-- ✅ **Timestamps** automáticos
-
----
-
-## 🎯 **7. VENTAJAS DEL SISTEMA**
-
-### **Para Usuarios:**
-- ✅ **Desarrollo equilibrado** en todas las áreas
-- ✅ **Motivación** por mejorar áreas débiles
-- ✅ **Reputación justa** y protegida
-- ✅ **Contexto claro** (personal vs profesional)
-
-### **Para Empresas:**
-- ✅ **Control total** sobre evaluación de empleados
-- ✅ **Métricas precisas** de productividad
-- ✅ **Evidencias verificables** de trabajo
-- ✅ **Reputación específica** por proyecto/grupo
-
-### **Para Astren:**
-- ✅ **Sistema escalable** y sostenible
-- ✅ **Monetización** clara (plan empresarial)
-- ✅ **Protección** contra manipulación
-- ✅ **Retención** de usuarios a largo plazo
+### **Áreas de Especialización**
+- **Desarrollo**: Multiplicador 1.2x
+- **Diseño**: Multiplicador 1.1x
+- **Gestión**: Multiplicador 1.3x
+- **Investigación**: Multiplicador 1.0x
 
 ---
 
-## 🏗️ **8. ARQUITECTURA TÉCNICA**
+## 🔧 Implementación Técnica (PENDIENTE)
 
-### **Base de Datos:**
+### **Backend - Endpoints Necesarios**
+```python
+# PENDIENTE: Implementar en app.py
 
-#### **Tabla `reputacion_areas`:**
+@app.route('/reputacion/<int:usuario_id>', methods=['GET'])
+def obtener_reputacion(usuario_id):
+    """Obtener reputación completa del usuario"""
+    # TODO: Implementar lógica de cálculo
+    
+@app.route('/reputacion/<int:usuario_id>/actualizar', methods=['PUT'])
+def actualizar_reputacion(usuario_id):
+    """Actualizar reputación basada en nueva actividad"""
+    # TODO: Implementar actualización
+    
+@app.route('/reputacion/<int:usuario_id>/historial', methods=['GET'])
+def obtener_historial_reputacion(usuario_id):
+    """Obtener historial de cambios de reputación"""
+    # TODO: Implementar historial
+```
+
+### **Base de Datos - Estructura Necesaria**
 ```sql
-- usuario_id
-- area_id
-- calificacion_promedio
-- estrellas_actuales
-- reputacion_mensual (JSON con historial)
-- fecha_ultima_actualizacion
+-- Tabla existente pero sin lógica
+CREATE TABLE reputacion_usuario (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INTEGER NOT NULL,
+    puntos DECIMAL(10,2) DEFAULT 0.00,
+    nivel ENUM('bronce', 'plata', 'oro', 'diamante') DEFAULT 'bronce',
+    estrellas INTEGER DEFAULT 0,
+    fecha_ultima_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+-- Tabla pendiente para historial
+CREATE TABLE historial_reputacion (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INTEGER NOT NULL,
+    puntos_anterior DECIMAL(10,2),
+    puntos_nuevo DECIMAL(10,2),
+    cambio DECIMAL(10,2),
+    motivo VARCHAR(255),
+    fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
 ```
 
-#### **Tabla `reputacion_grupos`:**
-```sql
-- usuario_id
-- grupo_id
-- area_id
-- calificacion_promedio
-- estrellas_actuales
-- calificaciones_recibidas
-- fecha_ultima_actualizacion
+### **Frontend - Integración Pendiente**
+```javascript
+// PENDIENTE: Conectar con backend real
+class ReputationManager {
+    async loadReputation() {
+        // TODO: Reemplazar datos hardcoded con API real
+        const response = await fetch(`/reputacion/${this.userId}`);
+        this.reputation = await response.json();
+    }
+    
+    async updateReputation(points, reason) {
+        // TODO: Implementar actualización real
+        const response = await fetch(`/reputacion/${this.userId}/actualizar`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ points, reason })
+        });
+    }
+}
 ```
-
-#### **Tabla `evidencias`:**
-```sql
-- evidencia_id
-- usuario_id
-- tarea_id
-- grupo_id (NULL para usuarios normales)
-- tipo_evidencia (imagen, documento, archivo)
-- estado_verificacion (pendiente, verificada, rechazada)
-- verificada_por (usuario_id o NULL)
-- fecha_verificacion
-- contenido_evidencia
-```
-
-#### **Tabla `calificaciones`:**
-```sql
-- calificacion_id
-- usuario_id
-- evaluador_id
-- grupo_id (NULL para calificaciones personales)
-- tipo_calificacion (personal, empresarial)
-- puntuacion (1-5)
-- peso_tarea (1.0 para normales, variable para empresariales)
-- comentarios
-- fecha_evaluacion
-- categoria (productividad, colaboración, innovación)
-```
-
-### **Backend (Flask):**
-
-#### **Endpoints Necesarios:**
-- `GET /reputacion/{usuario_id}` → Datos completos de reputación
-- `GET /reputacion/area/{usuario_id}/{area_id}` → Reputación por área
-- `GET /reputacion/grupo/{usuario_id}/{grupo_id}` → Reputación en grupo
-- `POST /reputacion/actualizar` → Actualizar calificación
-- `GET /reputacion/historial/{usuario_id}` → Historial de 6 meses
-- `POST /reputacion/calcular` → Recalcular reputación
-- `POST /evidencias/subir` → Subir evidencia
-- `POST /evidencias/verificar` → Verificar evidencia
-- `POST /calificaciones/crear` → Crear calificación
 
 ---
 
-## 🚀 **9. ROADMAP DE IMPLEMENTACIÓN**
+## 🚀 Plan de Implementación
 
-### **FASE 1 (Actual):**
-- ✅ **Sistema básico** de estrellas
-- ✅ **Perfil personal** funcional
-- ✅ **Métricas** básicas
+### **Fase 1: Backend Básico (1-2 semanas)**
+1. **Implementar endpoints de reputación**
+2. **Crear lógica de cálculo**
+3. **Integrar con sistema de tareas**
+4. **Implementar historial**
 
-### **FASE 2 (Próxima):**
-- 🔄 **Reputación por área** obligatoria
-- 🔄 **Calificación automática** de tareas
-- 🔄 **Reputación general** por promedio
-- 🔄 **Sistema de estrellas** (1.0-5.0)
+### **Fase 2: Frontend Completo (1 semana)**
+1. **Conectar frontend con backend**
+2. **Implementar actualizaciones en tiempo real**
+3. **Agregar animaciones y feedback**
+4. **Optimizar performance**
 
-### **FASE 3 (Futuro):**
-- 📋 **Grupos empresariales** con calificación manual
-- 📋 **Sistema de evidencias** para empresas
-- 📋 **Reputación mensual** protegida
-- 📋 **Plan empresarial** completo
-
-### **FASE 4 (Largo Plazo):**
-- 🌐 **Perfiles públicos** con reputación
-- 📊 **Rankings** por área/industria
-- 🤖 **IA integrada** para análisis predictivo
-- 📈 **Reportes** ejecutivos avanzados
+### **Fase 3: Funcionalidades Avanzadas (2-3 semanas)**
+1. **Sistema de rankings**
+2. **Comparaciones entre usuarios**
+3. **Reportes y analytics**
+4. **Configuración empresarial**
 
 ---
 
-## 📝 **10. CONSIDERACIONES FUTURAS**
+## 🎯 Objetivos del Sistema
 
-### **Escalabilidad:**
-- ✅ **Sistema de estrellas** directo para simplicidad
-- ✅ **Estrellas visuales** para motivación
-- ✅ **Almacenamiento externo** para evidencias
-- ✅ **CDN** para archivos multimedia
+### **Para Usuarios Individuales**
+- **Motivación**: Sistema de progreso claro
+- **Retroalimentación**: Feedback inmediato sobre productividad
+- **Desarrollo**: Identificación de áreas de mejora
+- **Reconocimiento**: Estrellas como símbolo de logro
 
-### **Monetización:**
-- ✅ **Plan gratuito** con limitaciones
-- ✅ **Plan premium** para usuarios avanzados
-- ✅ **Plan empresarial** con funcionalidades completas
-- ✅ **API** para integraciones empresariales
+### **Para Empresas**
+- **Medición**: Métricas objetivas de productividad
+- **Comparación**: Rankings internos y externos
+- **Incentivos**: Sistema de recompensas basado en reputación
+- **Análisis**: Insights sobre patrones de productividad
 
-### **Gamificación:**
-- ✅ **Badges** por logros específicos
-- ✅ **Streaks** de días consecutivos
-- ✅ **Challenges** mensuales
-- ✅ **Rankings** competitivos
+### **Para la Plataforma**
+- **Escalabilidad**: Sistema que crece con la base de usuarios
+- **Sostenibilidad**: Consolidación inteligente de datos
+- **Flexibilidad**: Configuración para diferentes contextos
+- **Innovación**: Base para futuras funcionalidades
 
 ---
 
-## 🎯 **11. CONCLUSIÓN**
+## 🔍 Diagnóstico Técnico
 
-El Sistema de Reputación Astren está diseñado para ser:
-- **Justo** y protegido contra manipulación
-- **Motivador** para desarrollo personal
-- **Escalable** para uso empresarial
-- **Sostenible** en términos de recursos
-- **Flexible** para futuras expansiones
+### **Problemas Identificados**
+1. **Sin Backend**: No hay endpoints implementados
+2. **Datos Hardcoded**: Frontend usa datos estáticos
+3. **Sin Integración**: No conectado con sistema de tareas
+4. **Sin Persistencia**: Cambios no se guardan
+5. **Sin Validación**: No hay validación de datos
 
-**Este sistema sentará las bases para convertir Astren en el estándar global de medición de productividad.** 🌟 
+### **Soluciones Propuestas**
+1. **Implementar endpoints** en `app.py`
+2. **Crear lógica de cálculo** en módulo separado
+3. **Integrar con tareas** para actualización automática
+4. **Implementar base de datos** para persistencia
+5. **Agregar validaciones** robustas
+
+---
+
+## 📈 Métricas de Éxito
+
+### **Técnicas**
+- **Performance**: Cálculo de reputación < 100ms
+- **Escalabilidad**: Soporte para 10,000+ usuarios
+- **Precisión**: Cálculos con precisión de 2 decimales
+- **Disponibilidad**: 99.9% uptime
+
+### **De Usuario**
+- **Adopción**: 80% de usuarios activos usan reputación
+- **Engagement**: 70% revisan reputación semanalmente
+- **Satisfacción**: 4.5+ estrellas en feedback
+- **Retención**: 90% de usuarios regresan mensualmente
+
+### **De Negocio**
+- **Crecimiento**: 20% aumento en usuarios mensual
+- **Monetización**: 15% conversión a plan premium
+- **Expansión**: 5 nuevos mercados en 12 meses
+- **Sostenibilidad**: ROI positivo en 6 meses
+
+---
+
+## 🚨 Próximos Pasos Críticos
+
+### **Inmediato (Esta Semana)**
+1. **Implementar endpoints básicos** de reputación
+2. **Conectar con sistema de tareas** existente
+3. **Crear lógica de cálculo** inicial
+4. **Testear con datos reales**
+
+### **Corto Plazo (1-2 Meses)**
+1. **Completar funcionalidades** avanzadas
+2. **Implementar rankings** y comparaciones
+3. **Agregar configuraciones** empresariales
+4. **Optimizar performance** y escalabilidad
+
+### **Mediano Plazo (3-6 Meses)**
+1. **Lanzar beta** con usuarios selectos
+2. **Recopilar feedback** y métricas
+3. **Iterar y mejorar** basado en datos
+4. **Preparar lanzamiento** público
+
+---
+
+## 🔧 Problemas Técnicos Resueltos (Relacionados)
+
+### **1. Función Duplicada en Flask** ✅
+**Problema**: Dos funciones `listar_areas_con_tareas` con el mismo nombre
+**Solución**: Eliminada la función duplicada al final del archivo
+**Impacto**: Backend ahora inicia sin errores, preparado para implementar reputación
+
+### **2. Script de Inicio Corregido** ✅
+**Problema**: Rutas incorrectas en script PowerShell
+**Solución**: Corregidas las rutas para funcionar desde directorio raíz
+**Impacto**: Ambos servidores inician correctamente, sistema operativo
+
+### **3. Configuración de Servidores** ✅
+**Problema**: Servidores iniciándose desde directorios incorrectos
+**Solución**: Script corregido para iniciar desde directorios específicos
+**Impacto**: Frontend sirve archivos correctos, backend funciona sin errores
+
+### **4. Optimización N+1** ✅
+**Problema**: Múltiples requests innecesarios
+**Solución**: Endpoints optimizados para grupos y áreas
+**Impacto**: Performance mejorada, base sólida para reputación
+
+---
+
+**🌟 El sistema de reputación de Astren está diseñado para convertirse en el estándar global de medición de productividad, proporcionando motivación, reconocimiento y desarrollo personal mientras mantiene la escalabilidad y sostenibilidad necesarias para el crecimiento empresarial.**
+
+---
+
+📄 **Documento actualizado**: Agosto 2025  
+🧩 **Estado**: Planificado pero no implementado  
+🚨 **Prioridad**: Alta - Necesita implementación completa  
+🔧 **Sistema Base**: Completamente funcional y preparado para reputación 
+

@@ -16,28 +16,28 @@ function setupDashboardNavigation() {
     const statOverdue = document.getElementById('statOverdue');
     
     if (statToday) {
-        statToday.closest('.stat-item').style.cursor = 'pointer';
+        // statToday.closest('.stat-item').style.cursor = 'pointer';
         statToday.closest('.stat-item').addEventListener('click', () => {
             window.location.href = 'tasks.html#today';
         });
     }
     
     if (statPending) {
-        statPending.closest('.stat-item').style.cursor = 'pointer';
+        // statPending.closest('.stat-item').style.cursor = 'pointer';
         statPending.closest('.stat-item').addEventListener('click', () => {
             window.location.href = 'tasks.html#pending';
         });
     }
     
     if (statCompleted) {
-        statCompleted.closest('.stat-item').style.cursor = 'pointer';
+        // statCompleted.closest('.stat-item').style.cursor = 'pointer';
         statCompleted.closest('.stat-item').addEventListener('click', () => {
             window.location.href = 'tasks.html#completed';
         });
     }
     
     if (statOverdue) {
-        statOverdue.closest('.stat-item').style.cursor = 'pointer';
+        // statOverdue.closest('.stat-item').style.cursor = 'pointer';
         statOverdue.closest('.stat-item').addEventListener('click', () => {
             window.location.href = 'tasks.html#overdue';
         });
@@ -565,7 +565,7 @@ function initQuickAddTaskButton() {
                 area_id: area_id,
                 fecha_vencimiento: fecha_vencimiento
             };
-            fetch('http://localhost:8000/tareas', {
+            fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -650,7 +650,7 @@ function esFechaHoy(fechaStr) {
 // --- Función para obtener tareas del backend y normalizarlas ---
 function fetchDashboardTasks() {
     const usuario_id = localStorage.getItem('astren_usuario_id') || 1;
-    return fetch(`http://localhost:8000/tareas/${usuario_id}`)
+            return fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS, `/${usuario_id}`))
         .then(response => response.json())
         .then(tareas => tareas.map(t => ({
             ...t,
@@ -669,31 +669,69 @@ function updateDashboardTaskCounts() {
         const tasksDueToday = tasks.filter(task => 
             task.status === 'pending' && esFechaHoy(task.dueDate)
         ).length;
-    const completedTasks = tasks.filter(task => task.status === 'completed').length;
-    const pendingTasks = tasks.filter(task => task.status === 'pending').length;
-    const overdueTasks = tasks.filter(task => task.status === 'overdue').length;
+        const completedTasks = tasks.filter(task => task.status === 'completed').length;
+        const pendingTasks = tasks.filter(task => task.status === 'pending').length;
+        const overdueTasks = tasks.filter(task => task.status === 'overdue').length;
 
-    if (document.getElementById('statToday')) document.getElementById('statToday').textContent = tasksDueToday;
-    if (document.getElementById('statCompleted')) document.getElementById('statCompleted').textContent = completedTasks;
-    if (document.getElementById('statPending')) document.getElementById('statPending').textContent = pendingTasks;
-    if (document.getElementById('statOverdue')) document.getElementById('statOverdue').textContent = overdueTasks;
-    if (document.getElementById('todayTasksCounter')) {
-        document.getElementById('todayTasksCounter').textContent = tasksDueToday;
-    }
+        // Función de animación
+        const updateStatWithAnimation = (elementId, value) => {
+            const statElement = document.getElementById(elementId);
+            if (!statElement) return;
+
+            // Siempre empezar desde 0 para que la animación sea visible
+            const currentValue = 0;
+            const animationDuration = 800; // Aumentar duración para mejor efecto
+            const increment = value / (animationDuration / 16); // 16ms es aproximadamente un frame
+
+            let currentDisplayValue = currentValue;
+            const updateValue = () => {
+                currentDisplayValue += increment;
+                if (currentDisplayValue >= value) {
+                    statElement.textContent = value;
+                    return;
+                }
+                statElement.textContent = Math.round(currentDisplayValue);
+                requestAnimationFrame(updateValue);
+            };
+            updateValue();
+        };
+
+        // Actualizar cada estadística con animación
+        updateStatWithAnimation('statToday', tasksDueToday);
+        updateStatWithAnimation('statCompleted', completedTasks);
+        updateStatWithAnimation('statPending', pendingTasks);
+        updateStatWithAnimation('statOverdue', overdueTasks);
+        
+        // También animar el contador de tareas de hoy si existe
+        if (document.getElementById('todayTasksCounter')) {
+            updateStatWithAnimation('todayTasksCounter', tasksDueToday);
+        }
     });
 }
 
 // --- renderDashboardTodayTasks usando backend ---
 function renderDashboardTodayTasks() {
+    console.log('🔄 [DEBUG] Renderizando tareas de hoy...');
+    
     const dashboardTodayTasks = document.getElementById('dashboardTodayTasks');
     if (dashboardTodayTasks) {
         dashboardTodayTasks.innerHTML = '';
         fetchDashboardTasks().then(tasks => {
+            console.log('📋 [DEBUG] Total de tareas cargadas:', tasks.length);
+            
         let tasksToday = tasks.filter(task => {
-                return task.status === 'pending' && esFechaHoy(task.dueDate);
+                const isPending = task.status === 'pending';
+                const isToday = esFechaHoy(task.dueDate);
+                console.log(`📋 [DEBUG] Tarea "${task.title}": status=${task.status}, isToday=${isToday}, mostrar=${isPending && isToday}`);
+                return isPending && isToday;
             });
+            
+            console.log('📋 [DEBUG] Tareas filtradas para hoy (pendientes):', tasksToday.length);
+            
         tasksToday = tasksToday.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+            
         if (tasksToday.length === 0) {
+                console.log('📋 [DEBUG] No hay tareas pendientes para hoy, mostrando mensaje vacío');
             dashboardTodayTasks.innerHTML = `
                 <div class="empty-tasks-message">
                     <div class="empty-tasks-icon">
@@ -704,16 +742,17 @@ function renderDashboardTodayTasks() {
                 </div>
             `;
         } else {
+                console.log('📋 [DEBUG] Renderizando', tasksToday.length, 'tareas pendientes');
             tasksToday.forEach(task => {
                 const taskElement = createTaskCard(task);
                 dashboardTodayTasks.appendChild(taskElement);
             });
         }
-        
-        // Detectar si necesita scrollbar después de renderizar
-        setTimeout(() => {
-            detectScrollbarNeeded();
-        }, 100);
+            
+            // Detectar si necesita scrollbar después de renderizar
+            setTimeout(() => {
+                detectScrollbarNeeded();
+            }, 100);
         });
     }
 }
@@ -750,7 +789,7 @@ function detectScrollbarNeeded() {
 }
 
 function deleteDashboardTask(taskId) {
-    fetch(`http://localhost:8000/tareas/${taskId}`, {
+            fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS, `/${taskId}`), {
         method: 'DELETE'
     })
     .then(res => res.json())
@@ -934,9 +973,16 @@ document.addEventListener('visibilitychange', function() {
 
 // --- Función para marcar tareas como completadas (igual que en tasks.js) ---
 function toggleTaskCompletion(taskId, completed) {
+    console.log('🔄 [DEBUG] Cambiando estado de tarea:', taskId, 'completed:', completed);
+    
     const tasks = JSON.parse(localStorage.getItem('astren_tasks')) || [];
     const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
+    if (!task) {
+        console.error('❌ [ERROR] Tarea no encontrada:', taskId);
+        return;
+    }
+    
+    console.log('📝 [DEBUG] Estado anterior de la tarea:', task.status);
     
     if (completed) {
         // Check if task requires evidence
@@ -944,7 +990,7 @@ function toggleTaskCompletion(taskId, completed) {
         
         if (requiresEvidence && !task.evidence) {
             showNotification('Esta tarea requiere evidencia antes de completarse', 'warning');
-            // NO cambiar el estado ni recargar la vista, para que el usuario pueda subir evidencia
+            console.log('⚠️ [DEBUG] Tarea requiere evidencia, no se completa');
             return;
         }
         
@@ -964,6 +1010,7 @@ function toggleTaskCompletion(taskId, completed) {
             task.reputationImpact = Math.max(-20, daysEarly * 2); // Penalty for late completion
         }
         
+        console.log('✅ [DEBUG] Tarea marcada como completada:', task);
         showNotification('¡Tarea completada! +' + task.reputationImpact + ' puntos de reputación', 'success');
     } else {
         task.status = 'pending';
@@ -971,46 +1018,21 @@ function toggleTaskCompletion(taskId, completed) {
         task.evidence = null;
         task.evidenceValidated = false;
         task.reputationImpact = 0;
+        console.log('⏳ [DEBUG] Tarea marcada como pendiente:', task);
         showNotification('Tarea marcada como pendiente', 'info');
     }
     
     // Guardar cambios en localStorage
     localStorage.setItem('astren_tasks', JSON.stringify(tasks));
+    console.log('💾 [DEBUG] Cambios guardados en localStorage');
     
-    // Recargar las tareas del dashboard
-    const dashboardTodayTasks = document.getElementById('dashboardTodayTasks');
-    if (dashboardTodayTasks) {
-        dashboardTodayTasks.innerHTML = '';
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tasksToday = tasks.filter(task => {
-            if (task.status !== 'pending') return false;
-            const dueDate = new Date(task.dueDate);
-            dueDate.setHours(0, 0, 0, 0);
-            return dueDate.getTime() === today.getTime();
-        });
-        
-        if (tasksToday.length === 0) {
-            // Mostrar mensaje cuando no hay tareas de hoy
-            dashboardTodayTasks.innerHTML = `
-                <div class="empty-tasks-message">
-                    <div class="empty-tasks-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <h3 class="empty-tasks-title">¡Excelente trabajo!</h3>
-                    <p class="empty-tasks-description">No tienes tareas pendientes para hoy. ¡Disfruta tu día!</p>
-                </div>
-            `;
-        } else {
-            tasksToday.forEach(task => {
-                const card = createTaskCard(task);
-                dashboardTodayTasks.appendChild(card);
-            });
-        }
-    }
+    // Recargar las tareas del dashboard usando la función centralizada
+    renderDashboardTodayTasks();
     
     // Actualizar contadores usando la función centralizada
     updateDashboardTaskCounts();
+    
+    console.log('🔄 [DEBUG] Dashboard actualizado');
 }
 
 // --- Funciones para manejar evidencia ---
@@ -1066,7 +1088,153 @@ function viewEvidence(taskId) {
 }
 
 function editTask(taskId) {
-    showNotification('Función de edición disponible próximamente', 'info');
+    console.log('📝 [DEBUG] Editando tarea:', taskId);
+    console.log('📝 [DEBUG] Función editTask llamada desde:', new Error().stack);
+    
+    // Buscar la tarea en el localStorage
+    const tasks = JSON.parse(localStorage.getItem('astren_tasks')) || [];
+    const task = tasks.find(t => t.id === taskId);
+    
+    if (!task) {
+        console.error('❌ [ERROR] Tarea no encontrada con ID:', taskId);
+        showNotification('Tarea no encontrada', 'error');
+        return;
+    }
+    
+    console.log('📝 [DEBUG] Tarea encontrada:', task);
+    
+    // Mostrar modal de edición
+    showEditTaskModal(task);
+}
+
+// Hacer la función global para que sea accesible desde onclick
+window.editTask = editTask;
+
+function showEditTaskModal(task) {
+    console.log('📝 [DEBUG] Mostrando modal de edición para tarea:', task);
+    
+    // Obtener elementos del modal
+    const modal = document.getElementById('editTaskModal');
+    const form = document.getElementById('editTaskForm');
+    
+    console.log('📝 [DEBUG] Modal encontrado:', modal);
+    console.log('📝 [DEBUG] Form encontrado:', form);
+    
+    if (!modal || !form) {
+        console.error('❌ [ERROR] Modal de edición no encontrado');
+        showNotification('Error al abrir el modal de edición', 'error');
+        return;
+    }
+    
+    // Poblar el formulario con los datos de la tarea
+    form.querySelector('#editTaskTitle').value = task.title;
+    form.querySelector('#editTaskDescription').value = task.description || '';
+    form.querySelector('#editTaskArea').value = task.area || '';
+    form.querySelector('#editTaskDueDate').value = formatDateForInput(task.dueDate);
+    
+    console.log('📝 [DEBUG] Formulario poblado con datos:', {
+        title: task.title,
+        description: task.description,
+        area: task.area,
+        dueDate: formatDateForInput(task.dueDate)
+    });
+    
+    // Guardar el ID de la tarea actual
+    window.currentEditTaskId = task.id;
+    
+    // Mostrar el modal
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    
+    console.log('📝 [DEBUG] Modal mostrado, display:', modal.style.display);
+    console.log('📝 [DEBUG] Modal classes:', modal.classList.toString());
+    
+    // Configurar el formulario para manejar la edición
+    form.onsubmit = (e) => handleEditTask(e);
+}
+
+function handleEditTask(e) {
+    e.preventDefault();
+    
+    const taskId = window.currentEditTaskId;
+    if (!taskId) {
+        showNotification('Error: ID de tarea no encontrado', 'error');
+        return;
+    }
+    
+    const formData = new FormData(e.target);
+    const updates = {
+        title: formData.get('title'),
+        description: formData.get('description'),
+        area: formData.get('area'),
+        dueDate: formData.get('dueDate')
+    };
+    
+    // Validar datos
+    if (!validateTaskData(updates)) {
+        return;
+    }
+    
+    // Actualizar la tarea
+    updateTask(taskId, updates);
+    
+    // Cerrar modal
+    const modal = document.getElementById('editTaskModal');
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+    
+    showNotification('Tarea actualizada exitosamente', 'success');
+}
+
+function validateTaskData(data) {
+    if (!data.title || data.title.trim().length < 3) {
+        showNotification('El título debe tener al menos 3 caracteres', 'error');
+        return false;
+    }
+    if (!data.dueDate) {
+        showNotification('Debes seleccionar una fecha límite', 'error');
+        return false;
+    }
+    return true;
+}
+
+function updateTask(taskId, updates) {
+    console.log('📝 [DEBUG] Actualizando tarea:', taskId, updates);
+    
+    // Obtener tareas del localStorage
+    const tasks = JSON.parse(localStorage.getItem('astren_tasks')) || [];
+    const taskIndex = tasks.findIndex(t => t.id === taskId);
+    
+    if (taskIndex === -1) {
+        showNotification('Tarea no encontrada', 'error');
+        return;
+    }
+    
+    // Actualizar la tarea
+    tasks[taskIndex] = { ...tasks[taskIndex], ...updates };
+    
+    // Guardar en localStorage
+    localStorage.setItem('astren_tasks', JSON.stringify(tasks));
+    
+    // Recargar tareas en el dashboard
+    fetchDashboardTasks();
+    updateDashboardTaskCounts();
+    renderDashboardTodayTasks();
+    
+    console.log('✅ [SUCCESS] Tarea actualizada correctamente');
+}
+
+function formatDateForInput(dateString) {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 function openDeleteModal(taskId) {
@@ -1130,6 +1298,57 @@ function initEvidenceButtons() {
         });
     }
 }
+
+// Setup edit task modal event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const editModal = document.getElementById('editTaskModal');
+    const closeEditBtn = document.getElementById('closeEditModal');
+    const cancelEditBtn = document.getElementById('cancelEditTask');
+    
+    console.log('🔍 [DEBUG] Modal de edición encontrado:', editModal);
+    console.log('🔍 [DEBUG] Botón cerrar encontrado:', closeEditBtn);
+    console.log('🔍 [DEBUG] Botón cancelar encontrado:', cancelEditBtn);
+    
+    if (closeEditBtn) {
+        closeEditBtn.addEventListener('click', function() {
+            console.log('🔍 [DEBUG] Cerrando modal con botón X');
+            editModal.style.display = 'none';
+            editModal.classList.remove('active');
+        });
+    }
+    
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', function() {
+            console.log('🔍 [DEBUG] Cerrando modal con botón Cancelar');
+            editModal.style.display = 'none';
+            editModal.classList.remove('active');
+        });
+    }
+    
+    // Cerrar modal al hacer clic fuera de él
+    if (editModal) {
+        editModal.addEventListener('click', function(e) {
+            if (e.target === editModal) {
+                console.log('🔍 [DEBUG] Cerrando modal con clic fuera');
+                editModal.style.display = 'none';
+                editModal.classList.remove('active');
+            }
+        });
+    }
+    
+    // Test function para verificar que el modal funciona
+    window.testEditModal = function() {
+        console.log('🧪 [TEST] Probando modal de edición');
+        const testTask = {
+            id: 'test-123',
+            title: 'Tarea de prueba',
+            description: 'Descripción de prueba',
+            area: 'personal',
+            dueDate: '2024-12-25 10:00'
+        };
+        showEditTaskModal(testTask);
+    };
+});
 
 // Add animation styles
 const style = document.createElement('style');
@@ -1298,39 +1517,35 @@ class DashboardResponsive {
 
     applySmallLayout(content, statsGrid, rowGrid, areasGrid) {
         if (content) content.style.padding = '0.75rem';
-        if (statsGrid) statsGrid.style.gridTemplateColumns = '1fr';
-        if (rowGrid) rowGrid.style.gridTemplateColumns = '1fr';
-        if (areasGrid) areasGrid.style.gridTemplateColumns = '1fr';
+        // if (rowGrid) rowGrid.style.gridTemplateColumns = '1fr';
+        // if (areasGrid) areasGrid.style.gridTemplateColumns = '1fr';
     }
 
     applyMediumLayout(content, statsGrid, rowGrid, areasGrid) {
         if (content) content.style.padding = '1rem';
-        if (statsGrid) statsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(150px, 1fr))';
-        if (rowGrid) rowGrid.style.gridTemplateColumns = '1fr';
-        if (areasGrid) areasGrid.style.gridTemplateColumns = '1fr';
+        // if (rowGrid) rowGrid.style.gridTemplateColumns = '1fr';
+        // if (areasGrid) areasGrid.style.gridTemplateColumns = '1fr';
     }
 
     applyLargeLayout(content, statsGrid, rowGrid, areasGrid) {
         if (content) content.style.padding = '1.5rem';
-        if (statsGrid) statsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(180px, 1fr))';
-        if (rowGrid) rowGrid.style.gridTemplateColumns = '1fr';
-        if (areasGrid) areasGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(250px, 1fr))';
+        // if (rowGrid) rowGrid.style.gridTemplateColumns = '1fr';
+        // if (areasGrid) areasGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(250px, 1fr))';
     }
 
     applyXLargeLayout(content, statsGrid, rowGrid, areasGrid) {
         if (content) content.style.padding = '2rem';
-        if (statsGrid) statsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
-        if (rowGrid) rowGrid.style.gridTemplateColumns = '2fr 1fr';
-        if (areasGrid) areasGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
+        // if (rowGrid) rowGrid.style.gridTemplateColumns = '2fr 1fr';
+        // if (areasGrid) areasGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
     }
 
     setupGridLayouts() {
         // Ensure proper grid behavior
-        const grids = document.querySelectorAll('.stats-grid, .dashboard-row-grid, .areas-grid');
+        const grids = document.querySelectorAll('.dashboard-row-grid, .areas-grid');
         grids.forEach(grid => {
             if (grid) {
-                grid.style.display = 'grid';
-                grid.style.gap = '1.5rem';
+                // grid.style.display = 'grid';
+                // grid.style.gap = '1.5rem';
             }
         });
     }
@@ -1444,7 +1659,7 @@ function populateAreaSelects() {
     }
 
     // Cargar áreas del usuario
-    fetch(`http://localhost:8000/areas/${userId}`)
+            fetch(buildApiUrl(CONFIG.API_ENDPOINTS.AREAS, `/${userId}`))
         .then(response => response.json())
         .then(data => {
             const areas = data.areas || [];
@@ -1479,10 +1694,10 @@ async function loadDashboardAreas() {
         }
 
         console.log('📡 Cargando áreas para usuario:', userId);
-        const response = await fetch(`http://localhost:8000/areas/${userId}`);
+                    const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.AREAS, `/${userId}`));
         if (response.ok) {
             const data = await response.json();
-            console.log('📊 Datos completos del backend:', data);
+            Logger.debug('Datos completos del backend', data, 'API');
             
             // El backend devuelve un array directo de áreas
             const areas = Array.isArray(data) ? data : (data.areas || []);
@@ -1515,7 +1730,7 @@ async function loadDashboardGroups() {
         }
 
         console.log('📡 Cargando grupos para usuario:', userId);
-        const response = await fetch(`http://localhost:8000/grupos/${userId}`);
+                    const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.GROUPS, `/${userId}`));
         if (response.ok) {
             const data = await response.json();
             const groups = data.grupos || [];
@@ -1658,9 +1873,9 @@ function renderDashboardGroups(groups) {
         console.log('🎨 Grupo:', group.nombre, 'Color:', group.color, '→', groupColor);
         
         return `
-            <div class="group-card" data-group-id="${group.id}" style="border-color: ${groupColor} !important; cursor: pointer; transition: all 0.2s ease;" onclick="window.location.href='groups.html?group=${group.id}'">
+            <div class="group-card" data-group-id="${group.id}" onclick="window.location.href='groups.html?group=${group.id}'">
                 <div class="group__header">
-                    <div class="group__avatar" style="background: linear-gradient(135deg, ${groupColor}, ${adjustColor(groupColor, -10)});">
+                    <div class="group__avatar">
                         <i class="fas ${group.icono || 'fa-users'}"></i>
                     </div>
                     <div class="group__actions">
@@ -1825,6 +2040,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar navegación inteligente del dashboard
     setupDashboardNavigation();
+    
+    // Cargar y animar contadores de tareas
+    updateDashboardTaskCounts();
     
     console.log('✅ Dashboard inicializado');
 });

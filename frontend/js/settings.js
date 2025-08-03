@@ -13,7 +13,7 @@ class SettingsManager {
         this.renderSettings();
         this.applySettings();
         this.setupGlobalEvents();
-        console.log('⚙️ Settings Manager inicializado');
+        Logger.info('Settings Manager inicializado', null, 'UI');
     }
 
     loadSettings() {
