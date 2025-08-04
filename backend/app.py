@@ -31,12 +31,14 @@ def get_db_connection():
         print(f"   - MYSQL_USER: {user}")
         print(f"   - MYSQL_PASSWORD: {'*' * len(password) if password else 'None'}")
         print(f"   - MYSQL_DATABASE: {database}")
+        print(f"   - MYSQL_PORT: {os.getenv('MYSQL_PORT', 3306)}")
         
         conn = mysql.connector.connect(
             host=host,
             user=user,
             password=password,
-            database=database
+            database=database,
+            port=int(os.getenv('MYSQL_PORT', 3306))
         )
         return conn
     except mysql.connector.Error as err:
