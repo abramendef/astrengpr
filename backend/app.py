@@ -20,11 +20,23 @@ tokens = {}
 
 def get_db_connection():
     try:
+        # Debug: Imprimir las variables de entorno
+        host = os.getenv('MYSQL_HOST', 'localhost')
+        user = os.getenv('MYSQL_USER', 'root')
+        password = os.getenv('MYSQL_PASSWORD', '1234')
+        database = os.getenv('MYSQL_DATABASE', 'astren')
+        
+        print(f"🔍 [DEBUG] Variables de entorno:")
+        print(f"   - MYSQL_HOST: {host}")
+        print(f"   - MYSQL_USER: {user}")
+        print(f"   - MYSQL_PASSWORD: {'*' * len(password) if password else 'None'}")
+        print(f"   - MYSQL_DATABASE: {database}")
+        
         conn = mysql.connector.connect(
-            host=os.getenv('MYSQL_HOST', 'localhost'),
-            user=os.getenv('MYSQL_USER', 'root'),
-            password=os.getenv('MYSQL_PASSWORD', '1234'),
-            database=os.getenv('MYSQL_DATABASE', 'astren')
+            host=host,
+            user=user,
+            password=password,
+            database=database
         )
         return conn
     except mysql.connector.Error as err:
