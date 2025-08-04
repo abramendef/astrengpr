@@ -9,11 +9,19 @@ from dotenv import load_dotenv
 import mysql.connector
 import re
 import bcrypt
+import logging
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Configurar logging para producción
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Almacenamiento temporal de tokens (en producción usar base de datos)
 tokens = {}
@@ -3241,4 +3249,4 @@ def listar_areas_archivadas(usuario_id):
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8000, host='0.0.0.0') 
+    app.run(debug=False, port=8000, host='0.0.0.0') 
