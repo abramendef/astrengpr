@@ -21,10 +21,10 @@ tokens = {}
 def get_db_connection():
     try:
         conn = mysql.connector.connect(
-            host=os.getenv('DB_HOST', 'localhost'),
-            user=os.getenv('DB_USER', 'root'),
-            password=os.getenv('DB_PASSWORD', '1234'),
-            database=os.getenv('DB_NAME', 'astren')
+            host=os.getenv('MYSQL_HOST', 'localhost'),
+            user=os.getenv('MYSQL_USER', 'root'),
+            password=os.getenv('MYSQL_PASSWORD', '1234'),
+            database=os.getenv('MYSQL_DATABASE', 'astren')
         )
         return conn
     except mysql.connector.Error as err:
