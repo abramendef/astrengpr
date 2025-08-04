@@ -3,7 +3,7 @@ const CONFIG = {
     // URL del backend API - Detecta automáticamente el entorno
     API_BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? 'http://localhost:8000' 
-        : 'https://astren-backend.onrender.com', // Cambiar por tu URL real
+        : 'https://astren-backend.onrender.com',
     
     // URLs específicas de la API
     API_ENDPOINTS: {
