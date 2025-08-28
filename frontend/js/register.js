@@ -312,7 +312,7 @@ function registrarUsuario(formData) {
             nombre: formData.firstName,
             apellido: formData.lastName,
             correo: formData.email,
-            contraseña: formData.password,
+            contrasena: formData.password,
             telefono: formData.phone || null
         })
     })
