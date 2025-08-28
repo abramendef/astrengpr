@@ -1,132 +1,183 @@
--- Crear base de datos Astren desde cero
--- Versión: 0.0.1
+-- Script para crear la base de datos en Aiven
+-- Versión: 0.0.2
 
--- Crear base de datos
-CREATE DATABASE IF NOT EXISTS astren;
-USE astren;
+create database astrengpr;
+USE astrengpr;
 
--- Tabla de usuarios
 CREATE TABLE usuarios (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT NOT NULL AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     correo VARCHAR(100) NOT NULL UNIQUE,
-    contraseña VARCHAR(255) NOT NULL,
-    telefono VARCHAR(20) NULL,
-    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+    contrasena VARCHAR(255) NOT NULL,
+    telefono VARCHAR(20) DEFAULT NULL,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB;
 
--- Tabla de áreas
 CREATE TABLE areas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT NULL,
-    color VARCHAR(20) NULL,
-    icono VARCHAR(100) NULL,
+    id INT NOT NULL AUTO_INCREMENT,
     usuario_id INT NOT NULL,
-    estado VARCHAR(20) NOT NULL DEFAULT 'activa',
-    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
-
--- Tabla de grupos
-CREATE TABLE grupos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT NULL,
-    color VARCHAR(7) NULL,
-    icono VARCHAR(50) NULL,
-    creador_id INT NOT NULL,
-    estado VARCHAR(20) NOT NULL DEFAULT 'activo',
-    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (creador_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
+    descripcion TEXT,
+    estado VARCHAR(20) NOT NULL DEFAULT 'activa',
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    color VARCHAR(20) DEFAULT NULL,
+    icono VARCHAR(100) DEFAULT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
 
--- Tabla de miembros de grupo
+CREATE TABLE grupos (
+    id INT NOT NULL AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    color VARCHAR(7) DEFAULT NULL COMMENT 'Color hexadecimal del grupo (ej: #3b82f6)',
+    icono VARCHAR(50) DEFAULT NULL COMMENT 'Clase del icono FontAwesome (ej: fa-users)',
+    creador_id INT NOT NULL,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    estado VARCHAR(20) NOT NULL DEFAULT 'activo',
+    PRIMARY KEY (id),
+    FOREIGN KEY (creador_id) REFERENCES usuarios(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE grupo_areas_usuario (
+    id INT NOT NULL AUTO_INCREMENT,
+    grupo_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    area_id INT DEFAULT NULL,
+    fecha_asignacion TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE (grupo_id, usuario_id),
+    FOREIGN KEY (grupo_id) REFERENCES grupos(id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (area_id) REFERENCES areas(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE invitaciones_grupo (
+    id INT NOT NULL AUTO_INCREMENT,
+    grupo_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    rol VARCHAR(20) NOT NULL DEFAULT 'miembro',
+    estado ENUM('pendiente','aceptada','rechazada','archivada') NOT NULL DEFAULT 'pendiente',
+    fecha_invitacion TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_respuesta TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (grupo_id, usuario_id),
+    FOREIGN KEY (grupo_id) REFERENCES grupos(id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE miembros_grupo (
     grupo_id INT NOT NULL,
     usuario_id INT NOT NULL,
-    rol ENUM('lider', 'miembro', 'administrador') NOT NULL DEFAULT 'miembro',
+    rol ENUM('lider','miembro','administrador') NOT NULL DEFAULT 'miembro',
     PRIMARY KEY (grupo_id, usuario_id),
-    FOREIGN KEY (grupo_id) REFERENCES grupos(id) ON DELETE CASCADE,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
+    FOREIGN KEY (grupo_id) REFERENCES grupos(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
 
--- Tabla de áreas de grupo por usuario
-CREATE TABLE grupo_areas_usuario (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    grupo_id INT NOT NULL,
-    area_id INT NOT NULL,
-    usuario_id INT NOT NULL,
-    fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (grupo_id) REFERENCES grupos(id) ON DELETE CASCADE,
-    FOREIGN KEY (area_id) REFERENCES areas(id) ON DELETE CASCADE,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_grupo_area_usuario (grupo_id, area_id, usuario_id)
-);
-
--- Tabla de invitaciones a grupos
-CREATE TABLE invitaciones_grupo (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    grupo_id INT NOT NULL,
-    usuario_id INT NOT NULL,
-    rol VARCHAR(20) NOT NULL,
-    estado ENUM('pendiente', 'aceptada', 'rechazada', 'archivada') NOT NULL DEFAULT 'pendiente',
-    fecha_invitacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_respuesta TIMESTAMP NULL,
-    FOREIGN KEY (grupo_id) REFERENCES grupos(id) ON DELETE CASCADE,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
-
--- Tabla de tareas
-CREATE TABLE tareas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    titulo VARCHAR(200) NOT NULL,
-    descripcion TEXT NULL,
-    estado VARCHAR(20) NULL,
-    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    fecha_vencimiento DATETIME NULL,
-    usuario_id INT NOT NULL,
-    area_id INT NULL,
-    grupo_id INT NULL,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-    FOREIGN KEY (area_id) REFERENCES areas(id) ON DELETE SET NULL,
-    FOREIGN KEY (grupo_id) REFERENCES grupos(id) ON DELETE SET NULL
-);
-
--- Tabla de notificaciones
 CREATE TABLE notificaciones (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT NOT NULL AUTO_INCREMENT,
     usuario_id INT NOT NULL,
     tipo VARCHAR(50) NOT NULL,
     titulo VARCHAR(200) NOT NULL,
     mensaje TEXT NOT NULL,
-    leida TINYINT(1) NULL,
-    datos_adicionales JSON NULL,
+    datos_adicionales JSON DEFAULT NULL,
+    leida TINYINT(1) DEFAULT '0',
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+    PRIMARY KEY (id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE tareas (
+    id INT NOT NULL AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    area_id INT DEFAULT NULL,
+    grupo_id INT DEFAULT NULL,
+    asignado_a_id INT DEFAULT NULL,
+    titulo VARCHAR(200) NOT NULL,
+    descripcion TEXT,
+    estado VARCHAR(20) DEFAULT 'pendiente',
+    estrellas TINYINT DEFAULT NULL,  -- Valor de 1 a 5 según evaluación de la tarea
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_vencimiento DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (area_id) REFERENCES areas(id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (grupo_id) REFERENCES grupos(id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (asignado_a_id) REFERENCES usuarios(id)
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE reputacion_general (
+    id INT NOT NULL AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    estrellas DECIMAL(4,2) NOT NULL DEFAULT 5.00,
+    fecha_ultima_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Insertar usuario de prueba
-INSERT INTO usuarios (nombre, apellido, correo, contraseña) VALUES 
-('Usuario', 'Demo', 'demo@astren.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3ZxQQxqKre');
+CREATE TABLE reputacion_mensual (
+    id INT NOT NULL AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    anio INT NOT NULL,
+    mes INT NOT NULL,
+    estrellas_promedio DECIMAL(3,2) NOT NULL DEFAULT 5.00,
+    PRIMARY KEY (id),
+    UNIQUE KEY usuario_mes_unico (usuario_id, anio, mes),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
 
--- Insertar áreas de ejemplo
-INSERT INTO areas (nombre, descripcion, color, icono, usuario_id) VALUES 
-('Trabajo', 'Tareas relacionadas con el trabajo', '#3b82f6', 'fas fa-briefcase', 1),
-('Personal', 'Tareas personales y domésticas', '#10b981', 'fas fa-home', 1),
-('Estudio', 'Tareas de estudio y aprendizaje', '#f59e0b', 'fas fa-graduation-cap', 1);
+CREATE TABLE reputacion_area (
+    id INT NOT NULL AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    area_id INT NOT NULL,
+    estrellas_promedio DECIMAL(3,2) NOT NULL DEFAULT 5.00,
+    PRIMARY KEY (id),
+    UNIQUE KEY usuario_area_unico (usuario_id, area_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (area_id) REFERENCES areas(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
 
--- Insertar grupo de ejemplo
-INSERT INTO grupos (nombre, descripcion, creador_id) VALUES 
-('Equipo Desarrollo', 'Equipo de desarrollo de software', 1);
+CREATE TABLE reputacion_grupo (
+    id INT NOT NULL AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    grupo_id INT NOT NULL,
+    estrellas_promedio DECIMAL(3,2) NOT NULL DEFAULT 5.00,
+    PRIMARY KEY (id),
+    UNIQUE KEY usuario_grupo_unico (usuario_id, grupo_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (grupo_id) REFERENCES grupos(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
 
--- Insertar miembro al grupo
-INSERT INTO miembros_grupo (grupo_id, usuario_id, rol) VALUES 
-(1, 1, 'lider');
-
--- Insertar tareas de ejemplo
-INSERT INTO tareas (titulo, descripcion, estado, usuario_id, area_id) VALUES 
-('Revisar documentación', 'Revisar la documentación del proyecto', 'pendiente', 1, 1),
-('Comprar víveres', 'Comprar víveres para la semana', 'pendiente', 1, 2),
-('Estudiar Python', 'Repasar conceptos de Python', 'pendiente', 1, 3); 
+CREATE TABLE reputacion_grupo_general (
+    id INT NOT NULL AUTO_INCREMENT,
+    grupo_id INT NOT NULL,
+    estrellas_promedio DECIMAL(3,2) NOT NULL DEFAULT 5.00,
+    fecha_ultima_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY grupo_unico (grupo_id),
+    FOREIGN KEY (grupo_id) REFERENCES grupos(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);

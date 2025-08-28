@@ -11,7 +11,7 @@
 ### **URLs de Producción:**
 - **🌐 Frontend (Vercel):** https://astren.vercel.app/
 - **🔧 Backend (Render):** https://astren-backend.onrender.com
-- **🗄️ Base de Datos (Railway):** MySQL en Railway
+- **🗄️ Base de Datos (Aiven):** MySQL en Aiven
 
 ### **Credenciales de Acceso:**
 - **👤 Email:** demo@example.com
@@ -149,9 +149,9 @@
 ## 📈 **MÉTRICAS DEL SISTEMA**
 
 ### **Versión Actual:**
-- **Versión**: 0.0.1 (Demo)
+- **Versión**: 0.0.2 (Demo)
 - **Fecha de Despliegue**: Agosto 2025
-- **Estado**: Sistema Operativo - Demo
+- **Estado**: Sistema Operativo - Demo - Sin sistema de reputación implementado
 
 ### **Arquitectura:**
 - **Frontend**: HTML5, CSS3, JavaScript (vanilla)
@@ -175,5 +175,5 @@
 
 ---
 
-**Documentación actualizada el 4 de Agosto de 2025**
+**Documentación actualizada el 27 de Agosto de 2025**
 **Sistema completamente funcional y desplegado en producción** 
