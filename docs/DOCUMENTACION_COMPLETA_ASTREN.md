@@ -588,7 +588,7 @@ logger = logging.getLogger(__name__)
 - ✅ **Optimizado para Rendimiento**
 
 ### **Versión Actual:**
-- **Versión**: 0.0.2 (Demo)
+- **Versión**: 0.0.3 (Demo)
 - **Fecha de Despliegue**: Agosto 2025
 - **Estado**: Sistema Operativo - Demo - Sin sistema de reputación implementado
 

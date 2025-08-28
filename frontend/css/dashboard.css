@@ -3120,3 +3120,219 @@
   color: hsl(var(--text-secondary)) !important;
   font-weight: var(--font-weight-medium) !important;
 } */
+
+/* =====================================================
+   ESTADOS DE CARGA Y OPTIMIZACIÓN
+   ===================================================== */
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    color: #64748B;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e2e8f0;
+    border-top: 3px solid #3366FF;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-state p {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* =====================================================
+   OPTIMIZACIONES DE RENDIMIENTO
+   ===================================================== */
+
+/* Reducir repaints y reflows */
+.dashboard__content {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+.stat-item {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+.area-card,
+.group-card {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* Optimizar animaciones */
+.stat-value {
+    will-change: contents;
+}
+
+/* =====================================================
+   MEJORAS DE ACCESIBILIDAD Y UX
+   ===================================================== */
+
+/* Indicador de estado de sincronización */
+.sync-indicator {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: #10B981;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(-1rem);
+    transition: all 0.3s ease;
+}
+
+.sync-indicator.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.sync-indicator.syncing {
+    background: #F59E0B;
+}
+
+.sync-indicator.error {
+    background: #EF4444;
+}
+
+/* Botón de actualización manual */
+.refresh-button {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #3366FF;
+    color: white;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 4px 12px rgba(51, 102, 255, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.refresh-button:hover {
+    background: #2563EB;
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(51, 102, 255, 0.5);
+}
+
+.refresh-button:active {
+    transform: scale(0.95);
+}
+
+.refresh-button i {
+    font-size: 1.25rem;
+}
+
+.refresh-button.loading i {
+    animation: spin 1s linear infinite;
+}
+
+/* =====================================================
+   RESPONSIVE Y MOBILE OPTIMIZATIONS
+   ===================================================== */
+
+@media (max-width: 768px) {
+    .loading-state {
+        padding: 1rem;
+    }
+    
+    .loading-spinner {
+        width: 32px;
+        height: 32px;
+        border-width: 2px;
+    }
+    
+    .refresh-button {
+        bottom: 1rem;
+        right: 1rem;
+        width: 48px;
+        height: 48px;
+    }
+    
+    .refresh-button i {
+        font-size: 1rem;
+    }
+}
+
+/* =====================================================
+   ANIMACIONES SUAVES PARA MEJOR UX
+   ===================================================== */
+
+/* Transiciones suaves para cambios de estado */
+.stat-item,
+.area-card,
+.group-card {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover effects mejorados */
+.stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.area-card:hover,
+.group-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* =====================================================
+   OPTIMIZACIONES DE FUENTES
+   ===================================================== */
+
+/* Preload de fuentes críticas */
+@font-face {
+    font-family: 'Poppins';
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+}
+
+/* =====================================================
+   MEJORAS DE PERFORMANCE
+   ===================================================== */
+
+/* Optimizar capas de composición */
+.dashboard__header,
+.dashboard__content {
+    contain: layout style paint;
+}
+
+/* Reducir jank en scroll */
+.dashboard__content {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Optimizar imágenes */
+img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}

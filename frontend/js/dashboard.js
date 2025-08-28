@@ -648,19 +648,38 @@ function esFechaHoy(fechaStr) {
 }
 
 // --- Función para obtener tareas del backend y normalizarlas ---
+let _dashboardTasksPromise = null;
 function fetchDashboardTasks() {
+    if (_dashboardTasksPromise) {
+        return _dashboardTasksPromise;
+    }
     const usuario_id = localStorage.getItem('astren_usuario_id') || 1;
-            return fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS, `/${usuario_id}`))
-        .then(response => response.json())
-        .then(tareas => tareas.map(t => ({
-            ...t,
-            status: t.estado === 'pendiente' ? 'pending' :
-                    t.estado === 'completada' ? 'completed' :
-                    t.estado === 'vencida' ? 'overdue' : t.estado,
-            title: t.titulo || t.title,
-            dueDate: t.fecha_vencimiento || t.dueDate
-        })))
-        .catch(() => []);
+    _dashboardTasksPromise = fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS, `/${usuario_id}`), { cache: 'no-store' })
+        .then(response => {
+            if (!response.ok) throw new Error('Error al cargar tareas del dashboard');
+            return response.json();
+        })
+        .then(tareas => {
+            const mapped = tareas.map(t => ({
+                ...t,
+                status: t.estado === 'pendiente' ? 'pending' :
+                        t.estado === 'completada' ? 'completed' :
+                        t.estado === 'vencida' ? 'overdue' : t.estado,
+                title: t.titulo || t.title,
+                dueDate: t.fecha_vencimiento || t.dueDate
+            }));
+            try { localStorage.setItem('astren_tasks', JSON.stringify(mapped)); } catch (_) {}
+            return mapped;
+        })
+        .catch((e) => {
+            console.error('❌ Error en fetchDashboardTasks:', e);
+            return [];
+        })
+        .finally(() => {
+            // Liberar para permitir una nueva carga en el futuro
+            _dashboardTasksPromise = null;
+        });
+    return _dashboardTasksPromise;
 }
 
 // --- updateDashboardTaskCounts usando backend ---
@@ -715,7 +734,6 @@ function renderDashboardTodayTasks() {
     
     const dashboardTodayTasks = document.getElementById('dashboardTodayTasks');
     if (dashboardTodayTasks) {
-        dashboardTodayTasks.innerHTML = '';
         fetchDashboardTasks().then(tasks => {
             console.log('📋 [DEBUG] Total de tareas cargadas:', tasks.length);
             
@@ -730,7 +748,9 @@ function renderDashboardTodayTasks() {
             
         tasksToday = tasksToday.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
             
-        if (tasksToday.length === 0) {
+            // Limpiar justo antes de pintar para evitar parpadeo
+            dashboardTodayTasks.innerHTML = '';
+            if (tasksToday.length === 0) {
                 console.log('📋 [DEBUG] No hay tareas pendientes para hoy, mostrando mensaje vacío');
             dashboardTodayTasks.innerHTML = `
                 <div class="empty-tasks-message">
@@ -741,7 +761,7 @@ function renderDashboardTodayTasks() {
                     <p class="empty-tasks-description">No tienes tareas pendientes para hoy. ¡Mantén el buen trabajo!</p>
                 </div>
             `;
-        } else {
+            } else {
                 console.log('📋 [DEBUG] Renderizando', tasksToday.length, 'tareas pendientes');
             tasksToday.forEach(task => {
                 const taskElement = createTaskCard(task);
@@ -1659,7 +1679,7 @@ function populateAreaSelects() {
     }
 
     // Cargar áreas del usuario
-            fetch(buildApiUrl(CONFIG.API_ENDPOINTS.AREAS, `/${userId}`))
+            fetch(buildApiUrl(CONFIG.API_ENDPOINTS.AREAS, `/${userId}`), { cache: 'no-store' })
         .then(response => response.json())
         .then(data => {
             const areas = data.areas || [];
@@ -1694,7 +1714,7 @@ async function loadDashboardAreas() {
         }
 
         console.log('📡 Cargando áreas para usuario:', userId);
-                    const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.AREAS, `/${userId}`));
+                    const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.AREAS, `/${userId}`), { cache: 'no-store' });
         if (response.ok) {
             const data = await response.json();
             Logger.debug('Datos completos del backend', data, 'API');
@@ -1730,7 +1750,7 @@ async function loadDashboardGroups() {
         }
 
         console.log('📡 Cargando grupos para usuario:', userId);
-                    const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.GROUPS, `/${userId}`));
+                    const response = await fetch(buildApiUrl(CONFIG.API_ENDPOINTS.GROUPS, `/${userId}`), { cache: 'no-store' });
         if (response.ok) {
             const data = await response.json();
             const groups = data.grupos || [];
@@ -2007,7 +2027,7 @@ function initializeHorizontalScroll() {
 }
 
 // Cargar datos del dashboard al inicializar
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Dashboard inicializando...');
     
     // Verificar userId
@@ -2020,18 +2040,36 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('📦 Contenedor de áreas encontrado:', !!areasContainer);
     console.log('📦 Contenedor de grupos encontrado:', !!groupsContainer);
     
-    // Cargar áreas y grupos
+    // Render inmediato desde cache local (solo si la feature está activa)
+    if (CONFIG.FEATURES && CONFIG.FEATURES.CACHE_FIRST) {
+        try {
+            const cachedAreas = JSON.parse(localStorage.getItem('astren_areas') || '[]');
+            if (Array.isArray(cachedAreas) && cachedAreas.length) {
+                renderDashboardAreas(cachedAreas);
+            }
+            const cachedGroups = JSON.parse(localStorage.getItem('astren_groups') || '[]');
+            if (Array.isArray(cachedGroups) && cachedGroups.length) {
+                renderDashboardGroups(cachedGroups);
+            }
+            setTimeout(initializeHorizontalScroll, 100);
+        } catch (e) {}
+    }
+
+    // Asegurar datos bootstrap (si existe helper)
+    if (typeof bootstrapUserData === 'function') {
+        await bootstrapUserData(false);
+    }
+
+    // Revalidación en segundo plano
     console.log('📡 Cargando áreas...');
     loadDashboardAreas().then(areas => {
         console.log('✅ Áreas cargadas:', areas.length);
-        // Inicializar scroll horizontal después de cargar áreas
         setTimeout(initializeHorizontalScroll, 100);
     });
     
     console.log('📡 Cargando grupos...');
     loadDashboardGroups().then(groups => {
         console.log('✅ Grupos cargados:', groups.length);
-        // Inicializar scroll horizontal después de cargar grupos
         setTimeout(initializeHorizontalScroll, 100);
     });
     
@@ -2041,8 +2079,36 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar navegación inteligente del dashboard
     setupDashboardNavigation();
     
-    // Cargar y animar contadores de tareas
+    // Cargar y animar contadores: usar cache solo si la feature está activa
+    if (CONFIG.FEATURES && CONFIG.FEATURES.CACHE_FIRST) {
+        try {
+            const cachedTasks = JSON.parse(localStorage.getItem('astren_tasks') || '[]');
+            if (Array.isArray(cachedTasks) && cachedTasks.length) {
+                const count = (statusFilter) => cachedTasks.filter(t => {
+                    const statusOk = statusFilter ? t.status === statusFilter : true;
+                    return statusOk;
+                });
+                const isToday = (t) => t.status === 'pending' && esFechaHoy(t.dueDate || t.fecha_vencimiento);
+                const tasksDueToday = cachedTasks.filter(isToday).length;
+                const completedTasks = count('completed').length;
+                const pendingTasks = count('pending').length;
+                const overdueTasks = count('overdue').length;
+                const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                set('statToday', tasksDueToday);
+                set('statCompleted', completedTasks);
+                set('statPending', pendingTasks);
+                set('statOverdue', overdueTasks);
+                renderDashboardTodayTasks();
+            }
+        } catch (e) {}
+    }
     updateDashboardTaskCounts();
+    
+    // Configurar funcionalidades adicionales
+    setupRefreshButton();
+    setupAutoRefresh();
+    setupConnectionMonitoring();
+    setupScrollOptimization();
     
     console.log('✅ Dashboard inicializado');
 });
@@ -2068,4 +2134,114 @@ function getUserId() {
     
     // Fallback: buscar userId directamente (compatibilidad)
     return sessionStorage.getItem('userId') || localStorage.getItem('userId');
+}
+
+// --- FUNCIONALIDADES ADICIONALES DEL DASHBOARD ---
+
+// Función para mostrar indicador de sincronización
+function mostrarIndicadorSincronizacion(mensaje, tipo = 'success', duracion = 3000) {
+    const indicator = document.getElementById('syncIndicator');
+    if (!indicator) return;
+    
+    const icon = indicator.querySelector('i');
+    const text = indicator.querySelector('span');
+    
+    // Actualizar contenido
+    text.textContent = mensaje;
+    
+    // Actualizar clase y icono según el tipo
+    indicator.className = `sync-indicator show ${tipo}`;
+    
+    switch (tipo) {
+        case 'syncing':
+            icon.className = 'fas fa-sync-alt fa-spin';
+            break;
+        case 'error':
+            icon.className = 'fas fa-exclamation-triangle';
+            break;
+        default:
+            icon.className = 'fas fa-check';
+    }
+    
+    // Ocultar después del tiempo especificado
+    setTimeout(() => {
+        indicator.classList.remove('show');
+    }, duracion);
+}
+
+// Función para manejar el botón de actualización
+function setupRefreshButton() {
+    const refreshButton = document.getElementById('refreshButton');
+    if (!refreshButton) return;
+    
+    refreshButton.addEventListener('click', async function() {
+        // Prevenir múltiples clics
+        if (this.classList.contains('loading')) return;
+        
+        // Mostrar estado de carga
+        this.classList.add('loading');
+        mostrarIndicadorSincronizacion('Actualizando...', 'syncing');
+        
+        try {
+            // Forzar actualización
+            await actualizarDashboard();
+            
+            // Mostrar éxito
+            mostrarIndicadorSincronizacion('¡Actualizado!', 'success');
+            
+        } catch (error) {
+            console.error('❌ Error al actualizar dashboard:', error);
+            mostrarIndicadorSincronizacion('Error al actualizar', 'error');
+        } finally {
+            // Restaurar estado normal
+            this.classList.remove('loading');
+        }
+    });
+}
+
+// Función para actualizar automáticamente el dashboard cada 5 minutos
+function setupAutoRefresh() {
+    setInterval(() => {
+        // Solo actualizar si el usuario está activo
+        if (!document.hidden) {
+            console.log('🔄 Actualización automática del dashboard...');
+            cargarDashboardCompleto();
+        }
+    }, 5 * 60 * 1000); // 5 minutos
+}
+
+// Función para detectar cambios en la conexión
+function setupConnectionMonitoring() {
+    if ('ononline' in window) {
+        window.addEventListener('online', () => {
+            console.log('🌐 Conexión restaurada, actualizando dashboard...');
+            mostrarIndicadorSincronizacion('Conexión restaurada', 'success');
+            cargarDashboardCompleto();
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('📡 Conexión perdida');
+            mostrarIndicadorSincronizacion('Sin conexión', 'error');
+        });
+    }
+}
+
+// Función para optimizar el rendimiento del scroll
+function setupScrollOptimization() {
+    let ticking = false;
+    
+    function updateScroll() {
+        // Aquí puedes agregar optimizaciones de scroll si es necesario
+        ticking = false;
+    }
+    
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(updateScroll);
+            ticking = true;
+        }
+    }
+    
+    // Optimizar eventos de scroll
+    window.addEventListener('scroll', requestTick, { passive: true });
 }

@@ -319,4 +319,4 @@ DECAY_FACTOR=0.9  # Podrá ser ajustado dinámicamente para modificar la influen
 ---
 
 📄 **Documento actualizado por última vez**: 27 de Agosto de 2025  
-🧩 **Versión del sistema**: v0.0.2 (Demo) - Sistema básico funcional 
+🧩 **Versión del sistema**: v0.0.3 (Demo) - Sistema básico funcional 
