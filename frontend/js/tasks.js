@@ -1,7 +1,7 @@
 // Sistema de Tareas Completo y Robusto de Astren
 class TasksManager {
     constructor() {
-        this.tasks = this.loadTasks();
+        this.tasks = [];
         this.currentFilter = 'all';
         this.currentView = 'grid';
         this.searchQuery = '';
@@ -44,6 +44,18 @@ class TasksManager {
             }
         }
         this.populateTaskAreaSelect();
+        // Render inmediato desde cache si la feature está activa
+        if (typeof CONFIG !== 'undefined' && CONFIG.FEATURES && CONFIG.FEATURES.CACHE_FIRST) {
+            try {
+                const cached = JSON.parse(localStorage.getItem('astren_tasks') || '[]');
+                if (Array.isArray(cached) && cached.length) {
+                    this.tasks = cached;
+                    this.renderTasks();
+                    this.updateTaskCounts();
+                    this.checkEmptyState();
+                }
+            } catch (e) {}
+        }
         // Cargar tareas desde el backend y renderizar
         this.loadTasks().then(tasks => {
             this.tasks = tasks;
@@ -95,7 +107,9 @@ class TasksManager {
         }
 
         // Crear una nueva promesa para la carga de tareas
-        this._loadTasksPromise = fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS, `/${this.getUserId()}`))
+        const userId = this.getUserId();
+        const url = buildApiUrl(CONFIG.API_ENDPOINTS.TASKS, `/${userId}?limit=100&offset=0`);
+        this._loadTasksPromise = fetch(url, { cache: 'no-store' })
             .then(response => {
                 // Verificar si la respuesta es válida
                 if (!response.ok) {
@@ -108,11 +122,16 @@ class TasksManager {
                 
                 // Mapear tareas con estado correcto
                 const mappedTareas = tareas.map(t => ({
-                ...t,
-                status: t.estado === 'pendiente' ? 'pending' :
-                        t.estado === 'completada' ? 'completed' :
-                        t.estado === 'vencida' ? 'overdue' : t.estado
+                    ...t,
+                    status: t.estado === 'pendiente' ? 'pending' :
+                            t.estado === 'completada' ? 'completed' :
+                            t.estado === 'vencida' ? 'overdue' : t.estado,
+                    title: t.titulo || t.title,
+                    dueDate: t.fecha_vencimiento || t.dueDate
                 }));
+
+                // Guardar en cache para render inmediato posterior
+                try { localStorage.setItem('astren_tasks', JSON.stringify(mappedTareas)); } catch (e) {}
 
                 // Limpiar la promesa en progreso
                 this._loadTasksPromise = null;
@@ -1550,17 +1569,14 @@ class TasksManager {
 
     // Método auxiliar para obtener el ID de usuario
     getUserId() {
+        if (typeof getAstrenUserId === 'function') return getAstrenUserId();
         let usuario_id = localStorage.getItem('astren_usuario_id');
-        if (!usuario_id) {
-            try {
-                const user = JSON.parse(sessionStorage.getItem('astren_user'));
-                usuario_id = user?.usuario_id;
-            } catch (e) {
-                console.error('❌ [ERROR] No se pudo obtener usuario_id:', e);
-                usuario_id = 1; // Valor por defecto
-            }
-        }
-        return usuario_id;
+        if (usuario_id) return usuario_id;
+        try {
+            const user = JSON.parse(sessionStorage.getItem('astren_user'));
+            if (user && user.usuario_id) return user.usuario_id;
+        } catch (e) {}
+        return sessionStorage.getItem('userId') || localStorage.getItem('userId') || 1;
     }
 
     // Añadir un método para configurar eventos globales de eliminación
@@ -2238,7 +2254,7 @@ async function populateTaskAreaSelect() {
     try {
         const url = buildApiUrl(CONFIG.API_ENDPOINTS.AREAS, `/${usuario_id}`);
         console.log('URL fetch:', url);
-        const response = await fetch(url);
+        const response = await fetch(url, { cache: 'no-store' });
         if (response.ok) {
             let areas = await response.json();
             // Filtrar solo áreas activas

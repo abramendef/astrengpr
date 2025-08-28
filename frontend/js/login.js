@@ -162,9 +162,14 @@ loginForm.addEventListener('submit', function(e) {
                 '¡Sesión renovada exitosamente! Redirigiendo...' : 
                 '¡Inicio de sesión exitoso! Redirigiendo...';
             
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 2000);
+            // Bootstrap de datos antes de ir al dashboard
+            if (typeof bootstrapUserData === 'function') {
+                bootstrapUserData(true).finally(() => {
+                    window.location.href = 'dashboard.html';
+                });
+            } else {
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 500);
+            }
         } else {
             showLoginError(body.error || 'Credenciales incorrectas.');
         }

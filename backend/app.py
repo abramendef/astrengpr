@@ -1,5 +1,17 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+try:
+    import orjson
+    from flask.json.provider import JSONProvider
+    class ORJSONProvider(JSONProvider):
+        def dumps(self, obj, **kwargs):
+            return orjson.dumps(obj).decode()
+        def loads(self, s: str | bytes):
+            return orjson.loads(s)
+    _USE_ORJSON = True
+except Exception:
+    _USE_ORJSON = False
+from flask_compress import Compress
 import os
 import requests
 import json
@@ -7,24 +19,76 @@ from datetime import datetime, timezone
 import base64
 from dotenv import load_dotenv
 import mysql.connector
+from mysql.connector import pooling as mysql_pooling
 import re
 import bcrypt
 import logging
 
+# Cargar variables de entorno
+# Nota: se usará el archivo .env creado por los scripts de inicio (local o nube)
+# y variables de entorno del proceso. No forzar env.production aquí.
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+Compress(app)
+if _USE_ORJSON:
+    app.json = ORJSONProvider(app)
 
-# Configurar logging para producción
+# Detección de entorno (automática con override por ENV)
+def _detect_env():
+    explicit = os.getenv('ENV')
+    if explicit:
+        return explicit.lower()
+    db_host = os.getenv('MYSQL_HOST') or os.getenv('DB_HOST') or 'localhost'
+    if db_host not in ('localhost', '127.0.0.1'):
+        return 'production'
+    return 'development'
+
+ENV = _detect_env()
+level = logging.INFO if ENV == 'production' else logging.DEBUG
 logging.basicConfig(
-    level=logging.INFO,
+    level=level,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+logger.info(f"[BOOT] Entorno: {ENV} - LogLevel: {logging.getLevelName(level)}")
+
+# Configuraciones de optimización para producción
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300  # Cache estático por 5 minutos
+app.config['TEMPLATES_AUTO_RELOAD'] = False
+app.config['JSON_SORT_KEYS'] = False  # Mantener orden de las claves JSON
+
+# Configurar CORS con opciones optimizadas
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "max_age": 86400  # Cache preflight por 24 horas
+    }
+})
+
+# Middleware para optimizar respuestas
+@app.after_request
+def add_performance_headers(response):
+    """Agregar headers de optimización a todas las respuestas"""
+    # Evitar cache para endpoints de API dinámicos
+    path = request.path or ''
+    if path.startswith(('/areas', '/tareas', '/dashboard', '/grupos', '/usuarios', '/notificaciones', '/invitaciones', '/login', '/task-notes', '/task-evidence')):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    else:
+        # Permitir cache ligero solo para otros recursos/healthchecks
+        response.headers['Cache-Control'] = 'public, max-age=300'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    return response
 
 # Almacenamiento temporal de tokens (en producción usar base de datos)
 tokens = {}
+db_pool = None
 
 def get_db_connection():
     try:
@@ -34,23 +98,26 @@ def get_db_connection():
         password = os.getenv('MYSQL_PASSWORD') or os.getenv('DB_PASSWORD', '1234')
         database = os.getenv('MYSQL_DATABASE') or os.getenv('DB_NAME', 'astren')
         port = int(os.getenv('MYSQL_PORT') or os.getenv('DB_PORT', '3306'))
+        pool_size = int(os.getenv('MYSQL_POOL_SIZE', '15'))
 
         # Evitar caracteres no ASCII para compatibilidad en Windows
-        print("[DEBUG] Variables de entorno:")
-        print(f"   - HOST: {host}")
-        print(f"   - USER: {user}")
-        print(f"   - PASSWORD: {'*' * len(password) if password else 'None'}")
-        print(f"   - DATABASE: {database}")
-        print(f"   - PORT: {port}")
+        logger.info("[DB] Conectando a MySQL")
 
-        conn = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database,
-            port=port
-        )
-        return conn
+        global db_pool
+        if db_pool is None:
+            print(f"[DEBUG] Inicializando pool de conexiones MySQL (size={pool_size})")
+            db_pool = mysql_pooling.MySQLConnectionPool(
+                pool_name="astren_pool",
+                pool_size=pool_size,
+                host=host,
+                user=user,
+                password=password,
+                database=database,
+                port=port,
+                connection_timeout=10
+            )
+
+        return db_pool.get_connection()
     except mysql.connector.Error as err:
         print(f"[ERROR] Error de conexión a la base de datos: {err}")
         if err.errno == mysql.connector.errorcode.CR_CONN_HOST_ERROR:
@@ -251,34 +318,96 @@ def crear_tarea_grupo_multiple(usuario_id, titulo, descripcion, grupo_id, asigna
         conn.close()
         return []
 
-def obtener_tareas_usuario(usuario_id):
+def obtener_tareas_usuario(usuario_id, limit=50, offset=0):
+    start = datetime.now()
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
+    # Asegurar enteros para LIMIT/OFFSET
+    try:
+        limit = int(limit)
+    except Exception:
+        limit = 50
+    try:
+        offset = int(offset)
+    except Exception:
+        offset = 0
     sql = '''
-        SELECT t.*, a.nombre AS area_nombre, a.color AS area_color, a.icono AS area_icono,
-               g.nombre AS grupo_nombre, g.color AS grupo_color, g.icono AS grupo_icono,
-               u.nombre AS asignado_nombre, u.apellido AS asignado_apellido
-        FROM tareas t
-        LEFT JOIN areas a ON t.area_id = a.id
-        LEFT JOIN grupos g ON t.grupo_id = g.id
-        LEFT JOIN usuarios u ON t.asignado_a_id = u.id
-        WHERE (t.usuario_id = %s OR t.asignado_a_id = %s) AND t.estado != 'eliminada'
-        ORDER BY t.fecha_creacion DESC
+        SELECT * FROM (
+            SELECT 
+                t.id, t.titulo, t.descripcion,
+                CASE 
+                    WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < NOW() THEN 'vencida'
+                    ELSE t.estado
+                END AS estado,
+                t.fecha_creacion AS fecha_creacion,
+                t.fecha_vencimiento,
+                t.area_id, t.grupo_id, t.asignado_a_id,
+                a.nombre AS area_nombre, a.color AS area_color, a.icono AS area_icono,
+                g.nombre AS grupo_nombre, g.color AS grupo_color, g.icono AS grupo_icono,
+                u.nombre AS asignado_nombre, u.apellido AS asignado_apellido
+            FROM tareas t
+            LEFT JOIN areas a ON t.area_id = a.id
+            LEFT JOIN grupos g ON t.grupo_id = g.id
+            LEFT JOIN usuarios u ON t.asignado_a_id = u.id
+            WHERE t.usuario_id = %s AND t.estado != 'eliminada'
+            
+            UNION ALL
+            
+            SELECT 
+                t.id, t.titulo, t.descripcion,
+                CASE 
+                    WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < NOW() THEN 'vencida'
+                    ELSE t.estado
+                END AS estado,
+                t.fecha_creacion AS fecha_creacion,
+                t.fecha_vencimiento,
+                t.area_id, t.grupo_id, t.asignado_a_id,
+                a.nombre AS area_nombre, a.color AS area_color, a.icono AS area_icono,
+                g.nombre AS grupo_nombre, g.color AS grupo_color, g.icono AS grupo_icono,
+                u.nombre AS asignado_nombre, u.apellido AS asignado_apellido
+            FROM tareas t
+            LEFT JOIN areas a ON t.area_id = a.id
+            LEFT JOIN grupos g ON t.grupo_id = g.id
+            LEFT JOIN usuarios u ON t.asignado_a_id = u.id
+            WHERE t.asignado_a_id = %s AND t.estado != 'eliminada'
+        ) AS combined
+        ORDER BY combined.fecha_creacion DESC
+        LIMIT %s OFFSET %s
     '''
-    cursor.execute(sql, (usuario_id, usuario_id))
-    tareas = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return tareas
+    try:
+        cursor.execute(sql, (usuario_id, usuario_id, limit, offset))
+        tareas = cursor.fetchall()
+        return tareas
+    except Exception as e:
+        logger.error(f"❌ Error en obtener_tareas_usuario: {e}")
+        raise
+    finally:
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
+        dur = (datetime.now() - start).total_seconds()
+        logger.info(f"⏱️ obtener_tareas_usuario uid={usuario_id} limit={limit} offset={offset} en {dur:.3f}s - filas={len(tareas) if 'tareas' in locals() else 'ERR'}")
 
-def obtener_tareas_grupo(grupo_id):
+def obtener_tareas_grupo(grupo_id, limit=50, offset=0):
     """Obtener todas las tareas de un grupo específico"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
         sql = '''
-            SELECT t.*, a.nombre AS area_nombre, a.color AS area_color, a.icono AS area_icono,
+            SELECT t.id, t.titulo, t.descripcion,
+                   CASE 
+                        WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < NOW() THEN 'vencida'
+                        ELSE t.estado
+                   END AS estado,
+                   t.fecha_creacion, t.fecha_vencimiento,
+                   t.area_id, t.grupo_id, t.asignado_a_id,
+                   a.nombre AS area_nombre, a.color AS area_color, a.icono AS area_icono,
                    g.nombre AS grupo_nombre, u.nombre AS asignado_nombre, u.apellido AS asignado_apellido,
                    c.nombre AS creador_nombre, c.apellido AS creador_apellido
             FROM tareas t
@@ -288,9 +417,10 @@ def obtener_tareas_grupo(grupo_id):
             LEFT JOIN usuarios c ON t.usuario_id = c.id
             WHERE t.grupo_id = %s AND t.estado != 'eliminada'
             ORDER BY t.fecha_creacion DESC
+            LIMIT %s OFFSET %s
         '''
         
-        cursor.execute(sql, (grupo_id,))
+        cursor.execute(sql, (grupo_id, limit, offset))
         tareas = cursor.fetchall()
         
         # Convertir fechas a string
@@ -502,17 +632,27 @@ def login_usuario():
     contrasena = data['contrasena']
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM usuarios WHERE correo = %s", (correo,))
+    # Seleccionar explícitamente campos esperados; algunos entornos antiguos pueden tener nombres distintos
+    cursor.execute("SELECT id, nombre, apellido, correo, contrasena FROM usuarios WHERE correo = %s", (correo,))
     usuario = cursor.fetchone()
     cursor.close()
     conn.close()
     if not usuario:
         return jsonify({'error': 'Usuario o contrasena incorrectos'}), 401
-    # Si usuario es una tupla, convertirlo a dict usando la descripción del cursor
-    if not isinstance(usuario, dict):
-        columns = [col[0] for col in cursor.description]
-        usuario = dict(zip(columns, usuario))
-    hashed_db = str(usuario['contrasena'])  # Asegura que es string
+    # Determinar el campo de contraseña disponible
+    hashed_key = None
+    for k in ['contrasena', 'password', 'contrasenia', 'contrasena_hash']:
+        if k in usuario and usuario[k] is not None:
+            hashed_key = k
+            break
+    if not hashed_key:
+        # Esquema inesperado en la tabla usuarios (entorno local desalineado)
+        return jsonify({
+            'error': 'Esquema de usuarios no compatible: falta columna de contraseña',
+            'campos_disponibles': list(usuario.keys())
+        }), 500
+
+    hashed_db = str(usuario[hashed_key])  # Asegura que es string
     hashed = hashed_db.encode('utf-8')
     if bcrypt.checkpw(contrasena.encode('utf-8'), hashed):
         # Puedes devolver más datos del usuario si quieres, pero nunca la contraseña
@@ -624,8 +764,17 @@ def registrar_tarea():
 
 @app.route('/tareas/<int:usuario_id>', methods=['GET'])
 def listar_tareas(usuario_id):
-    actualizar_tareas_vencidas()  # Actualiza tareas vencidas antes de listar
-    tareas = obtener_tareas_usuario(usuario_id)
+    # Paginación opcional
+    try:
+        limit = int(request.args.get('limit', 50))
+    except Exception:
+        limit = 50
+    try:
+        offset = int(request.args.get('offset', 0))
+    except Exception:
+        offset = 0
+
+    tareas = obtener_tareas_usuario(usuario_id, limit=limit, offset=offset)
     tareas = [dict(t) for t in tareas]  # Asegura que cada tarea es un dict
     for tarea in tareas:
         fecha = tarea.get('fecha_vencimiento')
@@ -636,6 +785,17 @@ def listar_tareas(usuario_id):
                 try:
                     dt = datetime.fromisoformat(fecha.replace('Z', ''))
                     tarea['fecha_vencimiento'] = dt.strftime('%Y-%m-%d %H:%M')
+                except Exception:
+                    pass
+        # Serializar fecha_creacion igual que en dashboard para evitar errores de JSON
+        fc = tarea.get('fecha_creacion')
+        if fc:
+            if isinstance(fc, datetime):
+                tarea['fecha_creacion'] = fc.strftime('%Y-%m-%d %H:%M:%S')
+            elif isinstance(fc, str) and 'T' in fc:
+                try:
+                    dtc = datetime.fromisoformat(fc.replace('Z', ''))
+                    tarea['fecha_creacion'] = dtc.strftime('%Y-%m-%d %H:%M:%S')
                 except Exception:
                     pass
     return jsonify(tareas)
@@ -2377,7 +2537,17 @@ def debug_grupos_usuario(usuario_id):
 def listar_tareas_grupo(grupo_id):
     """Obtener todas las tareas de un grupo"""
     try:
-        tareas = obtener_tareas_grupo(grupo_id)
+        # Paginación opcional
+        try:
+            limit = int(request.args.get('limit', 50))
+        except Exception:
+            limit = 50
+        try:
+            offset = int(request.args.get('offset', 0))
+        except Exception:
+            offset = 0
+
+        tareas = obtener_tareas_grupo(grupo_id, limit=limit, offset=offset)
         return jsonify(tareas)
     except Exception as e:
         print(f"❌ [ERROR] Error en listar_tareas_grupo: {e}")
@@ -3249,6 +3419,166 @@ def listar_areas_archivadas(usuario_id):
     except Exception as e:
         print(f"❌ Error en listar_areas_archivadas: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/dashboard/<int:usuario_id>', methods=['GET'])
+def obtener_dashboard_completo(usuario_id):
+    """Endpoint unificado para obtener todos los datos del dashboard en una sola llamada"""
+    try:
+        start_time = datetime.now()
+        logger.info(f"🔄 Iniciando carga del dashboard para usuario {usuario_id}")
+        
+        # Eliminar UPDATE masivo del hot path; calcular estado efectivo al vuelo
+        
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # 1. Obtener tareas con una sola consulta optimizada
+        tareas_sql = '''
+            (
+                SELECT 
+                    t.id, t.titulo, t.descripcion,
+                    CASE 
+                        WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < NOW() THEN 'vencida'
+                        ELSE t.estado
+                    END AS estado,
+                    t.fecha_creacion, t.fecha_vencimiento,
+                    t.area_id, t.grupo_id, t.asignado_a_id,
+                    a.nombre AS area_nombre, a.color AS area_color, a.icono AS area_icono,
+                    g.nombre AS grupo_nombre, g.color AS grupo_color, g.icono AS grupo_icono,
+                    u.nombre AS asignado_nombre, u.apellido AS asignado_apellido
+                FROM tareas t
+                LEFT JOIN areas a ON t.area_id = a.id
+                LEFT JOIN grupos g ON t.grupo_id = g.id
+                LEFT JOIN usuarios u ON t.asignado_a_id = u.id
+                WHERE t.usuario_id = %s AND t.estado != 'eliminada'
+                ORDER BY t.fecha_creacion DESC
+                LIMIT 100
+            )
+            UNION ALL
+            (
+                SELECT 
+                    t.id, t.titulo, t.descripcion,
+                    CASE 
+                        WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < NOW() THEN 'vencida'
+                        ELSE t.estado
+                    END AS estado,
+                    t.fecha_creacion, t.fecha_vencimiento,
+                    t.area_id, t.grupo_id, t.asignado_a_id,
+                    a.nombre AS area_nombre, a.color AS area_color, a.icono AS area_icono,
+                    g.nombre AS grupo_nombre, g.color AS grupo_color, g.icono AS grupo_icono,
+                    u.nombre AS asignado_nombre, u.apellido AS asignado_apellido
+                FROM tareas t
+                LEFT JOIN areas a ON t.area_id = a.id
+                LEFT JOIN grupos g ON t.grupo_id = g.id
+                LEFT JOIN usuarios u ON t.asignado_a_id = u.id
+                WHERE t.asignado_a_id = %s AND t.estado != 'eliminada'
+                ORDER BY t.fecha_creacion DESC
+                LIMIT 100
+            )
+            ORDER BY fecha_creacion DESC
+            LIMIT 100
+        '''
+        cursor.execute(tareas_sql, (usuario_id, usuario_id))
+        tareas = cursor.fetchall()
+        
+        # 2. Obtener áreas activas
+        areas_sql = '''
+            SELECT id, nombre, descripcion, color, icono, estado
+            FROM areas 
+            WHERE usuario_id = %s AND estado = 'activa'
+            ORDER BY nombre
+        '''
+        cursor.execute(areas_sql, (usuario_id,))
+        areas = cursor.fetchall()
+        
+        # 3. Obtener grupos con estadísticas básicas
+        grupos_sql = '''
+            SELECT 
+                g.id, g.nombre, g.descripcion, g.color, g.icono, g.estado,
+                COUNT(DISTINCT gm.usuario_id) AS num_miembros,
+                COALESCE(myu.rol, 'miembro') AS rol
+            FROM grupos g
+            JOIN miembros_grupo my ON my.grupo_id = g.id AND my.usuario_id = %s
+            LEFT JOIN miembros_grupo gm ON gm.grupo_id = g.id
+            LEFT JOIN (
+                SELECT grupo_id, rol FROM miembros_grupo WHERE usuario_id = %s
+            ) myu ON myu.grupo_id = g.id
+            WHERE g.estado = 'activo'
+            GROUP BY g.id, g.nombre, g.descripcion, g.color, g.icono, g.estado, myu.rol
+            ORDER BY g.nombre
+        '''
+        cursor.execute(grupos_sql, (usuario_id, usuario_id))
+        grupos = cursor.fetchall()
+        
+        # 4. Calcular contadores de tareas
+        # Contadores en dos consultas (evitar OR) y sumar en Python
+        cont_sql = '''
+            SELECT 
+                COUNT(CASE WHEN estado = 'pendiente' AND DATE(fecha_vencimiento) = CURDATE() THEN 1 END) AS tareas_hoy,
+                COUNT(CASE 
+                        WHEN estado = 'pendiente' AND (fecha_vencimiento IS NULL OR fecha_vencimiento >= NOW()) THEN 1 
+                    END) AS tareas_pendientes,
+                COUNT(CASE WHEN estado = 'completada' THEN 1 END) AS tareas_completadas,
+                COUNT(CASE 
+                        WHEN estado = 'vencida' OR (estado = 'pendiente' AND fecha_vencimiento IS NOT NULL AND fecha_vencimiento < NOW()) THEN 1 
+                    END) AS tareas_vencidas
+            FROM tareas 
+            WHERE usuario_id = %s AND estado != 'eliminada'
+        '''
+        cursor.execute(cont_sql, (usuario_id,))
+        c1 = cursor.fetchone() or {}
+        cont_asig_sql = cont_sql.replace('WHERE usuario_id = %s', 'WHERE asignado_a_id = %s')
+        cursor.execute(cont_asig_sql, (usuario_id,))
+        c2 = cursor.fetchone() or {}
+        contadores = {
+            'tareas_hoy': (c1.get('tareas_hoy') or 0) + (c2.get('tareas_hoy') or 0),
+            'tareas_pendientes': (c1.get('tareas_pendientes') or 0) + (c2.get('tareas_pendientes') or 0),
+            'tareas_completadas': (c1.get('tareas_completadas') or 0) + (c2.get('tareas_completadas') or 0),
+            'tareas_vencidas': (c1.get('tareas_vencidas') or 0) + (c2.get('tareas_vencidas') or 0),
+        }
+        
+        cursor.close()
+        conn.close()
+        
+        # Procesar fechas de tareas
+        for tarea in tareas:
+            if tarea.get('fecha_vencimiento'):
+                if isinstance(tarea['fecha_vencimiento'], datetime):
+                    tarea['fecha_vencimiento'] = tarea['fecha_vencimiento'].strftime('%Y-%m-%d %H:%M')
+                elif isinstance(tarea['fecha_vencimiento'], str) and 'T' in tarea['fecha_vencimiento']:
+                    try:
+                        dt = datetime.fromisoformat(tarea['fecha_vencimiento'].replace('Z', ''))
+                        tarea['fecha_vencimiento'] = dt.strftime('%Y-%m-%d %H:%M')
+                    except Exception:
+                        pass
+            
+            if tarea.get('fecha_creacion'):
+                if isinstance(tarea['fecha_creacion'], datetime):
+                    tarea['fecha_creacion'] = tarea['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Preparar respuesta
+        dashboard_data = {
+            'tareas': tareas,
+            'areas': areas,
+            'grupos': grupos,
+            'contadores': {
+                'tareas_hoy': contadores['tareas_hoy'],
+                'tareas_pendientes': contadores['tareas_pendientes'],
+                'tareas_completadas': contadores['tareas_completadas'],
+                'tareas_vencidas': contadores['tareas_vencidas']
+            },
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        end_time = datetime.now()
+        tiempo_total = (end_time - start_time).total_seconds()
+        logger.info(f"✅ Dashboard cargado en {tiempo_total:.2f}s para usuario {usuario_id}")
+        
+        return jsonify(dashboard_data)
+        
+    except Exception as e:
+        logger.error(f"❌ Error al cargar dashboard para usuario {usuario_id}: {e}")
+        return jsonify({'error': 'Error interno del servidor'}), 500
 
 if __name__ == '__main__':
     app.run(debug=False, port=8000, host='0.0.0.0') 

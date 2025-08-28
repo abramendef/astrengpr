@@ -1,0 +1,24 @@
+# Python venv and caches
+backend/venv/
+**/__pycache__/
+*.pyc
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Node/npm (future-proof)
+node_modules/
+
+# Env files (keep secrets local)
+backend/.env
+backend/env.local
+backend/env.production.local
+
+# Logs
+logs/
+*.log
+
+# Editor settings
+.vscode/
+.idea/

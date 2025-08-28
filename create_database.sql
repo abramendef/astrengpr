@@ -1,5 +1,5 @@
 -- Script para crear la base de datos en Aiven
--- Versión: 0.0.2
+-- Versión: 0.0.3
 
 create database astrengpr;
 USE astrengpr;
@@ -181,3 +181,24 @@ CREATE TABLE reputacion_grupo_general (
     FOREIGN KEY (grupo_id) REFERENCES grupos(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+
+-- =====================
+-- ÍNDICES DE RENDIMIENTO
+-- =====================
+
+-- Tareas: acelerar consultas por usuario/asignado/grupo/área con orden por fecha/estado
+CREATE INDEX idx_tareas_usuario_estado_fecha ON tareas (usuario_id, estado, fecha_creacion);
+CREATE INDEX idx_tareas_asignado_estado_fecha ON tareas (asignado_a_id, estado, fecha_creacion);
+CREATE INDEX idx_tareas_grupo_estado_fecha ON tareas (grupo_id, estado, fecha_creacion);
+CREATE INDEX idx_tareas_area_estado ON tareas (area_id, estado);
+
+-- Notificaciones: lecturas por usuario/estado de lectura
+CREATE INDEX idx_notif_usuario_leida ON notificaciones (usuario_id, leida);
+
+-- Miembros de grupo: ya existe PK (grupo_id, usuario_id), añadimos el inverso para búsquedas por usuario
+CREATE INDEX idx_mg_usuario_grupo ON miembros_grupo (usuario_id, grupo_id);
+
+-- Grupos: listas por estado y orden por nombre
+CREATE INDEX idx_grupos_estado_nombre ON grupos (estado, nombre);
+

@@ -1,13 +1,13 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 
-title Astren - Local (BD local)
+title Astren - Local (BD Aiven)
 echo.
 echo ========================================
-echo    ASTREN - MODO LOCAL (BASE DE DATOS LOCAL)
+echo    ASTREN - MODO LOCAL (BASE DE DATOS NUBE)
 echo ========================================
 echo.
-echo Este script inicia el backend local usando la BD local.
+echo Este script inicia el backend localmente usando la BD de Aiven.
 echo.
 
 REM Preparar rutas
@@ -53,8 +53,9 @@ if /I "%PYTHON_EXE%"=="python" (
   )
 )
 
-REM Lanzar BACKEND (local) y FRONTEND con scripts dedicados para evitar problemas de quoting
-start "Astren Backend (Local)" cmd /k "scripts\run_backend_local.cmd"
+REM Configuracion de entorno (local + Aiven)
+REM Lanzar BACKEND (Aiven) y FRONTEND con scripts dedicados para evitar problemas de quoting
+start "Astren Backend (Aiven)" cmd /k "scripts\run_backend_aiven.cmd"
 start "Astren Frontend" cmd /k "scripts\run_frontend.cmd"
 
 echo.
@@ -66,3 +67,5 @@ echo ========================================
 echo.
 echo Cierra esta ventana si ya no la necesitas.
 pause
+
+
