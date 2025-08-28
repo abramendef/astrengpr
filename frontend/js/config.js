@@ -33,7 +33,7 @@ const CONFIG = {
     // Configuración de la aplicación
     APP: {
         NAME: 'Astren',
-        VERSION: '0.0.1'
+        VERSION: '0.0.2'
     },
     
     // Configuración de logging

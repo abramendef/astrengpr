@@ -28,29 +28,31 @@ tokens = {}
 
 def get_db_connection():
     try:
-        # Debug: Imprimir las variables de entorno
-        host = os.getenv('MYSQL_HOST', 'localhost')
-        user = os.getenv('MYSQL_USER', 'root')
-        password = os.getenv('MYSQL_PASSWORD', '1234')
-        database = os.getenv('MYSQL_DATABASE', 'astren')
-        
-        print(f"🔍 [DEBUG] Variables de entorno:")
-        print(f"   - MYSQL_HOST: {host}")
-        print(f"   - MYSQL_USER: {user}")
-        print(f"   - MYSQL_PASSWORD: {'*' * len(password) if password else 'None'}")
-        print(f"   - MYSQL_DATABASE: {database}")
-        print(f"   - MYSQL_PORT: {os.getenv('MYSQL_PORT', 3306)}")
-        
+        # Debug: Imprimir las variables de entorno (aceptar tanto MYSQL_* como DB_*)
+        host = os.getenv('MYSQL_HOST') or os.getenv('DB_HOST', 'localhost')
+        user = os.getenv('MYSQL_USER') or os.getenv('DB_USER', 'root')
+        password = os.getenv('MYSQL_PASSWORD') or os.getenv('DB_PASSWORD', '1234')
+        database = os.getenv('MYSQL_DATABASE') or os.getenv('DB_NAME', 'astren')
+        port = int(os.getenv('MYSQL_PORT') or os.getenv('DB_PORT', '3306'))
+
+        # Evitar caracteres no ASCII para compatibilidad en Windows
+        print("[DEBUG] Variables de entorno:")
+        print(f"   - HOST: {host}")
+        print(f"   - USER: {user}")
+        print(f"   - PASSWORD: {'*' * len(password) if password else 'None'}")
+        print(f"   - DATABASE: {database}")
+        print(f"   - PORT: {port}")
+
         conn = mysql.connector.connect(
             host=host,
             user=user,
             password=password,
             database=database,
-            port=int(os.getenv('MYSQL_PORT', 3306))
+            port=port
         )
         return conn
     except mysql.connector.Error as err:
-        print(f"❌ Error de conexión a la base de datos: {err}")
+        print(f"[ERROR] Error de conexión a la base de datos: {err}")
         if err.errno == mysql.connector.errorcode.CR_CONN_HOST_ERROR:
             print("No se puede conectar al host de la base de datos.")
         elif err.errno == mysql.connector.errorcode.ER_ACCESS_DENIED_ERROR:
@@ -73,14 +75,14 @@ def actualizar_tareas_vencidas():
     cursor.close()
     conn.close()
 
-def crear_usuario(nombre, apellido, correo, contraseña, telefono=None):
+def crear_usuario(nombre, apellido, correo, contrasena, telefono=None):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        # Hashear la contraseña antes de guardar
-        hashed = bcrypt.hashpw(contraseña.encode('utf-8'), bcrypt.gensalt())
+        # Hashear la contrasena antes de guardar
+        hashed = bcrypt.hashpw(contrasena.encode('utf-8'), bcrypt.gensalt())
         hashed_str = hashed.decode('utf-8')
-        sql = "INSERT INTO usuarios (nombre, apellido, correo, contraseña, telefono) VALUES (%s, %s, %s, %s, %s)"
+        sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, telefono) VALUES (%s, %s, %s, %s, %s)"
         print("Ejecutando SQL:", sql)
         print("Valores:", (nombre, apellido, correo, '***hash***', telefono))
         cursor.execute(sql, (nombre, apellido, correo, hashed_str, telefono))
@@ -454,13 +456,13 @@ def registrar_usuario():
     email_regex = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
     if not re.match(email_regex, data['correo']):
         return jsonify({"error": "Correo inválido"}), 400
-    if not data.get('contraseña') or len(data['contraseña']) < 8:
-        return jsonify({"error": "La contraseña debe tener al menos 8 caracteres"}), 400
+    if not data.get('contrasena') or len(data['contrasena']) < 8:
+        return jsonify({"error": "La contrasena debe tener al menos 8 caracteres"}), 400
     # Validar que el correo no exista
     usuarios = obtener_usuarios()
     if any(u['correo'] == data['correo'] for u in usuarios):
         return jsonify({"error": "Ya existe un usuario con ese correo"}), 400
-    crear_usuario(data['nombre'], data['apellido'], data['correo'], data['contraseña'], data.get('telefono'))
+    crear_usuario(data['nombre'], data['apellido'], data['correo'], data['contrasena'], data.get('telefono'))
     return jsonify({"mensaje": "Usuario creado"}), 201
 
 @app.route('/usuarios', methods=['GET'])
@@ -494,10 +496,10 @@ def obtener_usuario_por_id(usuario_id):
 @app.route('/login', methods=['POST'])
 def login_usuario():
     data = request.json
-    if not data or not data.get('correo') or not data.get('contraseña'):
-        return jsonify({'error': 'Correo y contraseña son obligatorios'}), 400
+    if not data or not data.get('correo') or not data.get('contrasena'):
+        return jsonify({'error': 'Correo y contrasena son obligatorios'}), 400
     correo = data['correo']
-    contraseña = data['contraseña']
+    contrasena = data['contrasena']
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM usuarios WHERE correo = %s", (correo,))
@@ -505,18 +507,18 @@ def login_usuario():
     cursor.close()
     conn.close()
     if not usuario:
-        return jsonify({'error': 'Usuario o contraseña incorrectos'}), 401
+        return jsonify({'error': 'Usuario o contrasena incorrectos'}), 401
     # Si usuario es una tupla, convertirlo a dict usando la descripción del cursor
     if not isinstance(usuario, dict):
         columns = [col[0] for col in cursor.description]
         usuario = dict(zip(columns, usuario))
-    hashed_db = str(usuario['contraseña'])  # Asegura que es string
+    hashed_db = str(usuario['contrasena'])  # Asegura que es string
     hashed = hashed_db.encode('utf-8')
-    if bcrypt.checkpw(contraseña.encode('utf-8'), hashed):
+    if bcrypt.checkpw(contrasena.encode('utf-8'), hashed):
         # Puedes devolver más datos del usuario si quieres, pero nunca la contraseña
         return jsonify({'mensaje': 'Login exitoso', 'usuario_id': usuario['id'], 'nombre': usuario['nombre'], 'apellido': usuario['apellido'], 'correo': usuario['correo']}), 200
     else:
-        return jsonify({'error': 'Usuario o contraseña incorrectos'}), 401
+        return jsonify({'error': 'Usuario o contrasena incorrectos'}), 401
 
 @app.route('/tareas', methods=['POST'])
 def registrar_tarea():

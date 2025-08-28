@@ -17,7 +17,7 @@
 ### **URLs del Sistema:**
 - **Frontend (Vercel):** https://astren.vercel.app/
 - **Backend (Render):** https://astren-backend.onrender.com
-- **Base de Datos (Railway):** MySQL en Railway
+- **Base de Datos (Aiven):** MySQL en Aiven
 
 ### **Datos de Acceso Demo:**
 - **Email:** astren@gmail.com
@@ -39,7 +39,7 @@ astren/
 │   │   ├── tasks.css         # Sistema de tareas (1,459 líneas)
 │   │   ├── groups.css        # Gestión de grupos (1,650 líneas)
 │   │   ├── areas.css         # Áreas personales (2,693 líneas)
-│   │   ├── reputation.css    # Sistema de reputación (481 líneas)
+│   │   ├── reputation.css    # Sistema de reputación (planificado - 481 líneas)
 │   │   ├── sidebar.css       # Navegación lateral (389 líneas)
 │   │   ├── notifications.css # Sistema de notificaciones
 │   │   ├── profile.css       # Perfil de usuario
@@ -52,7 +52,7 @@ astren/
 │   │   ├── tasks.js        # Gestión de tareas (2,420 líneas)
 │   │   ├── groups.js       # Gestión de grupos (2,752 líneas)
 │   │   ├── areas.js        # Áreas personales (1,307 líneas)
-│   │   ├── reputation.js   # Sistema de reputación (1,237 líneas)
+│   │   ├── reputation.js   # Sistema de reputación (planificado - 1,237 líneas)
 │   │   ├── scripts.js      # Utilidades generales
 │   │   ├── sidebar-new.js  # Navegación lateral
 │   │   ├── header-buttons.js # Botones del header
@@ -68,7 +68,7 @@ astren/
 │   ├── tasks.html          # Gestión de tareas (403 líneas)
 │   ├── groups.html         # Gestión de equipos (687 líneas)
 │   ├── areas.html          # Áreas personales (405 líneas)
-│   ├── reputation.html     # Sistema de reputación
+│   ├── reputation.html     # Sistema de reputación (planificado)
 │   ├── profile.html        # Perfil de usuario
 │   ├── settings.html       # Configuraciones
 │   ├── notifications.html  # Notificaciones
@@ -463,7 +463,7 @@ logger = logging.getLogger(__name__)
 
 ### **4. Gestión de Variables de Entorno**
 **Problema**: Variables de entorno no configuradas correctamente.
-**Solución**: Configuración completa para Railway MySQL.
+**Solución**: Configuración completa para Aiven MySQL.
 
 ## 📋 **PROBLEMAS RESUELTOS**
 
@@ -473,7 +473,7 @@ logger = logging.getLogger(__name__)
 
 ### **2. Error de Variables de Entorno**
 - **Problema**: Variables no configuradas en Render
-- **Solución**: Configuración completa con Railway MySQL
+- **Solución**: Configuración completa con Aiven MySQL
 
 ### **3. Error de Usuario Demo**
 - **Problema**: Usuario demo no existía en base de datos
@@ -532,10 +532,10 @@ logger = logging.getLogger(__name__)
 
 #### **1. Sistema de Reputación** 🔄
 - **Estado**: Frontend 90% completo, Backend 0%
-- **Funcionalidades**: Estructura HTML/CSS/JS completa
+- **Funcionalidades**: Estructura HTML/CSS/JS completa (planificado)
 - **Archivos**: `reputation.html`, `reputation.js`, `reputation.css`
 - **Backend**: Endpoints no implementados
-- **Características**: Diseño completo, lógica frontend lista
+- **Características**: Diseño completo, lógica frontend lista (planificado)
 - **Próximos pasos**: Implementar endpoints backend, algoritmos de cálculo
 
 #### **2. Perfil de Usuario** 🔄
@@ -575,7 +575,7 @@ logger = logging.getLogger(__name__)
 ### **URLs de Producción:**
 - **Frontend**: https://astren.vercel.app/
 - **Backend**: https://astren-backend.onrender.com
-- **Base de Datos**: Railway MySQL
+- **Base de Datos**: Aiven MySQL
 
 ### **Credenciales de Acceso:**
 - **Email**: astren@gmail.com
@@ -588,11 +588,11 @@ logger = logging.getLogger(__name__)
 - ✅ **Optimizado para Rendimiento**
 
 ### **Versión Actual:**
-- **Versión**: 0.0.1 (Demo)
+- **Versión**: 0.0.2 (Demo)
 - **Fecha de Despliegue**: Agosto 2025
-- **Estado**: Sistema Operativo - Demo
+- **Estado**: Sistema Operativo - Demo - Sin sistema de reputación implementado
 
 ---
 
-**Documentación actualizada el 4 de Agosto de 2025**
+**Documentación actualizada el 27 de Agosto de 2025**
 **Sistema completamente funcional y desplegado en producción** 

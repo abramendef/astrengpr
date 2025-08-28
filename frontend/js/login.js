@@ -115,7 +115,7 @@ loginForm.addEventListener('submit', function(e) {
     // Get form data
     const formData = {
         correo: emailInput.value.trim(),
-        contraseña: passwordInput.value
+        contrasena: passwordInput.value
     };
     
     // Nuevo flujo: usar endpoint real de login
@@ -151,7 +151,7 @@ loginForm.addEventListener('submit', function(e) {
                 localStorage.setItem('astren_correo', body.correo);
                 localStorage.setItem('astren_rememberMe', 'true');
                 localStorage.setItem('astren_email', formData.correo);
-                localStorage.setItem('astren_password', formData.contraseña);
+                localStorage.setItem('astren_password', formData.contrasena);
                 localStorage.setItem('astren_autoLogin', 'true');
             }
             

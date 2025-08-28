@@ -6,7 +6,7 @@
 
 - **🌐 Frontend (Vercel):** https://astren.vercel.app/
 - **🔧 Backend (Render):** https://astren-backend.onrender.com
-- **🗄️ Base de Datos (Railway):** MySQL en Railway
+- **🗄️ Base de Datos (Aiven):** MySQL en Aiven
 
 **Credenciales de Acceso:**
 - **👤 Email:** astren@gmail.com
@@ -22,8 +22,8 @@
 - [x] Commit y push a GitHub
 - [x] Verificar que todo esté sincronizado
 
-### **✅ PASO 2: Configuración de Base de Datos (Railway)**
-- [x] Crear cuenta en Railway
+### **✅ PASO 2: Configuración de Base de Datos (Aiven)**
+- [x] Crear cuenta en Aiven
 - [x] Crear servicio MySQL
 - [x] Obtener credenciales de conexión
 - [x] Configurar variables de entorno
@@ -60,11 +60,11 @@
 
 ### **Variables de Entorno (Render)**
 ```env
-MYSQL_HOST=yamabiko.proxy.rlwy.net
-MYSQL_USER=root
-MYSQL_PASSWORD=poXSpcslPLNEYHtltSrrNLrqMhfqGSsA
-MYSQL_DATABASE=astren
-MYSQL_PORT=32615
+MYSQL_HOST=astrengpr-astrendb.l.aivencloud.com
+MYSQL_USER=avnadmin
+MYSQL_PASSWORD=AVNS_v9XMXN-BE9Or-VI580I
+MYSQL_DATABASE=astrengpr
+MYSQL_PORT=18019
 ```
 
 ### **Dependencias Python (requirements.txt)**
@@ -195,5 +195,5 @@ API_BASE_URL: window.location.hostname === 'localhost' || window.location.hostna
 
 ---
 
-**Guía actualizada el 4 de Agosto de 2025**
+**Guía actualizada el 27 de Agosto de 2025**
 **Sistema completamente desplegado y operativo en producción** 
