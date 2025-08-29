@@ -90,6 +90,46 @@ def add_performance_headers(response):
 tokens = {}
 db_pool = None
 
+# Utilidad: normalizar strings de fecha de vencimiento a 'YYYY-MM-DD HH:MM:SS' en hora local
+def _normalize_due_date_str(due_value):
+    if not due_value:
+        return None
+    try:
+        if isinstance(due_value, (int, float)):
+            # Epoch seconds or ms
+            # Asumir segundos si es razonable, ms si es muy grande
+            ts = float(due_value)
+            if ts > 10_000_000_000:  # heurística: milisegundos
+                ts = ts / 1000.0
+            local_dt = datetime.fromtimestamp(ts)
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        if isinstance(due_value, str):
+            s = due_value.strip()
+            # ISO con Z u offset
+            if 'T' in s:
+                s2 = s.replace('Z', '+00:00')
+                try:
+                    dt = datetime.fromisoformat(s2)
+                    # Si es naive, tomar como local; si es aware, convertir a local
+                    if dt.tzinfo is not None:
+                        dt = dt.astimezone()
+                    return dt.strftime('%Y-%m-%d %H:%M:%S')
+                except Exception:
+                    pass
+            # Formatos 'YYYY-MM-DD HH:MM' o 'YYYY-MM-DD HH:MM:SS'
+            try:
+                if re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$', s):
+                    dt = datetime.strptime(s, '%Y-%m-%d %H:%M')
+                    return dt.strftime('%Y-%m-%d %H:%M:%S')
+                if re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', s):
+                    dt = datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
+                    return dt.strftime('%Y-%m-%d %H:%M:%S')
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return due_value
+
 def get_db_connection():
     try:
         # Debug: Imprimir las variables de entorno (aceptar tanto MYSQL_* como DB_*)
@@ -117,7 +157,38 @@ def get_db_connection():
                 connection_timeout=10
             )
 
-        return db_pool.get_connection()
+        conn = db_pool.get_connection()
+        # Alinear zona horaria de la sesión MySQL con la hora local o una preferida
+        try:
+            tz_pref = os.getenv('APP_TZ') or os.getenv('TIMEZONE') or os.getenv('DB_TZ')
+            cursor = conn.cursor()
+            if tz_pref:
+                try:
+                    cursor.execute("SET time_zone = %s", (tz_pref,))
+                except Exception:
+                    # Fallback a offset calculado si el nombre de zona no está disponible en el servidor
+                    offset = datetime.now() - datetime.utcnow()
+                    total_seconds = int(offset.total_seconds())
+                    sign = '+' if total_seconds >= 0 else '-'
+                    abs_seconds = abs(total_seconds)
+                    hours = abs_seconds // 3600
+                    minutes = (abs_seconds % 3600) // 60
+                    tz_offset = f"{sign}{hours:02d}:{minutes:02d}"
+                    cursor.execute("SET time_zone = %s", (tz_offset,))
+            else:
+                # Sin configuración explícita: usar offset local del sistema
+                offset = datetime.now() - datetime.utcnow()
+                total_seconds = int(offset.total_seconds())
+                sign = '+' if total_seconds >= 0 else '-'
+                abs_seconds = abs(total_seconds)
+                hours = abs_seconds // 3600
+                minutes = (abs_seconds % 3600) // 60
+                tz_offset = f"{sign}{hours:02d}:{minutes:02d}"
+                cursor.execute("SET time_zone = %s", (tz_offset,))
+            cursor.close()
+        except Exception as tz_err:
+            logger.warning(f"[DB] No se pudo fijar time_zone de la sesión: {tz_err}")
+        return conn
     except mysql.connector.Error as err:
         print(f"[ERROR] Error de conexión a la base de datos: {err}")
         if err.errno == mysql.connector.errorcode.CR_CONN_HOST_ERROR:
@@ -142,23 +213,36 @@ def actualizar_tareas_vencidas():
     cursor.close()
     conn.close()
 
-def crear_usuario(nombre, apellido, correo, contrasena, telefono=None):
+def _get_bcrypt_rounds() -> int:
+    """Determina el costo de bcrypt según entorno o variable de entorno.
+
+    - Producción: por defecto 12
+    - Desarrollo: por defecto 10 (más rápido en máquinas locales)
+    - Se puede sobreescribir con BCRYPT_ROUNDS
+    """
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        # Hashear la contrasena antes de guardar
-        hashed = bcrypt.hashpw(contrasena.encode('utf-8'), bcrypt.gensalt())
-        hashed_str = hashed.decode('utf-8')
-        sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, telefono) VALUES (%s, %s, %s, %s, %s)"
-        print("Ejecutando SQL:", sql)
-        print("Valores:", (nombre, apellido, correo, '***hash***', telefono))
-        cursor.execute(sql, (nombre, apellido, correo, hashed_str, telefono))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        print("Usuario insertado correctamente")
-    except Exception as e:
-        print("Error al insertar usuario:", e)
+        override = os.getenv('BCRYPT_ROUNDS')
+        if override:
+            return max(4, min(16, int(override)))
+    except Exception:
+        pass
+    return 12 if ENV == 'production' else 10
+
+
+def crear_usuario(nombre, apellido, correo, contrasena, telefono=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Hashear la contrasena antes de guardar (costo ajustado por entorno)
+    rounds = _get_bcrypt_rounds()
+    hashed = bcrypt.hashpw(contrasena.encode('utf-8'), bcrypt.gensalt(rounds=rounds))
+    hashed_str = hashed.decode('utf-8')
+    sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, telefono) VALUES (%s, %s, %s, %s, %s)"
+    logger.debug("[SQL] INSERT usuarios ...", extra={'category': 'DB'})
+    cursor.execute(sql, (nombre, apellido, correo, hashed_str, telefono))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    logger.info("[DB] Usuario insertado correctamente", extra={'category': 'DB'})
 
 def obtener_usuarios():
     conn = get_db_connection()
@@ -174,6 +258,17 @@ def obtener_usuarios():
     cursor.close()
     conn.close()
     return usuarios
+
+
+def usuario_existe_por_correo(correo: str) -> bool:
+    """Verifica existencia por correo de forma eficiente (usa índice UNIQUE)."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM usuarios WHERE correo = %s LIMIT 1", (correo,))
+    exists = cursor.fetchone() is not None
+    cursor.close()
+    conn.close()
+    return exists
 
 def crear_tarea(usuario_id, titulo, descripcion, area_id=None, grupo_id=None, asignado_a_id=None, fecha_vencimiento=None, estado='pendiente'):
     conn = get_db_connection()
@@ -215,7 +310,7 @@ def crear_tarea(usuario_id, titulo, descripcion, area_id=None, grupo_id=None, as
         usuario_id, titulo, 
         descripcion, descripcion, 
         area_id, area_id, 
-        fecha_vencimiento, fecha_vencimiento,
+        _normalize_due_date_str(fecha_vencimiento), _normalize_due_date_str(fecha_vencimiento),
         estado
     ))
     
@@ -232,7 +327,8 @@ def crear_tarea(usuario_id, titulo, descripcion, area_id=None, grupo_id=None, as
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
     try:
-        cursor.execute(sql, (usuario_id, area_id, grupo_id, asignado_a_id, titulo, descripcion, fecha_vencimiento, estado))
+        fv_norm = _normalize_due_date_str(fecha_vencimiento)
+        cursor.execute(sql, (usuario_id, area_id, grupo_id, asignado_a_id, titulo, descripcion, fv_norm, estado))
         conn.commit()
         task_id = cursor.lastrowid
         
@@ -294,7 +390,8 @@ def crear_tarea_grupo_multiple(usuario_id, titulo, descripcion, grupo_id, asigna
                 INSERT INTO tareas (usuario_id, area_id, grupo_id, asignado_a_id, titulo, descripcion, fecha_vencimiento, estado)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(sql, (asignado_id, area_personal_id, grupo_id, asignado_id, titulo, descripcion, fecha_vencimiento, estado))
+            fv_norm = _normalize_due_date_str(fecha_vencimiento)
+            cursor.execute(sql, (asignado_id, area_personal_id, grupo_id, asignado_id, titulo, descripcion, fv_norm, estado))
             task_id = cursor.lastrowid
             
             # Crear notificación si no es el mismo usuario
@@ -588,12 +685,18 @@ def registrar_usuario():
         return jsonify({"error": "Correo inválido"}), 400
     if not data.get('contrasena') or len(data['contrasena']) < 8:
         return jsonify({"error": "La contrasena debe tener al menos 8 caracteres"}), 400
-    # Validar que el correo no exista
-    usuarios = obtener_usuarios()
-    if any(u['correo'] == data['correo'] for u in usuarios):
+    # Validar que el correo no exista (consulta O(1) con índice)
+    if usuario_existe_por_correo(data['correo']):
         return jsonify({"error": "Ya existe un usuario con ese correo"}), 400
-    crear_usuario(data['nombre'], data['apellido'], data['correo'], data['contrasena'], data.get('telefono'))
-    return jsonify({"mensaje": "Usuario creado"}), 201
+    try:
+        crear_usuario(data['nombre'], data['apellido'], data['correo'], data['contrasena'], data.get('telefono'))
+        return jsonify({"mensaje": "Usuario creado"}), 201
+    except mysql.connector.IntegrityError as e:
+        # Manejar condición de carrera por UNIQUE(correo)
+        return jsonify({"error": "Ya existe un usuario con ese correo"}), 400
+    except Exception as e:
+        logger.error(f"[DB] Error al crear usuario: {e}")
+        return jsonify({"error": "Error al crear usuario"}), 500
 
 @app.route('/usuarios', methods=['GET'])
 def listar_usuarios():
@@ -737,6 +840,9 @@ def registrar_tarea():
     
     print(f"✅ [DEBUG] Creando tarea con datos: usuario={usuario_id}, titulo={data['titulo']}, area={area_id}, estado={estado}")
     
+    # Normalizar fecha de vencimiento si viene del frontend
+    fecha_venc = _normalize_due_date_str(data.get('fecha_vencimiento'))
+
     task_id = crear_tarea(
         usuario_id,
         data['titulo'],
@@ -744,7 +850,7 @@ def registrar_tarea():
         area_id,
         data.get('grupo_id'),
         data.get('asignado_a_id'),
-        data.get('fecha_vencimiento'),
+        fecha_venc,
         estado
     )
     
@@ -822,7 +928,7 @@ def actualizar_tarea(tarea_id):
         titulo = data.get('titulo')
         descripcion = data.get('descripcion')
         area_id = data.get('area_id')
-        fecha_vencimiento = data.get('fecha_vencimiento')
+        fecha_vencimiento = _normalize_due_date_str(data.get('fecha_vencimiento'))
         
         # Validar que la tarea existe
         conn = get_db_connection()
@@ -2563,7 +2669,7 @@ def crear_tarea_grupo(grupo_id):
         area_id = data.get('area_id')
         asignado_a_id = data.get('asignado_a_id')  # Para asignación individual
         asignados_ids = data.get('asignados_ids')  # Para asignación múltiple
-        fecha_vencimiento = data.get('fecha_vencimiento')
+        fecha_vencimiento = _normalize_due_date_str(data.get('fecha_vencimiento'))
         usuario_id = data.get('usuario_id')  # ID del creador de la tarea
         
         if not titulo or not usuario_id:

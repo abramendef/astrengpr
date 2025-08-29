@@ -38,6 +38,8 @@ function validateEmail(email) {
     return emailRegex.test(email);
 }
 
+// Teléfono eliminado del registro
+
 function validatePassword(password) {
     return password.length >= 8;
 }
@@ -111,6 +113,8 @@ togglePasswordBtn.addEventListener('click', function() {
         icon.classList.add('fa-eye');
     }
 });
+// Teléfono eliminado del registro
+
 
 toggleConfirmPasswordBtn.addEventListener('click', function() {
     const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -231,6 +235,7 @@ function validateForm() {
     hideError(firstNameError);
     hideError(lastNameError);
     hideError(emailError);
+    
     hideError(passwordError);
     hideError(confirmPasswordError);
     hideError(userTypeError);
@@ -285,6 +290,8 @@ function validateForm() {
         isValid = false;
     }
     
+    // Teléfono eliminado del registro
+
     // Validate user type
     const userType = userTypeSelect.value;
     if (!userType) {
@@ -313,7 +320,7 @@ function registrarUsuario(formData) {
             apellido: formData.lastName,
             correo: formData.email,
             contrasena: formData.password,
-            telefono: formData.phone || null
+            
         })
     })
     .then(response => response.json())
@@ -345,7 +352,7 @@ registerForm.addEventListener('submit', function(e) {
         lastName: lastNameInput.value.trim(),
         email: emailInput.value.trim(),
         password: passwordInput.value,
-        phone: null // Puedes agregar un input para teléfono si lo deseas
+        
     };
     registrarUsuario(formData);
 });
@@ -499,6 +506,7 @@ function clearForm() {
     hideError(firstNameError);
     hideError(lastNameError);
     hideError(emailError);
+    
     hideError(passwordError);
     hideError(confirmPasswordError);
     hideError(userTypeError);
