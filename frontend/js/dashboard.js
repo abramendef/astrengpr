@@ -553,11 +553,23 @@ function initQuickAddTaskButton() {
     if (newTaskForm) {
         newTaskForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const usuario_id = localStorage.getItem('astren_usuario_id') || 1;
+            const usuario_id = (typeof getAstrenUserId === 'function' && getAstrenUserId()) || (typeof getUserId === 'function' && getUserId());
+            if (!usuario_id) {
+                showNotification('No hay usuario autenticado. Inicia sesión.', 'error');
+                return;
+            }
             const titulo = document.getElementById('taskTitle').value;
             const descripcion = document.getElementById('taskDescription').value;
             const area_id = document.getElementById('taskArea').value || null;
-            const fecha_vencimiento = document.getElementById('taskDueDate').value;
+            // Normalizar a 'YYYY-MM-DD HH:MM' en hora local para el backend
+            const dueInput = document.getElementById('taskDueDate').value;
+            const due = new Date(dueInput.replace(' ', 'T'));
+            const yyyy = due.getFullYear();
+            const MM = String(due.getMonth() + 1).padStart(2, '0');
+            const dd = String(due.getDate()).padStart(2, '0');
+            const HH = String(due.getHours()).padStart(2, '0');
+            const mm = String(due.getMinutes()).padStart(2, '0');
+            const fecha_vencimiento = `${yyyy}-${MM}-${dd} ${HH}:${mm}`;
             const data = {
                 usuario_id: usuario_id,
                 titulo: titulo,
@@ -653,7 +665,11 @@ function fetchDashboardTasks() {
     if (_dashboardTasksPromise) {
         return _dashboardTasksPromise;
     }
-    const usuario_id = localStorage.getItem('astren_usuario_id') || 1;
+    const usuario_id = (typeof getAstrenUserId === 'function' && getAstrenUserId()) || (typeof getUserId === 'function' && getUserId());
+    if (!usuario_id) {
+        console.warn('❌ No hay usuario autenticado; devolviendo lista de tareas vacía');
+        return Promise.resolve([]);
+    }
     _dashboardTasksPromise = fetch(buildApiUrl(CONFIG.API_ENDPOINTS.TASKS, `/${usuario_id}`), { cache: 'no-store' })
         .then(response => {
             if (!response.ok) throw new Error('Error al cargar tareas del dashboard');
@@ -684,6 +700,14 @@ function fetchDashboardTasks() {
 
 // --- updateDashboardTaskCounts usando backend ---
 function updateDashboardTaskCounts() {
+    const usuario_id = (typeof getAstrenUserId === 'function' && getAstrenUserId()) || (typeof getUserId === 'function' && getUserId());
+    if (!usuario_id) {
+        ['statToday', 'statCompleted', 'statPending', 'statOverdue', 'todayTasksCounter'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '0';
+        });
+        return;
+    }
     fetchDashboardTasks().then(tasks => {
         const tasksDueToday = tasks.filter(task => 
             task.status === 'pending' && esFechaHoy(task.dueDate)
