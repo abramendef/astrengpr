@@ -51,8 +51,9 @@
 .sidebar__header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 1.75rem 1.25rem;
+    justify-content: center;
+    position: relative;
+    padding: 1rem 1rem;
     border-bottom: 1px solid var(--sidebar-border);
     min-height: 90px;
 }
@@ -60,13 +61,15 @@
 .sidebar__logo {
     display: flex;
     align-items: center;
+    justify-content: center;
+    width: 100%;
     font-size: 1.5rem;
     font-weight: 700;
     color: hsl(var(--primary-color));
 }
 
 .sidebar__logo-img {
-    height: 60px;
+    height: 80px;
     width: auto;
     max-width: 100%;
 }
@@ -81,6 +84,10 @@
     padding: 0.5rem;
     border-radius: 6px;
     transition: all 0.2s ease;
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .sidebar__toggle:hover {
