@@ -90,40 +90,43 @@ def add_performance_headers(response):
 tokens = {}
 db_pool = None
 
-# Utilidad: normalizar strings de fecha de vencimiento a 'YYYY-MM-DD HH:MM:SS' en hora local
+# Utilidad: normalizar strings de fecha de vencimiento a UTC 'YYYY-MM-DD HH:MM:SS'
 def _normalize_due_date_str(due_value):
     if not due_value:
         return None
     try:
         if isinstance(due_value, (int, float)):
-            # Epoch seconds or ms
-            # Asumir segundos si es razonable, ms si es muy grande
             ts = float(due_value)
-            if ts > 10_000_000_000:  # heurística: milisegundos
+            if ts > 10_000_000_000:
                 ts = ts / 1000.0
-            local_dt = datetime.fromtimestamp(ts)
-            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+            utc_dt = datetime.utcfromtimestamp(ts)
+            return utc_dt.strftime('%Y-%m-%d %H:%M:%S')
         if isinstance(due_value, str):
             s = due_value.strip()
-            # ISO con Z u offset
             if 'T' in s:
                 s2 = s.replace('Z', '+00:00')
                 try:
                     dt = datetime.fromisoformat(s2)
-                    # Si es naive, tomar como local; si es aware, convertir a local
-                    if dt.tzinfo is not None:
-                        dt = dt.astimezone()
-                    return dt.strftime('%Y-%m-%d %H:%M:%S')
+                    if dt.tzinfo is None:
+                        # Asumir hora local del servidor y convertir a UTC
+                        offset = datetime.now() - datetime.utcnow()
+                        dt_utc = dt - offset
+                    else:
+                        dt_utc = dt.astimezone(timezone.utc)
+                    return dt_utc.strftime('%Y-%m-%d %H:%M:%S')
                 except Exception:
                     pass
-            # Formatos 'YYYY-MM-DD HH:MM' o 'YYYY-MM-DD HH:MM:SS'
             try:
                 if re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$', s):
                     dt = datetime.strptime(s, '%Y-%m-%d %H:%M')
-                    return dt.strftime('%Y-%m-%d %H:%M:%S')
+                    offset = datetime.now() - datetime.utcnow()
+                    dt_utc = dt - offset
+                    return dt_utc.strftime('%Y-%m-%d %H:%M:%S')
                 if re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', s):
                     dt = datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
-                    return dt.strftime('%Y-%m-%d %H:%M:%S')
+                    offset = datetime.now() - datetime.utcnow()
+                    dt_utc = dt - offset
+                    return dt_utc.strftime('%Y-%m-%d %H:%M:%S')
             except Exception:
                 pass
     except Exception:
@@ -158,36 +161,13 @@ def get_db_connection():
             )
 
         conn = db_pool.get_connection()
-        # Alinear zona horaria de la sesión MySQL con la hora local o una preferida
+        # Alinear zona horaria de la sesión MySQL en UTC para consistencia global
         try:
-            tz_pref = os.getenv('APP_TZ') or os.getenv('TIMEZONE') or os.getenv('DB_TZ')
             cursor = conn.cursor()
-            if tz_pref:
-                try:
-                    cursor.execute("SET time_zone = %s", (tz_pref,))
-                except Exception:
-                    # Fallback a offset calculado si el nombre de zona no está disponible en el servidor
-                    offset = datetime.now() - datetime.utcnow()
-                    total_seconds = int(offset.total_seconds())
-                    sign = '+' if total_seconds >= 0 else '-'
-                    abs_seconds = abs(total_seconds)
-                    hours = abs_seconds // 3600
-                    minutes = (abs_seconds % 3600) // 60
-                    tz_offset = f"{sign}{hours:02d}:{minutes:02d}"
-                    cursor.execute("SET time_zone = %s", (tz_offset,))
-            else:
-                # Sin configuración explícita: usar offset local del sistema
-                offset = datetime.now() - datetime.utcnow()
-                total_seconds = int(offset.total_seconds())
-                sign = '+' if total_seconds >= 0 else '-'
-                abs_seconds = abs(total_seconds)
-                hours = abs_seconds // 3600
-                minutes = (abs_seconds % 3600) // 60
-                tz_offset = f"{sign}{hours:02d}:{minutes:02d}"
-                cursor.execute("SET time_zone = %s", (tz_offset,))
+            cursor.execute("SET time_zone = '+00:00'")
             cursor.close()
         except Exception as tz_err:
-            logger.warning(f"[DB] No se pudo fijar time_zone de la sesión: {tz_err}")
+            logger.warning(f"[DB] No se pudo fijar time_zone UTC de la sesión: {tz_err}")
         return conn
     except mysql.connector.Error as err:
         print(f"[ERROR] Error de conexión a la base de datos: {err}")
@@ -207,7 +187,7 @@ def actualizar_tareas_vencidas():
         SET estado = 'vencida'
         WHERE estado = 'pendiente'
         AND fecha_vencimiento IS NOT NULL
-        AND fecha_vencimiento < NOW()
+        AND fecha_vencimiento < UTC_TIMESTAMP()
     """)
     conn.commit()
     cursor.close()
@@ -303,7 +283,7 @@ def crear_tarea(usuario_id, titulo, descripcion, area_id=None, grupo_id=None, as
         (fecha_vencimiento = %s)
     )
     AND estado = %s
-    AND fecha_creacion > NOW() - INTERVAL 1 MINUTE
+    AND fecha_creacion > UTC_TIMESTAMP() - INTERVAL 1 MINUTE
     """
     
     cursor.execute(duplicate_check_sql, (
@@ -433,7 +413,7 @@ def obtener_tareas_usuario(usuario_id, limit=50, offset=0):
             SELECT 
                 t.id, t.titulo, t.descripcion,
                 CASE 
-                    WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < NOW() THEN 'vencida'
+                    WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < UTC_TIMESTAMP() THEN 'vencida'
                     ELSE t.estado
                 END AS estado,
                 t.fecha_creacion AS fecha_creacion,
@@ -453,7 +433,7 @@ def obtener_tareas_usuario(usuario_id, limit=50, offset=0):
             SELECT 
                 t.id, t.titulo, t.descripcion,
                 CASE 
-                    WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < NOW() THEN 'vencida'
+                    WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < UTC_TIMESTAMP() THEN 'vencida'
                     ELSE t.estado
                 END AS estado,
                 t.fecha_creacion AS fecha_creacion,
@@ -499,7 +479,7 @@ def obtener_tareas_grupo(grupo_id, limit=50, offset=0):
         sql = '''
             SELECT t.id, t.titulo, t.descripcion,
                    CASE 
-                        WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < NOW() THEN 'vencida'
+                        WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < UTC_TIMESTAMP() THEN 'vencida'
                         ELSE t.estado
                    END AS estado,
                    t.fecha_creacion, t.fecha_vencimiento,
@@ -524,10 +504,10 @@ def obtener_tareas_grupo(grupo_id, limit=50, offset=0):
         for tarea in tareas:
             if tarea['fecha_creacion']:
                 if isinstance(tarea['fecha_creacion'], datetime):
-                    tarea['fecha_creacion'] = tarea['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
+                    tarea['fecha_creacion'] = tarea['fecha_creacion'].strftime('%Y-%m-%dT%H:%M:%SZ')
             if tarea['fecha_vencimiento']:
                 if isinstance(tarea['fecha_vencimiento'], datetime):
-                    tarea['fecha_vencimiento'] = tarea['fecha_vencimiento'].strftime('%Y-%m-%d %H:%M:%S')
+                    tarea['fecha_vencimiento'] = tarea['fecha_vencimiento'].strftime('%Y-%m-%dT%H:%M:%SZ')
         
         cursor.close()
         conn.close()
@@ -563,10 +543,10 @@ def obtener_tareas_asignadas_usuario(usuario_id):
         for tarea in tareas:
             if tarea['fecha_creacion']:
                 if isinstance(tarea['fecha_creacion'], datetime):
-                    tarea['fecha_creacion'] = tarea['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
+                    tarea['fecha_creacion'] = tarea['fecha_creacion'].strftime('%Y-%m-%dT%H:%M:%SZ')
             if tarea['fecha_vencimiento']:
                 if isinstance(tarea['fecha_vencimiento'], datetime):
-                    tarea['fecha_vencimiento'] = tarea['fecha_vencimiento'].strftime('%Y-%m-%d %H:%M:%S')
+                    tarea['fecha_vencimiento'] = tarea['fecha_vencimiento'].strftime('%Y-%m-%dT%H:%M:%SZ')
         
         cursor.close()
         conn.close()
@@ -886,24 +866,16 @@ def listar_tareas(usuario_id):
         fecha = tarea.get('fecha_vencimiento')
         if fecha:
             if isinstance(fecha, datetime):
-                tarea['fecha_vencimiento'] = fecha.strftime('%Y-%m-%d %H:%M')
+                tarea['fecha_vencimiento'] = fecha.strftime('%Y-%m-%dT%H:%M:%SZ')
             elif isinstance(fecha, str) and 'T' in fecha:
-                try:
-                    dt = datetime.fromisoformat(fecha.replace('Z', ''))
-                    tarea['fecha_vencimiento'] = dt.strftime('%Y-%m-%d %H:%M')
-                except Exception:
-                    pass
+                tarea['fecha_vencimiento'] = fecha
         # Serializar fecha_creacion igual que en dashboard para evitar errores de JSON
         fc = tarea.get('fecha_creacion')
         if fc:
             if isinstance(fc, datetime):
-                tarea['fecha_creacion'] = fc.strftime('%Y-%m-%d %H:%M:%S')
+                tarea['fecha_creacion'] = fc.strftime('%Y-%m-%dT%H:%M:%SZ')
             elif isinstance(fc, str) and 'T' in fc:
-                try:
-                    dtc = datetime.fromisoformat(fc.replace('Z', ''))
-                    tarea['fecha_creacion'] = dtc.strftime('%Y-%m-%d %H:%M:%S')
-                except Exception:
-                    pass
+                tarea['fecha_creacion'] = fc
     return jsonify(tareas)
 
 @app.route('/tareas/<int:tarea_id>/estado', methods=['PUT'])
@@ -1251,7 +1223,7 @@ def obtener_grupos_usuario(usuario_id, incluir_archivados=False):
                    (SELECT COUNT(*) FROM tareas WHERE grupo_id = g.id AND estado = 'completada') as tareas_completadas,
                    (SELECT COUNT(*) FROM tareas WHERE grupo_id = g.id AND estado = 'pendiente') as tareas_pendientes,
                    (SELECT COUNT(*) FROM tareas WHERE grupo_id = g.id AND estado = 'vencida') as tareas_vencidas,
-                   (SELECT COUNT(*) FROM tareas WHERE grupo_id = g.id AND estado = 'pendiente' AND DATE(fecha_vencimiento) = CURDATE()) as tareas_hoy,
+                   (SELECT COUNT(*) FROM tareas WHERE grupo_id = g.id AND estado = 'pendiente' AND DATE(fecha_vencimiento) = UTC_DATE()) as tareas_hoy,
                    (SELECT COUNT(*) FROM tareas WHERE grupo_id = g.id AND estado != 'eliminada') as total_tareas
             FROM grupos g
             INNER JOIN miembros_grupo mg ON g.id = mg.grupo_id
@@ -1276,7 +1248,7 @@ def obtener_grupos_usuario(usuario_id, incluir_archivados=False):
         for grupo in grupos:
             if grupo['fecha_creacion']:
                 if isinstance(grupo['fecha_creacion'], datetime):
-                    grupo['fecha_creacion'] = grupo['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
+                    grupo['fecha_creacion'] = grupo['fecha_creacion'].strftime('%Y-%m-%dT%H:%M:%SZ')
         
         cursor.close()
         conn.close()
@@ -1803,7 +1775,7 @@ def obtener_notificaciones_usuario(usuario_id, solo_no_leidas=False):
         for notif in notificaciones:
             if notif['fecha_creacion']:
                 if isinstance(notif['fecha_creacion'], datetime):
-                    notif['fecha_creacion'] = notif['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
+                    notif['fecha_creacion'] = notif['fecha_creacion'].strftime('%Y-%m-%dT%H:%M:%SZ')
             
             if notif['datos_adicionales']:
                 try:
@@ -2472,7 +2444,7 @@ def listar_miembros_completos(grupo_id):
             if miembro['fecha_union']:
                 try:
                     if isinstance(miembro['fecha_union'], datetime):
-                        miembro['fecha_union'] = miembro['fecha_union'].strftime('%Y-%m-%d %H:%M:%S')
+                        miembro['fecha_union'] = miembro['fecha_union'].strftime('%Y-%m-%dT%H:%M:%SZ')
                     else:
                         miembro['fecha_union'] = str(miembro['fecha_union'])
                 except Exception as date_error:
@@ -2869,7 +2841,7 @@ def listar_miembros_detallados(grupo_id):
             if miembro['fecha_union']:
                 try:
                     if isinstance(miembro['fecha_union'], datetime):
-                        miembro['fecha_union'] = miembro['fecha_union'].strftime('%Y-%m-%d %H:%M:%S')
+                        miembro['fecha_union'] = miembro['fecha_union'].strftime('%Y-%m-%dT%H:%M:%SZ')
                     else:
                         miembro['fecha_union'] = str(miembro['fecha_union'])
                 except Exception as date_error:
@@ -2909,7 +2881,7 @@ def aceptar_invitacion_grupo(invitacion_id, usuario_id, area_id=None):
         if verificar_miembro_grupo(grupo_id, usuario_id):
             print(f"⚠️ [WARN] Usuario {usuario_id} ya es miembro del grupo {grupo_id}")
             # Marcar invitación como aceptada aunque ya sea miembro
-            cursor.execute("UPDATE invitaciones_grupo SET estado = 'aceptada', fecha_respuesta = NOW() WHERE id = %s", (invitacion_id,))
+            cursor.execute("UPDATE invitaciones_grupo SET estado = 'aceptada', fecha_respuesta = UTC_TIMESTAMP() WHERE id = %s", (invitacion_id,))
             conn.commit()
             cursor.close()
             conn.close()
@@ -2940,7 +2912,7 @@ def aceptar_invitacion_grupo(invitacion_id, usuario_id, area_id=None):
             print(f"✅ [DEBUG] Área {area_id} asignada al grupo {grupo_id} para usuario {usuario_id}")
         
         # Marcar invitación como aceptada
-        cursor.execute("UPDATE invitaciones_grupo SET estado = 'aceptada', fecha_respuesta = NOW() WHERE id = %s", (invitacion_id,))
+        cursor.execute("UPDATE invitaciones_grupo SET estado = 'aceptada', fecha_respuesta = UTC_TIMESTAMP() WHERE id = %s", (invitacion_id,))
         
         print(f"🔍 [DEBUG] Realizando commit...")
         conn.commit()
@@ -2982,7 +2954,7 @@ def rechazar_invitacion_grupo(invitacion_id, usuario_id):
         grupo_id, rol = invitacion
         
         # Marcar invitación como rechazada
-        cursor.execute("UPDATE invitaciones_grupo SET estado = 'rechazada', fecha_respuesta = NOW() WHERE id = %s", (invitacion_id,))
+        cursor.execute("UPDATE invitaciones_grupo SET estado = 'rechazada', fecha_respuesta = UTC_TIMESTAMP() WHERE id = %s", (invitacion_id,))
         
         conn.commit()
         cursor.close()
@@ -3271,7 +3243,7 @@ def notificar_invitacion_archivada(invitacion_id):
             mensaje = f"Invitación al grupo '{grupo_nombre}' archivada para revisar más tarde"
             cursor.execute("""
                 INSERT INTO notificaciones (usuario_id, tipo, mensaje, leida, fecha_creacion)
-                VALUES (%s, 'invitacion_archivada', %s, FALSE, NOW())
+                VALUES (%s, 'invitacion_archivada', %s, FALSE, UTC_TIMESTAMP())
             """, (usuario_id, mensaje))
             
             conn.commit()
@@ -3544,7 +3516,7 @@ def obtener_dashboard_completo(usuario_id):
                 SELECT 
                     t.id, t.titulo, t.descripcion,
                     CASE 
-                        WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < NOW() THEN 'vencida'
+                        WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < UTC_TIMESTAMP() THEN 'vencida'
                         ELSE t.estado
                     END AS estado,
                     t.fecha_creacion, t.fecha_vencimiento,
@@ -3565,7 +3537,7 @@ def obtener_dashboard_completo(usuario_id):
                 SELECT 
                     t.id, t.titulo, t.descripcion,
                     CASE 
-                        WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < NOW() THEN 'vencida'
+                        WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < UTC_TIMESTAMP() THEN 'vencida'
                         ELSE t.estado
                     END AS estado,
                     t.fecha_creacion, t.fecha_vencimiento,
@@ -3620,13 +3592,13 @@ def obtener_dashboard_completo(usuario_id):
         # Contadores en dos consultas (evitar OR) y sumar en Python
         cont_sql = '''
             SELECT 
-                COUNT(CASE WHEN estado = 'pendiente' AND DATE(fecha_vencimiento) = CURDATE() THEN 1 END) AS tareas_hoy,
+                COUNT(CASE WHEN estado = 'pendiente' AND DATE(fecha_vencimiento) = UTC_DATE() THEN 1 END) AS tareas_hoy,
                 COUNT(CASE 
-                        WHEN estado = 'pendiente' AND (fecha_vencimiento IS NULL OR fecha_vencimiento >= NOW()) THEN 1 
+                        WHEN estado = 'pendiente' AND (fecha_vencimiento IS NULL OR fecha_vencimiento >= UTC_TIMESTAMP()) THEN 1 
                     END) AS tareas_pendientes,
                 COUNT(CASE WHEN estado = 'completada' THEN 1 END) AS tareas_completadas,
                 COUNT(CASE 
-                        WHEN estado = 'vencida' OR (estado = 'pendiente' AND fecha_vencimiento IS NOT NULL AND fecha_vencimiento < NOW()) THEN 1 
+                        WHEN estado = 'vencida' OR (estado = 'pendiente' AND fecha_vencimiento IS NOT NULL AND fecha_vencimiento < UTC_TIMESTAMP()) THEN 1 
                     END) AS tareas_vencidas
             FROM tareas 
             WHERE usuario_id = %s AND estado != 'eliminada'
@@ -3650,17 +3622,13 @@ def obtener_dashboard_completo(usuario_id):
         for tarea in tareas:
             if tarea.get('fecha_vencimiento'):
                 if isinstance(tarea['fecha_vencimiento'], datetime):
-                    tarea['fecha_vencimiento'] = tarea['fecha_vencimiento'].strftime('%Y-%m-%d %H:%M')
+                    tarea['fecha_vencimiento'] = tarea['fecha_vencimiento'].strftime('%Y-%m-%dT%H:%M:%SZ')
                 elif isinstance(tarea['fecha_vencimiento'], str) and 'T' in tarea['fecha_vencimiento']:
-                    try:
-                        dt = datetime.fromisoformat(tarea['fecha_vencimiento'].replace('Z', ''))
-                        tarea['fecha_vencimiento'] = dt.strftime('%Y-%m-%d %H:%M')
-                    except Exception:
-                        pass
+                    tarea['fecha_vencimiento'] = tarea['fecha_vencimiento']
             
             if tarea.get('fecha_creacion'):
                 if isinstance(tarea['fecha_creacion'], datetime):
-                    tarea['fecha_creacion'] = tarea['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
+                    tarea['fecha_creacion'] = tarea['fecha_creacion'].strftime('%Y-%m-%dT%H:%M:%SZ')
         
         # Preparar respuesta
         dashboard_data = {

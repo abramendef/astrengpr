@@ -561,15 +561,9 @@ function initQuickAddTaskButton() {
             const titulo = document.getElementById('taskTitle').value;
             const descripcion = document.getElementById('taskDescription').value;
             const area_id = document.getElementById('taskArea').value || null;
-            // Normalizar a 'YYYY-MM-DD HH:MM' en hora local para el backend
+            // Normalizar a ISO UTC para el backend
             const dueInput = document.getElementById('taskDueDate').value;
-            const due = new Date(dueInput.replace(' ', 'T'));
-            const yyyy = due.getFullYear();
-            const MM = String(due.getMonth() + 1).padStart(2, '0');
-            const dd = String(due.getDate()).padStart(2, '0');
-            const HH = String(due.getHours()).padStart(2, '0');
-            const mm = String(due.getMinutes()).padStart(2, '0');
-            const fecha_vencimiento = `${yyyy}-${MM}-${dd} ${HH}:${mm}`;
+            const fecha_vencimiento = new Date(dueInput.replace(' ', 'T')).toISOString();
             const data = {
                 usuario_id: usuario_id,
                 titulo: titulo,
