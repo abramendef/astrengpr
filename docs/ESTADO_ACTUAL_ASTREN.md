@@ -149,7 +149,7 @@
 ## 📈 **MÉTRICAS DEL SISTEMA**
 
 ### **Versión Actual:**
-- **Versión**: 0.0.3 (Demo)
+- **Versión**: 0.0.4 (Demo)
 - **Fecha de Despliegue**: Agosto 2025
 - **Estado**: Sistema Operativo - Demo - Sin sistema de reputación implementado
 

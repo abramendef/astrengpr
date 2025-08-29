@@ -1,5 +1,5 @@
 -- Script para crear la base de datos en Aiven
--- Versión: 0.0.3
+-- Versión: 0.0.4
 
 create database astrengpr;
 USE astrengpr;

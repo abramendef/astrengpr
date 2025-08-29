@@ -2,7 +2,7 @@
 
 ## 🎯 **RESUMEN DE CAMBIOS**
 
-**Versión**: 0.0.3  
+**Versión**: 0.0.4  
 **Fecha**: 27 de Agosto de 2025  
 **Tipo**: Migración de Base de Datos + Limpieza del Sistema
 
@@ -72,7 +72,7 @@ MYSQL_PORT=18019
 - **Frontend**: https://astren.vercel.app/ ✅
 - **Backend**: https://astren-backend.onrender.com ✅
 - **Base de Datos**: Aiven MySQL ✅
-- **Versión**: 0.0.3 ✅
+- **Versión**: 0.0.4 ✅
 
 ### **🔧 Funcionalidades Operativas**
 - Sistema de autenticación ✅
@@ -145,5 +145,5 @@ La versión 0.0.2 representa una **migración exitosa** del sistema de Railway a
 ---
 
 **Documentación actualizada el 27 de Agosto de 2025**  
-**Versión**: 0.0.3  
+**Versión**: 0.0.4  
 **Sistema**: Astren - Completamente funcional ✅
