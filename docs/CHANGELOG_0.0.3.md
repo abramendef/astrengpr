@@ -1,4 +1,4 @@
-# Cambios en la versión 0.0.4
+# Cambios en la versión 0.0.6
 
 - Corrección global de zona horaria:
   - Backend en UTC (sesión MySQL UTC, comparaciones con UTC_TIMESTAMP/UTC_DATE)

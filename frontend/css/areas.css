@@ -217,12 +217,31 @@
 }
 
 /* Areas Container */
-.areas-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-  overflow: visible !important;
-  position: relative;
+.dashboard .areas-container {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: var(--space-4) !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  position: relative !important;
+  padding: var(--space-2) calc(var(--space-4) + 6px) !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  transition: transform 0.3s ease !important;
+  /* Forzar que el contenedor mantenga su ancho */
+  box-sizing: border-box !important;
+}
+
+/* Asegurar que las tarjetas de área tengan ancho fijo en el dashboard */
+.dashboard .areas-container .area-card {
+  flex-shrink: 0 !important;
+  min-width: var(--areasCardWidth, calc((100% - (var(--space-4) * 2) - (var(--space-4) * 2) - 14px) / 3)) !important;
+  max-width: var(--areasCardWidth, calc((100% - (var(--space-4) * 2) - (var(--space-4) * 2) - 14px) / 3)) !important;
+  width: var(--areasCardWidth, calc((100% - (var(--space-4) * 2) - (var(--space-4) * 2) - 14px) / 3)) !important;
+  box-sizing: border-box !important;
+  /* Prevenir que las tarjetas expandan el contenedor */
+  position: relative !important;
 }
 
 /* Usar la misma estructura que tareas */
@@ -2019,7 +2038,7 @@
   left: 0;
   width: 5px;
   height: 100%;
-  background-color: hsl(var(--border));
+  background-color: var(--area-border-color, #3b82f6);
 }
 
 .area-card--active {

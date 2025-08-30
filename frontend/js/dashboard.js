@@ -1839,7 +1839,7 @@ function renderDashboardAreas(areas) {
         console.log('🎨 Área:', area.nombre || area.name, 'Color:', area.color, '→', areaColor);
         
         return `
-            <div class="area-card" data-area-id="${area.id}" style="border-color: ${areaColor}; cursor: pointer; transition: all 0.2s ease;" onclick="window.location.href='areas.html?area=${area.id}'">
+            <div class="area-card" data-area-id="${area.id}" style="--area-border-color: ${areaColor}; border-color: ${areaColor}; cursor: pointer; transition: all 0.2s ease;" onclick="window.location.href='areas.html?area=${area.id}'">
                 <div class="area__header">
                     <div class="area__icon" style="background: linear-gradient(135deg, ${areaColor}, ${adjustColor(areaColor, -20)});">
                         <i class="fas ${area.icon || area.icono || 'fa-briefcase'}"></i>
@@ -1891,50 +1891,52 @@ function renderDashboardGroups(groups) {
         return;
     }
 
-    // Mapear colores de la base de datos a valores hexadecimales (versiones pasteles más suaves)
+    // Usar exactamente la misma paleta que groups.js#getGroupColor
     const colorMap = {
-        'blue': '#dbeafe',
-        'green': '#dcfce7',
-        'purple': '#ede9fe',
-        'orange': '#fed7aa',
-        'red': '#fee2e2',
-        'pink': '#fce7f3',
-        'yellow': '#fef3c7',
-        'mint': '#d1fae5',
-        'sky': '#e0f2fe',
-        'coral': '#fecaca',
-        'lavender': '#f3e8ff'
+        blue: '#93c5fd',
+        green: '#86efac',
+        purple: '#c4b5fd',
+        orange: '#fed7aa',
+        red: '#fca5a5',
+        pink: '#f9a8d4',
+        yellow: '#fef3c7',
+        mint: '#a7f3d0',
+        sky: '#bae6fd',
+        coral: '#fecaca',
+        lavender: '#e9d5ff'
     };
 
     const groupsHTML = activeGroups.map(group => {
         const groupColor = colorMap[group.color] || '#93c5fd';
+        const darker = adjustColor(groupColor, -20);
         console.log('🎨 Grupo:', group.nombre, 'Color:', group.color, '→', groupColor);
         
+        const memberCount = group.total_miembros || group.num_miembros || group.miembros || 0;
+        const areaNombre = group.area_nombre || group.area || '';
+        const areaIcono = group.area_icono || 'fa-layer-group';
+        const areaColorName = group.area_color || group.areaColor || null;
+        const areaColor = areaColorName ? (colorMap[areaColorName] || '#93c5fd') : null;
+        const areaColorIntense = areaColor ? adjustColor(areaColor, -20) : null;
+
         return `
-            <div class="group-card" data-group-id="${group.id}" onclick="window.location.href='groups.html?group=${group.id}'">
-                <div class="group__header">
-                    <div class="group__avatar">
+            <div class="group-card" data-group-id="${group.id}" style="border-color: ${groupColor} !important;" onclick="window.location.href='groups.html?group=${group.id}'">
+                <div class="group-card-border" style="background-color: ${groupColor};"></div>
+                <div class="group-header">
+                    <div class="group-avatar" style="background: linear-gradient(135deg, ${groupColor}, ${darker});">
                         <i class="fas ${group.icono || 'fa-users'}"></i>
                     </div>
-                    <div class="group__actions">
-                        <button class="group__action" title="Ver grupo" onclick="event.stopPropagation(); window.location.href='groups.html?group=${group.id}'">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                </div>
+                <div class="group-info">
+                    <h3 class="group-name">${escapeHtml(group.nombre)}</h3>
+                    ${group.descripcion ? `<p class=\"group-description\">${escapeHtml(group.descripcion)}</p>` : ''}
+                    <div class="group-meta">
+                        <span class="group-role group-role--${group.rol}">
+                            <i class="fas ${getRoleIcon(group.rol)}"></i>
+                            ${getRoleText(group.rol)}
+                        </span>
+                        ${areaNombre ? `<span class=\"task-area-badge\"><i class=\"fas ${areaIcono}\" style=\"color: ${areaColorIntense || groupColor}\"></i> ${escapeHtml(areaNombre)}</span>` : ''}
+                        <span class="group-members"><i class="fas fa-users"></i> ${memberCount}</span>
                     </div>
-                </div>
-                <div class="group__info">
-                    <h3 class="group__name">${escapeHtml(group.nombre)}</h3>
-                    <p class="group__description">${escapeHtml(group.descripcion || 'Sin descripción')}</p>
-                </div>
-                <div class="group__meta">
-                    <span class="group__role group__role--${group.rol}">
-                        <i class="fas ${getRoleIcon(group.rol)}"></i>
-                        ${getRoleText(group.rol)}
-                    </span>
-                    <span class="group__members">
-                        <i class="fas fa-users"></i>
-                        ${group.num_miembros || 0}
-                    </span>
                 </div>
             </div>
         `;
@@ -1990,58 +1992,104 @@ function getRoleText(role) {
     }
 }
 
-// Funciones para scroll horizontal
+// Funciones para navegación por flechitas (sin scroll horizontal)
 function setupHorizontalScroll(containerId, leftBtnId, rightBtnId) {
+    console.log('🔧 Configurando navegación para:', containerId);
+    
     const container = document.getElementById(containerId);
     const leftBtn = document.getElementById(leftBtnId);
     const rightBtn = document.getElementById(rightBtnId);
     
-    if (!container || !leftBtn || !rightBtn) return;
+    console.log('📦 Container:', container);
+    console.log('⬅️ Botón izquierdo:', leftBtn);
+    console.log('➡️ Botón derecho:', rightBtn);
     
+    if (!container || !leftBtn || !rightBtn) {
+        console.log('❌ Elementos no encontrados, saliendo...');
+        return;
+    }
+
+    // Asegurar que no haya transform aplicado al contenedor (evita expandir el documento)
+    container.style.transform = '';
+    container.style.willChange = 'auto';
+
     // Calcular el ancho de una tarjeta + gap
     const cardWidth = 380; // Ancho de la tarjeta
     const gap = 16; // Gap entre tarjetas
     const scrollAmount = cardWidth + gap; // Una tarjeta completa + gap
-    
-    function updateScrollButtons() {
-        const isAtStart = container.scrollLeft === 0;
-        const isAtEnd = container.scrollLeft >= container.scrollWidth - container.clientWidth;
-        
+
+    function updateNavigationButtons() {
+        const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth - 1);
+        const isAtStart = container.scrollLeft <= 0;
+        const isAtEnd = container.scrollLeft >= maxScrollLeft;
         leftBtn.style.display = isAtStart ? 'none' : 'flex';
         rightBtn.style.display = isAtEnd ? 'none' : 'flex';
     }
-    
-    // Scroll hacia la izquierda
+
+    // Mover hacia la izquierda usando scroll programático
     leftBtn.addEventListener('click', () => {
-        container.scrollBy({
-            left: -scrollAmount,
-            behavior: 'smooth'
-        });
+        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
     });
-    
-    // Scroll hacia la derecha
+
+    // Mover hacia la derecha usando scroll programático
     rightBtn.addEventListener('click', () => {
-        container.scrollBy({
-            left: scrollAmount,
-            behavior: 'smooth'
-        });
+        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     });
-    
+
     // Actualizar botones al hacer scroll
-    container.addEventListener('scroll', updateScrollButtons);
-    
-    // Actualizar botones inicialmente
-    updateScrollButtons();
-    
-    // Actualizar botones cuando cambie el contenido
-    const observer = new MutationObserver(updateScrollButtons);
+    container.addEventListener('scroll', updateNavigationButtons, { passive: true });
+
+    // Observar cambios en el contenido
+    const observer = new MutationObserver(updateNavigationButtons);
     observer.observe(container, { childList: true, subtree: true });
+
+    // Estado inicial
+    requestAnimationFrame(updateNavigationButtons);
 }
 
-// Inicializar scroll horizontal después de cargar el contenido
+// Calcular y fijar un ancho exacto para mostrar 3 tarjetas completas sin cortar
+function setThreeCardLayout(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const compute = () => {
+        const styles = window.getComputedStyle(container);
+        const paddingLeft = parseFloat(styles.paddingLeft) || 0;
+        const paddingRight = parseFloat(styles.paddingRight) || 0;
+        const gap = parseFloat(styles.columnGap || styles.gap || '0') || 0;
+        const visibleCards = 3;
+        const available = container.clientWidth - paddingLeft - paddingRight - gap * (visibleCards - 1);
+        const safetyPx = 5; // margen de seguridad para evitar que asome la 4ª tarjeta
+        const cardWidth = Math.floor(available / visibleCards) - safetyPx;
+        if (cardWidth > 0) {
+            container.style.setProperty('--areasCardWidth', cardWidth + 'px');
+        }
+    };
+
+    // inicial
+    compute();
+
+    // en resize (ligero debounce)
+    let rafId = null;
+    const onResize = () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(compute);
+    };
+    window.addEventListener('resize', onResize);
+
+    // al mutar el contenido
+    const obs = new MutationObserver(() => compute());
+    obs.observe(container, { childList: true, subtree: true });
+}
+
+// Inicializar navegación por flechitas después de cargar el contenido
 function initializeHorizontalScroll() {
+    console.log('🚀 Inicializando navegación por flechitas...');
     setupHorizontalScroll('areasGrid', 'areasScrollLeft', 'areasScrollRight');
     setupHorizontalScroll('groupsGrid', 'groupsScrollLeft', 'groupsScrollRight');
+    // Fijar layout de 3 tarjetas exactas
+    setThreeCardLayout('areasGrid');
+    console.log('✅ Navegación por flechitas inicializada');
 }
 
 // Cargar datos del dashboard al inicializar

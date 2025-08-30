@@ -1,16 +1,36 @@
 /*===== DASHBOARD STYLES =====*/
 
+/* Estilos globales para prevenir expansión horizontal */
+html, body {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+* {
+  box-sizing: border-box !important;
+}
+
 /*===== DASHBOARD LAYOUT =====*/
 .dashboard-body {
   margin: 0;
   padding: 0;
   background-color: hsl(var(--background));
+  overflow-x: hidden !important; /* Prevenir scroll horizontal */
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .dashboard {
   display: flex;
   min-height: 100vh;
   position: relative;
+  overflow-x: hidden !important; /* Prevenir scroll horizontal */
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /*===== SIDEBAR =====*/
@@ -567,6 +587,32 @@
 .dashboard .group-card {
   transition: all 0.2s ease;
   cursor: pointer;
+}
+
+/* Estilos de group-card en dashboard iguales a los de la página de grupos */
+.dashboard .group-card {
+  background-color: #fcfcfc !important;
+  border: 2px solid hsl(var(--border));
+  border-radius: var(--radius-xl);
+  padding: 2.1rem 1.6rem 1.8rem 1.3rem; /* un poco más de alto visual */
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* más aire vertical */
+  margin-bottom: 0.7rem;
+  min-height: 240px; /* un poco más largas */
+}
+
+.dashboard .group-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 100%;
+  background-color: hsl(var(--border));
 }
 
 .dashboard .area-card:hover,
@@ -1202,8 +1248,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  right: 0; /* evita overflow por 100vw */
+  bottom: 0; /* evita overflow por 100vh */
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
   opacity: 0;
@@ -1701,6 +1747,7 @@
 @media (min-width: 1025px) {
   .main-content {
     margin-left: 260px !important;
+    width: calc(100% - 260px) !important; /* evita overflow horizontal en desktop */
   }
   
   .sidebar {
@@ -1821,8 +1868,8 @@
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
+  right: 0 !important; /* evita overflow por 100vw */
+  bottom: 0 !important; /* evita overflow por 100vh */
   z-index: 999 !important;
 }
 
@@ -2930,30 +2977,81 @@
     }
 }
 
-/* Contenedores de áreas y grupos con scroll horizontal */
-.areas-container,
-.groups-container {
-    display: flex;
-    gap: var(--space-4);
-    overflow-x: hidden; /* Ocultar scroll nativo */
-    scroll-behavior: smooth;
-    padding: var(--space-2) 0;
-    position: relative;
-    min-height: 200px;
+/* Contenedores de áreas y grupos con navegación por flechitas */
+.dashboard .areas-container,
+.dashboard .groups-container {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: var(--space-4) !important;
+    overflow-x: auto !important; /* Scroll interno para navegación */
+    overflow-y: hidden !important;
+    /* Padding horizontal extra para ocultar totalmente la 4ª tarjeta */
+    padding: var(--space-2) calc(var(--space-4) + 6px) !important;
+    position: relative !important;
+    min-height: 200px !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    transition: transform 0.3s ease !important;
+    /* Forzar que el contenedor mantenga su ancho */
+    box-sizing: border-box !important;
+    /* Máscara visual a la derecha para ocultar 1-2px residuales */
+    mask-image: linear-gradient(to right, black 0, black calc(100% - 2px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 2px), transparent 100%);
 }
 
+/* Ocultar scrollbar visual pero permitir scroll programático */
+.dashboard .areas-container { -ms-overflow-style: none; scrollbar-width: none; }
+.dashboard .areas-container::-webkit-scrollbar { display: none; }
+.dashboard .groups-container { -ms-overflow-style: none; scrollbar-width: none; }
+.dashboard .groups-container::-webkit-scrollbar { display: none; }
+
 /* Asegurar que las tarjetas mantengan su tamaño */
-.area-card {
-    flex-shrink: 0;
-    min-width: 350px;
-    max-width: 350px;
+.dashboard .area-card {
+    flex-shrink: 0 !important;
+    min-width: 380px !important;
+    max-width: 380px !important;
+    width: 380px !important;
+    box-sizing: border-box !important;
+    /* Prevenir que las tarjetas expandan el contenedor */
+    position: relative !important;
+}
+
+/* Desktop: mostrar exactamente 3 tarjetas completas sin corte */
+@media (min-width: 1025px) {
+  .dashboard .areas-container .area-card {
+    /* Alternativa robusta: fijar por variable calculada en JS (fallback a cálculo CSS) */
+    min-width: var(--areasCardWidth, calc((100% - (var(--space-4) * 2) - (var(--space-4) * 2) - 14px) / 3)) !important;
+    max-width: var(--areasCardWidth, calc((100% - (var(--space-4) * 2) - (var(--space-4) * 2) - 14px) / 3)) !important;
+    width: var(--areasCardWidth, calc((100% - (var(--space-4) * 2) - (var(--space-4) * 2) - 14px) / 3)) !important;
+  }
+  .dashboard .groups-container .group-card {
+    /* Muy ligeramente más anchas que las áreas (+12px) */
+    min-width: calc(var(--areasCardWidth, calc((100% - (var(--space-4) * 2) - (var(--space-4) * 2) - 14px) / 3)) + 12px) !important;
+    max-width: calc(var(--areasCardWidth, calc((100% - (var(--space-4) * 2) - (var(--space-4) * 2) - 14px) / 3)) + 12px) !important;
+    width: calc(var(--areasCardWidth, calc((100% - (var(--space-4) * 2) - (var(--space-4) * 2) - 14px) / 3)) + 12px) !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+  }
 }
 
 /* Contenedor principal del dashboard */
 .dashboard-grid {
-    overflow-x: hidden; /* Prevenir scroll horizontal en el grid */
-    width: 100%;
-    max-width: 100%;
+    overflow: hidden !important; /* Prevenir cualquier overflow */
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Contenedor de áreas específico */
+.dashboard .areas-container {
+    /* Forzar ancho fijo del contenedor */
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    /* Prevenir expansión horizontal */
+    overflow: hidden !important;
+    position: relative !important;
 }
 
 /* Card content para prevenir overflow */
@@ -2965,9 +3063,18 @@
 
 /* Dashboard principal */
 .dashboard {
-    overflow-x: hidden;
-    width: 100%;
-    max-width: 100%;
+    overflow: hidden !important; /* Prevenir cualquier overflow */
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Contenedor principal del dashboard */
+.dashboard__content {
+    overflow: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 /* Botones de navegación */
@@ -2975,31 +3082,54 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: var(--color-white);
-    border: 1px solid var(--color-gray-200);
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
     z-index: 10;
+    color: #2563eb; /* azul calmo para el ícono */
+    font-size: 14px;
 }
 
 .scroll-btn:hover {
-    background: var(--color-gray-50);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: #f1f5f9;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Botones controlados por JS: no forzar visibilidad */
+
+/* Estilo final de flechas: azules simples */
+#areasScrollLeft,
+#areasScrollRight,
+#groupsScrollLeft,
+#groupsScrollRight {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    color: #2563eb;
+}
+
+/* Ícono interno más sutil */
+#areasScrollLeft i,
+#areasScrollRight i,
+#groupsScrollLeft i,
+#groupsScrollRight i {
+    color: #2563eb;
+    font-size: 14px;
 }
 
 .scroll-btn--left {
-    left: 15px; /* Un poco más separado del borde */
+    left: 15px !important; /* Un poco más separado del borde */
 }
 
 .scroll-btn--right {
-    right: 15px; /* Un poco más separado del borde */
+    right: 15px !important; /* Un poco más separado del borde */
 }
 
 .scroll-btn:disabled {
@@ -3020,10 +3150,10 @@
 
 /* Contenedor de las cards para posicionar flechas */
 .card__content {
-    overflow-x: hidden;
-    width: 100%;
-    max-width: 100%;
-    position: relative; /* Para posicionar las flechas */
+    overflow: hidden !important; /* Prevenir cualquier overflow */
+    width: 100% !important;
+    max-width: 100% !important;
+    position: relative !important; /* Para posicionar las flechas */
 }
 
 /* Estilos para las secciones de áreas y grupos */
