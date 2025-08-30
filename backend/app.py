@@ -18,6 +18,7 @@ import json
 from datetime import datetime, timezone
 import base64
 from dotenv import load_dotenv
+import time
 import mysql.connector
 from mysql.connector import pooling as mysql_pooling
 import re
@@ -52,6 +53,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.info(f"[BOOT] Entorno: {ENV} - LogLevel: {logging.getLevelName(level)}")
+
+# Idempotencia simple en memoria para evitar dobles envíos rápidos
+_recent_request_signatures = {}
+_RECENT_REQ_TTL_SECONDS = 5
+
+def _is_duplicate_request(signature_key: str) -> bool:
+    now = time.time()
+    # Limpiar entradas viejas
+    expired_keys = [k for k, ts in _recent_request_signatures.items() if now - ts > _RECENT_REQ_TTL_SECONDS]
+    for k in expired_keys:
+        _recent_request_signatures.pop(k, None)
+    # Checar duplicado
+    if signature_key in _recent_request_signatures and now - _recent_request_signatures[signature_key] <= _RECENT_REQ_TTL_SECONDS:
+        return True
+    _recent_request_signatures[signature_key] = now
+    return False
 
 # Configuraciones de optimización para producción
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300  # Cache estático por 5 minutos
@@ -365,13 +382,29 @@ def crear_tarea_grupo_multiple(usuario_id, titulo, descripcion, grupo_id, asigna
             else:
                 area_personal_id = area_id
             
-            # Insertar la tarea para este usuario con su área personal
+            # Evitar duplicados recientes para el mismo destinatario en el mismo grupo
+            dup_sql = """
+                SELECT id FROM tareas
+                WHERE titulo = %s
+                  AND (descripcion IS NULL AND %s IS NULL OR descripcion = %s)
+                  AND grupo_id = %s
+                  AND asignado_a_id = %s
+                  AND estado = %s
+                  AND fecha_creacion > UTC_TIMESTAMP() - INTERVAL 1 MINUTE
+            """
+            fv_norm = _normalize_due_date_str(fecha_vencimiento)
+            cursor.execute(dup_sql, (titulo, descripcion, descripcion, grupo_id, asignado_id, estado))
+            if cursor.fetchone():
+                print(f"⚠️ [WARN] Tarea duplicada detectada para asignado {asignado_id}, se omite inserción")
+                continue
+
+            # Insertar la tarea para este destinatario
             sql = """
                 INSERT INTO tareas (usuario_id, area_id, grupo_id, asignado_a_id, titulo, descripcion, fecha_vencimiento, estado)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
-            fv_norm = _normalize_due_date_str(fecha_vencimiento)
-            cursor.execute(sql, (asignado_id, area_personal_id, grupo_id, asignado_id, titulo, descripcion, fv_norm, estado))
+            # Importante: usuario_id debe ser el creador; asignado_a_id el destinatario
+            cursor.execute(sql, (usuario_id, area_personal_id, grupo_id, asignado_id, titulo, descripcion, fv_norm, estado))
             task_id = cursor.lastrowid
             
             # Crear notificación si no es el mismo usuario
@@ -409,46 +442,25 @@ def obtener_tareas_usuario(usuario_id, limit=50, offset=0):
     except Exception:
         offset = 0
     sql = '''
-        SELECT * FROM (
-            SELECT 
-                t.id, t.titulo, t.descripcion,
-                CASE 
-                    WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < UTC_TIMESTAMP() THEN 'vencida'
-                    ELSE t.estado
-                END AS estado,
-                t.fecha_creacion AS fecha_creacion,
-                t.fecha_vencimiento,
-                t.area_id, t.grupo_id, t.asignado_a_id,
-                a.nombre AS area_nombre, a.color AS area_color, a.icono AS area_icono,
-                g.nombre AS grupo_nombre, g.color AS grupo_color, g.icono AS grupo_icono,
-                u.nombre AS asignado_nombre, u.apellido AS asignado_apellido
-            FROM tareas t
-            LEFT JOIN areas a ON t.area_id = a.id
-            LEFT JOIN grupos g ON t.grupo_id = g.id
-            LEFT JOIN usuarios u ON t.asignado_a_id = u.id
-            WHERE t.usuario_id = %s AND t.estado != 'eliminada'
-            
-            UNION ALL
-            
-            SELECT 
-                t.id, t.titulo, t.descripcion,
-                CASE 
-                    WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < UTC_TIMESTAMP() THEN 'vencida'
-                    ELSE t.estado
-                END AS estado,
-                t.fecha_creacion AS fecha_creacion,
-                t.fecha_vencimiento,
-                t.area_id, t.grupo_id, t.asignado_a_id,
-                a.nombre AS area_nombre, a.color AS area_color, a.icono AS area_icono,
-                g.nombre AS grupo_nombre, g.color AS grupo_color, g.icono AS grupo_icono,
-                u.nombre AS asignado_nombre, u.apellido AS asignado_apellido
-            FROM tareas t
-            LEFT JOIN areas a ON t.area_id = a.id
-            LEFT JOIN grupos g ON t.grupo_id = g.id
-            LEFT JOIN usuarios u ON t.asignado_a_id = u.id
-            WHERE t.asignado_a_id = %s AND t.estado != 'eliminada'
-        ) AS combined
-        ORDER BY combined.fecha_creacion DESC
+        SELECT 
+            t.id, t.titulo, t.descripcion,
+            CASE 
+                WHEN t.estado = 'pendiente' AND t.fecha_vencimiento IS NOT NULL AND t.fecha_vencimiento < UTC_TIMESTAMP() THEN 'vencida'
+                ELSE t.estado
+            END AS estado,
+            t.fecha_creacion AS fecha_creacion,
+            t.fecha_vencimiento,
+            t.area_id, t.grupo_id, t.asignado_a_id,
+            a.nombre AS area_nombre, a.color AS area_color, a.icono AS area_icono,
+            g.nombre AS grupo_nombre, g.color AS grupo_color, g.icono AS grupo_icono,
+            u.nombre AS asignado_nombre, u.apellido AS asignado_apellido
+        FROM tareas t
+        LEFT JOIN areas a ON t.area_id = a.id
+        LEFT JOIN grupos g ON t.grupo_id = g.id
+        LEFT JOIN usuarios u ON t.asignado_a_id = u.id
+        WHERE t.estado != 'eliminada'
+          AND (t.usuario_id = %s OR t.asignado_a_id = %s)
+        ORDER BY t.fecha_creacion DESC
         LIMIT %s OFFSET %s
     '''
     try:
@@ -747,6 +759,13 @@ def login_usuario():
 def registrar_tarea():
     data = request.json
     print("🔍 [DEBUG] Datos recibidos para tarea:", data)  # Depuración detallada
+    # Idempotencia: evitar doble creación por doble click
+    try:
+        sig = f"/tareas:{data.get('usuario_id')}:{data.get('titulo')}:{data.get('descripcion')}:{data.get('area_id')}:{data.get('grupo_id')}:{data.get('fecha_vencimiento')}"
+        if _is_duplicate_request(sig):
+            return jsonify({"mensaje": "Tarea ya procesada recientemente"}), 200
+    except Exception:
+        pass
     
     # Validaciones
     if not data:
@@ -2653,6 +2672,13 @@ def crear_tarea_grupo(grupo_id):
         
         # Si se usa asignación múltiple
         if asignados_ids and isinstance(asignados_ids, list):
+            # Idempotencia: firmar solicitud múltiple
+            try:
+                sig_multi = f"/grupos/{grupo_id}/tareas:{usuario_id}:{titulo}:{descripcion}:{sorted(asignados_ids)}:{fecha_vencimiento}"
+                if _is_duplicate_request(sig_multi):
+                    return jsonify({'mensaje': 'Solicitud ya procesada recientemente', 'tareas_creadas': 0})
+            except Exception:
+                pass
             # Verificar que todos los usuarios asignados sean miembros del grupo
             for asignado_id in asignados_ids:
                 if not verificar_miembro_grupo(grupo_id, asignado_id):
@@ -2675,6 +2701,14 @@ def crear_tarea_grupo(grupo_id):
             if asignado_a_id and not verificar_miembro_grupo(grupo_id, asignado_a_id):
                 return jsonify({'error': 'El usuario asignado no es miembro del grupo'}), 403
             
+            # Idempotencia: firmar solicitud individual
+            try:
+                sig_single = f"/grupos/{grupo_id}/tareas:{usuario_id}:{titulo}:{descripcion}:{asignado_a_id}:{fecha_vencimiento}"
+                if _is_duplicate_request(sig_single):
+                    return jsonify({'mensaje': 'Solicitud ya procesada recientemente'}), 200
+            except Exception:
+                pass
+
             task_id = crear_tarea(usuario_id, titulo, descripcion, area_id, grupo_id, asignado_a_id, fecha_vencimiento)
             
             if task_id:

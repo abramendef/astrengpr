@@ -109,7 +109,7 @@ Pueden crear sus propias cuentas o usar las de prueba.
 - **Frontend**: Desplegado en Vercel ✅
 - **Backend**: Desplegado en Render ✅  
 - **Base de Datos**: Migrada a Aiven MySQL ✅
-- **Versión**: 0.0.4 ✅
+- **Versión**: 0.0.6 ✅
 - **Estado**: Listo para pruebas de equipo ✅
 
 **Última actualización**: 27 de Agosto de 2025

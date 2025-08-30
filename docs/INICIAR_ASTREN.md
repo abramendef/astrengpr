@@ -53,5 +53,5 @@ El sistema está completamente desplegado y funcionando. Si hay problemas:
 ---
 
 **Última actualización**: 27 de Agosto de 2025
-**Versión**: 0.0.4
+**Versión**: 0.0.6
 **Estado**: Completamente desplegado y funcional ✅ 
