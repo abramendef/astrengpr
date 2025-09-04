@@ -29,7 +29,7 @@ def test_basic_endpoints():
     except Exception as e:
         print(f"   ❌ Error de conexión: {e}")
     
-    # Test 2: Endpoint de login (si existe)
+    # Test 2: Endpoint de login
     print("\n📊 Test 2: Endpoint de login")
     print("-" * 40)
     
