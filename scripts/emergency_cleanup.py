@@ -20,8 +20,8 @@ def clean_sensitive_files():
         "docs/DOCUMENTACION_COMPLETA_ASTREN.md"
     ]
     
-    # Patrón para encontrar la contraseña real
-    password_pattern = r'YOUR_AIVEN_PASSWORD_HERE'
+    # Patrón para encontrar la contraseña real (ya removida)
+    password_pattern = r'OLD_PASSWORD_REMOVED_FOR_SECURITY'
     replacement = 'YOUR_AIVEN_PASSWORD_HERE'
     
     print("🚨 LIMPIEZA DE CREDENCIALES SENSIBLES")

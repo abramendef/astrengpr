@@ -18,8 +18,8 @@ def test_old_password():
     """Probar si la contraseña vieja aún funciona"""
     print("🔍 Probando contraseña vieja...")
     
-    # Contraseña vieja que estaba expuesta
-    old_password = "YOUR_AIVEN_PASSWORD_HERE"
+    # Contraseña vieja que estaba expuesta (ya no funciona)
+    old_password = "OLD_PASSWORD_REMOVED_FOR_SECURITY"
     
     try:
         conn = mysql.connector.connect(
@@ -94,7 +94,7 @@ def main():
     print("🔍 VERIFICACIÓN DE SEGURIDAD - CONTRASEÑAS")
     print("=" * 60)
     
-    print(f"🔑 Contraseña vieja expuesta: YOUR_AIVEN_PASSWORD_HERE")
+    print(f"🔑 Contraseña vieja: REMOVIDA POR SEGURIDAD")
     print(f"📍 Host: {os.getenv('MYSQL_HOST')}")
     print(f"👤 Usuario: {os.getenv('MYSQL_USER')}")
     
