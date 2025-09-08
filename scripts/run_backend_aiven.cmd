@@ -18,7 +18,7 @@ set FLASK_ENV=development
 set FLASK_DEBUG=True
 set MYSQL_HOST=astrengpr-astrendb.l.aivencloud.com
 set MYSQL_USER=avnadmin
-set MYSQL_PASSWORD=AVNS_v9XMXN-BE9Or-VI580I
+set MYSQL_PASSWORD=AVNS_f3Py-NKnf8cskt1rxdR
 set MYSQL_DATABASE=astrengpr
 set MYSQL_PORT=18019
 

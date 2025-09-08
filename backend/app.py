@@ -28,7 +28,17 @@ import logging
 # Cargar variables de entorno
 # Nota: se usará el archivo .env creado por los scripts de inicio (local o nube)
 # y variables de entorno del proceso. No forzar env.production aquí.
-load_dotenv()
+
+# Intentar cargar archivos de configuración específicos
+if os.path.exists('env.local'):
+    load_dotenv('env.local')
+    print("✅ Cargando configuración desde env.local")
+elif os.path.exists('env.production'):
+    load_dotenv('env.production')
+    print("✅ Cargando configuración desde env.production")
+else:
+    load_dotenv()
+    print("✅ Cargando configuración desde .env o variables de entorno")
 
 app = Flask(__name__)
 Compress(app)
@@ -159,6 +169,11 @@ def get_db_connection():
         database = os.getenv('MYSQL_DATABASE') or os.getenv('DB_NAME', 'astren')
         port = int(os.getenv('MYSQL_PORT') or os.getenv('DB_PORT', '3306'))
         pool_size = int(os.getenv('MYSQL_POOL_SIZE', '15'))
+        
+        # Logging de conexión para debugging
+        print(f"🔗 [DB] Conectando a: {host}:{port}")
+        print(f"🔗 [DB] Usuario: {user}")
+        print(f"🔗 [DB] Base de datos: {database}")
 
         # Evitar caracteres no ASCII para compatibilidad en Windows
         logger.info("[DB] Conectando a MySQL")
@@ -3687,6 +3702,49 @@ def obtener_dashboard_completo(usuario_id):
     except Exception as e:
         logger.error(f"❌ Error al cargar dashboard para usuario {usuario_id}: {e}")
         return jsonify({'error': 'Error interno del servidor'}), 500
+
+# ===== ENDPOINT DE SALUD =====
+
+@app.route('/debug/health', methods=['GET'])
+def health_check():
+    """Endpoint de salud para verificar el estado del servidor y la base de datos"""
+    try:
+        # Verificar conexión a la base de datos
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        result = cursor.fetchone()  # Leer el resultado
+        cursor.close()
+        conn.close()
+        
+        # Información del sistema
+        health_info = {
+            'status': 'healthy',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'version': '1.0.0',
+            'environment': ENV,
+            'database': 'connected',
+            'python_version': '3.13.7',
+            'endpoints': {
+                'usuarios': '/usuarios',
+                'login': '/login',
+                'tareas': '/tareas',
+                'grupos': '/grupos',
+                'areas': '/areas'
+            }
+        }
+        
+        logger.info(f"✅ Health check realizado - Status: {health_info['status']}")
+        return jsonify(health_info), 200
+        
+    except Exception as e:
+        logger.error(f"❌ Health check falló: {e}")
+        return jsonify({
+            'status': 'unhealthy',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'error': str(e),
+            'database': 'disconnected'
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=False, port=8000, host='0.0.0.0') 

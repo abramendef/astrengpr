@@ -41,7 +41,7 @@ REM Cargar configuración de Aiven
 echo ✅ Cargando configuración de Aiven...
 set MYSQL_HOST=astrengpr-astrendb.l.aivencloud.com
 set MYSQL_USER=avnadmin
-set MYSQL_PASSWORD=AVNS_v9XMXN-BE9Or-VI580I
+set MYSQL_PASSWORD=YOUR_AIVEN_PASSWORD_HERE
 set MYSQL_DATABASE=astrengpr
 set MYSQL_PORT=18019
 

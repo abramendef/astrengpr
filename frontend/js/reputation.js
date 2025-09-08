@@ -74,7 +74,7 @@ function updateOverallScore(overallData) {
     if (ranking) ranking.textContent = `#${overallData.ranking} de ${overallData.totalUsers.toLocaleString()}`;
     
     const totalStars = document.querySelectorAll('.reputation__detail-value')[2];
-    if (totalStars) totalStars.textContent = `${overallData.totalStars} ⭐`;
+    if (totalStars) totalStars.textContent = `${overallData.totalTasks} tareas`;
 }
 
 /*===== UPDATE CATEGORIES =====*/
@@ -108,7 +108,7 @@ function updateCategories(categories) {
         // Update stats
         const statValues = categoryCard.querySelectorAll('.category__stat-value');
         if (statValues[0]) statValues[0].textContent = category.projects;
-        if (statValues[1]) statValues[1].textContent = category.stars;
+        if (statValues[1]) statValues[1].textContent = category.average;
     });
 }
 
@@ -216,7 +216,7 @@ function initStarsDistributionChart() {
         data: {
             labels: ['Desarrollo', 'Colaboración', 'Puntualidad', 'Calidad'],
             datasets: [{
-                data: [128, 89, 67, 98],
+                data: [4.8, 4.1, 3.9, 4.7],
                 backgroundColor: [
                     'hsl(var(--primary-color))',
                     'hsl(var(--success-color))',
@@ -319,32 +319,32 @@ function getReputationData() {
             ranking: 127,
             totalUsers: 10234,
             nextLevelProgress: 75,
-            totalStars: 342
+            totalTasks: 156
         },
         categories: [
             {
                 name: 'Desarrollo',
                 score: 4.8,
                 projects: 45,
-                stars: 128
+                average: 4.2
             },
             {
                 name: 'Colaboración',
                 score: 4.1,
                 projects: 12,
-                stars: 89
+                average: 4.1
             },
             {
                 name: 'Puntualidad',
                 score: 3.9,
                 projects: '95%',
-                stars: 67
+                average: 3.9
             },
             {
                 name: 'Calidad',
                 score: 4.7,
                 projects: 156,
-                stars: 98
+                average: 4.7
             }
         ],
         achievements: [
@@ -456,7 +456,7 @@ class ReputationManager {
                 ranking: 127,
                 totalUsers: 10234,
                 nextLevelProgress: 75,
-                totalStars: 342,
+                totalTasks: 156,
                 level: 8
             },
             categories: [
@@ -464,28 +464,28 @@ class ReputationManager {
                     name: 'Desarrollo',
                     score: 4.8,
                     projects: 45,
-                    stars: 128,
+                    average: 4.2,
                     icon: 'fas fa-laptop-code'
                 },
                 {
                     name: 'Colaboración',
                     score: 4.1,
                     projects: 12,
-                    stars: 89,
+                    average: 4.1,
                     icon: 'fas fa-users'
                 },
                 {
                     name: 'Liderazgo',
                     score: 3.9,
                     projects: 8,
-                    stars: 67,
+                    average: 3.9,
                     icon: 'fas fa-crown'
                 },
                 {
                     name: 'Innovación',
                     score: 4.5,
                     projects: 23,
-                    stars: 58,
+                    average: 4.5,
                     icon: 'fas fa-lightbulb'
                 }
             ],
@@ -536,7 +536,7 @@ class ReputationManager {
                     description: 'Completaste tu primera tarea en Astren',
                     icon: 'fas fa-check-circle',
                     date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90).toISOString(),
-                    points: 10
+                    stars: 3
                 },
                 {
                     id: 2,
@@ -544,7 +544,7 @@ class ReputationManager {
                     description: 'Alcanzaste una reputación de 4.0 estrellas',
                     icon: 'fas fa-star',
                     date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45).toISOString(),
-                    points: 50
+                    stars: 4
                 },
                 {
                     id: 3,
@@ -552,7 +552,7 @@ class ReputationManager {
                     description: 'Te convertiste en líder de un grupo',
                     icon: 'fas fa-crown',
                     date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-                    points: 100
+                    stars: 5
                 }
             ]
         };
@@ -578,7 +578,7 @@ class ReputationManager {
                 type: 'task_completed',
                 title: 'Tarea completada',
                 description: 'Presentación proyecto final',
-                points: 15,
+                stars: 4,
                 timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
                 area: 'school'
             },
@@ -587,7 +587,7 @@ class ReputationManager {
                 type: 'evidence_validated',
                 title: 'Evidencia validada',
                 description: 'Diseño de interfaz',
-                points: 20,
+                stars: 5,
                 timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
                 area: 'work'
             },
@@ -596,7 +596,7 @@ class ReputationManager {
                 type: 'group_activity',
                 title: 'Actividad en grupo',
                 description: 'Equipo Desarrollo',
-                points: 10,
+                stars: 3,
                 timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
                 area: 'work'
             },
@@ -605,7 +605,7 @@ class ReputationManager {
                 type: 'badge_earned',
                 title: 'Insignia obtenida',
                 description: 'Top Performer',
-                points: 50,
+                stars: 5,
                 timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
                 area: 'general'
             }
@@ -704,7 +704,7 @@ class ReputationManager {
         }
 
         if (totalStarsElement) {
-            totalStarsElement.textContent = `${this.reputation.overall.totalStars} ⭐`;
+            totalStarsElement.textContent = `${this.reputation.overall.totalTasks} tareas`;
         }
     }
 
@@ -732,8 +732,8 @@ class ReputationManager {
                         <span class="category__stat-label">Proyectos</span>
                     </div>
                     <div class="category__stat">
-                        <span class="category__stat-value">${category.stars}</span>
-                        <span class="category__stat-label">Estrellas</span>
+                        <span class="category__stat-value">${category.average}</span>
+                        <span class="category__stat-label">Promedio</span>
                     </div>
                 </div>
             </div>
@@ -774,9 +774,9 @@ class ReputationManager {
                     <p class="achievement__description">${this.escapeHtml(achievement.description)}</p>
                     <span class="achievement__date">${this.formatDate(achievement.date)}</span>
                 </div>
-                <div class="achievement__points">
-                    <span class="points__value">+${achievement.points}</span>
-                    <span class="points__label">puntos</span>
+                <div class="achievement__stars">
+                    <span class="stars__value">${achievement.stars}</span>
+                    <span class="stars__label">⭐</span>
                 </div>
             </div>
         `).join('');
@@ -841,8 +841,9 @@ class ReputationManager {
                     <p class="history__description">${this.escapeHtml(item.description)}</p>
                     <span class="history__time">${timeAgo}</span>
                 </div>
-                <div class="history__points">
-                    <span class="points__value">+${item.points}</span>
+                <div class="history__stars">
+                    <span class="stars__value">${item.stars}</span>
+                    <span class="stars__label">⭐</span>
                 </div>
             </div>
         `;
@@ -944,7 +945,7 @@ class ReputationManager {
             data: {
                 labels: monthlyData.labels,
                 datasets: [{
-                    label: 'Puntos ganados',
+                    label: 'Estrellas promedio',
                     data: monthlyData.data,
                     backgroundColor: '#3366FF',
                     borderRadius: 4
@@ -969,7 +970,7 @@ class ReputationManager {
 
     getMonthlyHistoryData() {
         const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
-        const data = [45, 67, 89, 123, 156, 189];
+        const data = [3.2, 3.5, 3.8, 4.0, 4.1, 4.2];
         
         return {
             labels: months,
@@ -1037,13 +1038,13 @@ class ReputationManager {
         return div.innerHTML;
     }
 
-    addReputationPoints(points, type, title, description, area = 'general') {
+    addReputationStars(stars, type, title, description, area = 'general') {
         const historyItem = {
             id: Date.now(),
             type,
             title,
             description,
-            points,
+            stars,
             timestamp: new Date().toISOString(),
             area
         };
@@ -1052,12 +1053,12 @@ class ReputationManager {
         this.saveHistory();
 
         // Update overall score
-        this.reputation.overall.totalStars += points;
-        this.reputation.overall.score = Math.min(5, this.reputation.overall.score + (points / 100));
+        this.reputation.overall.totalTasks += 1;
+        this.reputation.overall.score = Math.min(5, this.reputation.overall.score + (stars / 100));
         this.saveReputation();
 
         this.renderReputation();
-        this.showToast(`+${points} puntos de reputación ganados`, 'success');
+        this.showToast(`+${stars} estrellas ganadas`, 'success');
     }
 
     shareProfile() {

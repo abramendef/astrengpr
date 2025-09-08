@@ -20,7 +20,7 @@
 # Variables de Entorno (Aiven)
 MYSQL_HOST=astrengpr-astrendb.l.aivencloud.com
 MYSQL_USER=avnadmin
-MYSQL_PASSWORD=AVNS_v9XMXN-BE9Or-VI580I
+MYSQL_PASSWORD=YOUR_AIVEN_PASSWORD_HERE
 MYSQL_DATABASE=astrengpr
 MYSQL_PORT=18019
 ```
