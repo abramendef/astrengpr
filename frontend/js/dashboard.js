@@ -2171,7 +2171,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     updateDashboardTaskCounts();
     
     // Configurar funcionalidades adicionales
-    setupRefreshButton();
     setupAutoRefresh();
     setupConnectionMonitoring();
     setupScrollOptimization();
@@ -2235,35 +2234,7 @@ function mostrarIndicadorSincronizacion(mensaje, tipo = 'success', duracion = 30
     }, duracion);
 }
 
-// Función para manejar el botón de actualización
-function setupRefreshButton() {
-    const refreshButton = document.getElementById('refreshButton');
-    if (!refreshButton) return;
-    
-    refreshButton.addEventListener('click', async function() {
-        // Prevenir múltiples clics
-        if (this.classList.contains('loading')) return;
-        
-        // Mostrar estado de carga
-        this.classList.add('loading');
-        mostrarIndicadorSincronizacion('Actualizando...', 'syncing');
-        
-        try {
-            // Forzar actualización
-            await actualizarDashboard();
-            
-            // Mostrar éxito
-            mostrarIndicadorSincronizacion('¡Actualizado!', 'success');
-            
-        } catch (error) {
-            console.error('❌ Error al actualizar dashboard:', error);
-            mostrarIndicadorSincronizacion('Error al actualizar', 'error');
-        } finally {
-            // Restaurar estado normal
-            this.classList.remove('loading');
-        }
-    });
-}
+// Botón de actualización manual eliminado por decisión de producto
 
 // Función para actualizar automáticamente el dashboard cada 5 minutos
 function setupAutoRefresh() {

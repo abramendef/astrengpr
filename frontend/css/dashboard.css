@@ -3347,43 +3347,7 @@ html, body {
     background: #EF4444;
 }
 
-/* Botón de actualización manual */
-.refresh-button {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    background: #3366FF;
-    color: white;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    border: none;
-    box-shadow: 0 4px 12px rgba(51, 102, 255, 0.4);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.refresh-button:hover {
-    background: #2563EB;
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(51, 102, 255, 0.5);
-}
-
-.refresh-button:active {
-    transform: scale(0.95);
-}
-
-.refresh-button i {
-    font-size: 1.25rem;
-}
-
-.refresh-button.loading i {
-    animation: spin 1s linear infinite;
-}
+/* Botón de actualización manual eliminado */
 
 /* =====================================================
    RESPONSIVE Y MOBILE OPTIMIZATIONS
@@ -3400,16 +3364,7 @@ html, body {
         border-width: 2px;
     }
     
-    .refresh-button {
-        bottom: 1rem;
-        right: 1rem;
-        width: 48px;
-        height: 48px;
-    }
-    
-    .refresh-button i {
-        font-size: 1rem;
-    }
+    /* estilos del botón de actualización manual eliminados */
 }
 
 /* =====================================================
