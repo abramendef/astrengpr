@@ -10,10 +10,19 @@ Thumbs.db
 # Node/npm (future-proof)
 node_modules/
 
-# Env files (keep secrets local)
+# Env files (keep secrets local) - CRÍTICO PARA SEGURIDAD
 backend/.env
 backend/env.local
+backend/env.production
 backend/env.production.local
+backend/env.development
+backend/env.staging
+
+# Scripts con credenciales sensibles
+scripts/run_backend_aiven.cmd
+scripts/start_local_aiven.bat
+scripts/test_local.env
+scripts/*.env
 
 # Logs
 logs/
@@ -22,3 +31,10 @@ logs/
 # Editor settings
 .vscode/
 .idea/
+
+# Archivos de configuración sensibles
+*.env
+.env.*
+config.json
+secrets.json
+credentials.json
