@@ -20,7 +20,7 @@ Disallow: /notifications.html
 Disallow: /reputation.html
 
 # Sitemap
-Sitemap: https://astren-frontend.vercel.app/sitemap.xml
+Sitemap: https://astren.app/sitemap.xml
 
 # Crawl-delay para ser considerado con el servidor
 Crawl-delay: 1
