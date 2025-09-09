@@ -5,7 +5,7 @@
 
     <!-- Página principal - Landing page -->
     <url>
-        <loc>https://astren-frontend.vercel.app/</loc>
+        <loc>https://astren.app/</loc>
         <lastmod>2025-01-14</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
@@ -13,7 +13,7 @@
 
     <!-- Página de inicio de sesión -->
     <url>
-        <loc>https://astren-frontend.vercel.app/login.html</loc>
+        <loc>https://astren.app/login.html</loc>
         <lastmod>2025-01-14</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
@@ -21,7 +21,7 @@
 
     <!-- Página de registro -->
     <url>
-        <loc>https://astren-frontend.vercel.app/register.html</loc>
+        <loc>https://astren.app/register.html</loc>
         <lastmod>2025-01-14</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
