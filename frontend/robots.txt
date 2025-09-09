@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /
+
+# Permitir indexación de páginas públicas
+Allow: /index.html
+Allow: /login.html
+Allow: /register.html
+Allow: /css/
+Allow: /js/
+Allow: /images/
+
+# Bloquear páginas que requieren autenticación
+Disallow: /dashboard.html
+Disallow: /tasks.html
+Disallow: /groups.html
+Disallow: /areas.html
+Disallow: /profile.html
+Disallow: /settings.html
+Disallow: /notifications.html
+Disallow: /reputation.html
+
+# Sitemap
+Sitemap: https://astren-frontend.vercel.app/sitemap.xml
+
+# Crawl-delay para ser considerado con el servidor
+Crawl-delay: 1
