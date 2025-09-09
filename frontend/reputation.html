@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reputación - Astren</title>
-    <meta name="description" content="Visualiza tu reputación profesional en Astren - Sistema de estrellas basado en evidencias.">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Mi Reputación - Astren</title>
+    <meta name="description" content="Visualiza tu reputación profesional en Astren - Sistema de estrellas basado en evidencias y productividad.">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +26,7 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/reputation.css">
 </head>
-<body>
+<body class="dashboard-body">
     <div class="dashboard">
         <!-- El sidebar será inyectado dinámicamente por sidebar-new.js -->
 
@@ -36,16 +39,19 @@
                         <button class="mobile-menu-btn" id="mobileMenuBtn">
                             <i class="fas fa-bars"></i>
                         </button>
-                        <h1 class="header__title">Mi Reputación</h1>
+                        <h1 class="header__title">
+                            <i class="fas fa-star"></i>
+                            Mi Reputación
+                        </h1>
                     </div>
                     <div class="header__right">
                         <div class="header__search">
                             <i class="fas fa-search"></i>
-                            <input type="text" placeholder="Buscar reputación..." class="search__input">
+                            <input type="text" placeholder="Buscar en reputación..." class="search__input">
                         </div>
-                        <button class="header__notification">
+                        <button class="header__notification" id="notificationBtn">
                             <i class="fas fa-bell"></i>
-                            <span class="notification__badge">3</span>
+                            <span class="notification__badge" id="notificationBadge">0</span>
                         </button>
                         <div class="header__profile">
                             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%233366FF'%3E%3Cpath fill-rule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="Avatar">
@@ -56,102 +62,103 @@
 
             <!-- Reputation Content -->
             <div class="dashboard__content">
-                <!-- Development Message -->
-                <div class="development-message">
-                    <div class="development-message__icon">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <h3 class="development-message__title">🚧 Sistema de Reputación en Desarrollo</h3>
-                    <p class="development-message__description">
-                        El sistema de reputación está siendo desarrollado. Pronto podrás ver tu progreso y estrellas basadas en evidencias.
-                    </p>
-                    <div class="development-message__features">
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Sistema de estrellas</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Evidencias verificadas</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Ranking y badges</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Overall Reputation -->
+                <!-- Reputation Overview -->
                 <div class="reputation__overview">
+                    <!-- Main Score Card -->
                     <div class="reputation__score-card">
-                        <div class="reputation__score-main">
-                            <div class="reputation__score-value">4.2</div>
-                            <div class="reputation__stars-large">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
+                        <div class="score-card__header">
+                            <div class="score-card__main">
+                                <div class="score__value" id="overallScore">4.2</div>
+                                <div class="score__stars" id="overallStars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </div>
+                                <div class="score__label">Reputación General</div>
                             </div>
-                            <p class="reputation__score-description">Reputación General</p>
+                            <div class="score-card__level">
+                                <div class="level__badge" id="levelBadge">
+                                    <i class="fas fa-medal"></i>
+                                    <span>Plata</span>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="reputation__score-details">
-                            <div class="reputation__detail">
-                                <span class="reputation__detail-label">Ranking</span>
-                                <span class="reputation__detail-value">#127 de 10,234</span>
+                        <div class="score-card__stats">
+                            <div class="stat__item">
+                                <div class="stat__value" id="rankingValue">#127</div>
+                                <div class="stat__label">Ranking Global</div>
                             </div>
-                            <div class="reputation__detail">
-                                <span class="reputation__detail-label">Próximo nivel</span>
-                                <div class="reputation__progress">
-                                    <div class="reputation__progress-bar" style="width: 75%;"></div>
-                                    <span class="reputation__progress-text">75%</span>
-                                </div>
+                            <div class="stat__item">
+                                <div class="stat__value" id="tasksEvaluated">156</div>
+                                <div class="stat__label">Tareas Evaluadas</div>
                             </div>
-                            <div class="reputation__detail">
-                                <span class="reputation__detail-label">Tareas evaluadas</span>
-                                <span class="reputation__detail-value">156 tareas</span>
+                            <div class="stat__item">
+                                <div class="stat__value" id="nextLevelProgress">75%</div>
+                                <div class="stat__label">Próximo Nivel</div>
+                            </div>
+                        </div>
+
+                        <div class="score-card__progress">
+                            <div class="progress__bar">
+                                <div class="progress__fill" id="progressFill" style="width: 75%"></div>
+                            </div>
+                            <div class="progress__text">
+                                <span id="progressText">75% hacia Oro</span>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="reputation__badges">
-                        <h3 class="reputation__section-title">Insignias Obtenidas</h3>
-                        <div class="badges__grid">
-                            <div class="badge badge--earned">
-                                <div class="badge__icon">
+
+                    <!-- Quick Stats -->
+                    <div class="reputation__quick-stats">
+                        <div class="quick-stats__header">
+                            <h3>Estadísticas Rápidas</h3>
+                            <button class="button button--ghost button--small" id="refreshStats">
+                                <i class="fas fa-sync-alt"></i>
+                                Actualizar
+                            </button>
+                        </div>
+                        
+                        <div class="quick-stats__grid">
+                            <div class="quick-stat__card">
+                                <div class="quick-stat__icon">
                                     <i class="fas fa-trophy"></i>
                                 </div>
-                                <div class="badge__info">
-                                    <h4 class="badge__title">Top Performer</h4>
-                                    <p class="badge__description">100+ tareas completadas</p>
+                                <div class="quick-stat__content">
+                                    <div class="quick-stat__value" id="totalStars">1,247</div>
+                                    <div class="quick-stat__label">Estrellas Totales</div>
                                 </div>
                             </div>
-                            <div class="badge badge--earned">
-                                <div class="badge__icon">
+                            
+                            <div class="quick-stat__card">
+                                <div class="quick-stat__icon">
+                                    <i class="fas fa-calendar-week"></i>
+                                </div>
+                                <div class="quick-stat__content">
+                                    <div class="quick-stat__value" id="weeklyAverage">4.3</div>
+                                    <div class="quick-stat__label">Promedio Semanal</div>
+                                </div>
+                            </div>
+                            
+                            <div class="quick-stat__card">
+                                <div class="quick-stat__icon">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div class="quick-stat__content">
+                                    <div class="quick-stat__value" id="streakDays">12</div>
+                                    <div class="quick-stat__label">Días de Racha</div>
+                                </div>
+                            </div>
+                            
+                            <div class="quick-stat__card">
+                                <div class="quick-stat__icon">
                                     <i class="fas fa-users"></i>
                                 </div>
-                                <div class="badge__info">
-                                    <h4 class="badge__title">Colaborador</h4>
-                                    <p class="badge__description">Miembro activo en 5+ grupos</p>
-                                </div>
-                            </div>
-                            <div class="badge badge--earned">
-                                <div class="badge__icon">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div class="badge__info">
-                                    <h4 class="badge__title">Puntual</h4>
-                                    <p class="badge__description">95% entregas a tiempo</p>
-                                </div>
-                            </div>
-                            <div class="badge">
-                                <div class="badge__icon">
-                                    <i class="fas fa-rocket"></i>
-                                </div>
-                                <div class="badge__info">
-                                    <h4 class="badge__title">Innovador</h4>
-                                    <p class="badge__description">Proponer 10 mejoras implementadas</p>
+                                <div class="quick-stat__content">
+                                    <div class="quick-stat__value" id="groupsActive">5</div>
+                                    <div class="quick-stat__label">Grupos Activos</div>
                                 </div>
                             </div>
                         </div>
@@ -160,200 +167,104 @@
 
                 <!-- Reputation Breakdown -->
                 <div class="reputation__breakdown">
+                    <!-- Categories Performance -->
                     <div class="reputation__categories">
-                        <h3 class="reputation__section-title">Reputación por Categorías</h3>
-                        <div class="categories__grid">
-                            <div class="category__card">
-                                <div class="category__header">
-                                    <div class="category__icon">
-                                        <i class="fas fa-laptop-code"></i>
-                                    </div>
-                                    <div class="category__info">
-                                        <h4 class="category__title">Desarrollo</h4>
-                                        <div class="category__stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                        </div>
-                                        <span class="category__score">4.8</span>
-                                    </div>
-                                </div>
-                                <div class="category__stats">
-                                    <div class="category__stat">
-                                        <span class="category__stat-value">45</span>
-                                        <span class="category__stat-label">Proyectos</span>
-                                    </div>
-                                    <div class="category__stat">
-                                        <span class="category__stat-value">4.2</span>
-                                        <span class="category__stat-label">Promedio</span>
-                                    </div>
-                                </div>
+                        <div class="categories__header">
+                            <h3>Rendimiento por Categorías</h3>
+                            <div class="categories__filters">
+                                <button class="filter-btn filter-btn--active" data-filter="all">Todas</button>
+                                <button class="filter-btn" data-filter="work">Trabajo</button>
+                                <button class="filter-btn" data-filter="school">Estudio</button>
+                                <button class="filter-btn" data-filter="personal">Personal</button>
                             </div>
-                            
-                            <div class="category__card">
-                                <div class="category__header">
-                                    <div class="category__icon">
-                                        <i class="fas fa-users"></i>
-                                    </div>
-                                    <div class="category__info">
-                                        <h4 class="category__title">Colaboración</h4>
-                                        <div class="category__stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="far fa-star"></i>
-                                        </div>
-                                        <span class="category__score">4.1</span>
-                                    </div>
-                                </div>
-                                <div class="category__stats">
-                                    <div class="category__stat">
-                                        <span class="category__stat-value">12</span>
-                                        <span class="category__stat-label">Grupos</span>
-                                    </div>
-                                    <div class="category__stat">
-                                        <span class="category__stat-value">4.1</span>
-                                        <span class="category__stat-label">Promedio</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="category__card">
-                                <div class="category__header">
-                                    <div class="category__icon">
-                                        <i class="fas fa-clock"></i>
-                                    </div>
-                                    <div class="category__info">
-                                        <h4 class="category__title">Puntualidad</h4>
-                                        <div class="category__stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="far fa-star"></i>
-                                        </div>
-                                        <span class="category__score">3.9</span>
-                                    </div>
-                                </div>
-                                <div class="category__stats">
-                                    <div class="category__stat">
-                                        <span class="category__stat-value">95%</span>
-                                        <span class="category__stat-label">A tiempo</span>
-                                    </div>
-                                    <div class="category__stat">
-                                        <span class="category__stat-value">3.9</span>
-                                        <span class="category__stat-label">Promedio</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="category__card">
-                                <div class="category__header">
-                                    <div class="category__icon">
-                                        <i class="fas fa-shield-alt"></i>
-                                    </div>
-                                    <div class="category__info">
-                                        <h4 class="category__title">Calidad</h4>
-                                        <div class="category__stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                        </div>
-                                        <span class="category__score">4.7</span>
-                                    </div>
-                                </div>
-                                <div class="category__stats">
-                                    <div class="category__stat">
-                                        <span class="category__stat-value">156</span>
-                                        <span class="category__stat-label">Evidencias</span>
-                                    </div>
-                                    <div class="category__stat">
-                                        <span class="category__stat-value">4.7</span>
-                                        <span class="category__stat-label">Promedio</span>
-                                    </div>
-                                </div>
-                            </div>
+                        </div>
+                        
+                        <div class="categories__grid" id="categoriesGrid">
+                            <!-- Categories will be populated by JavaScript -->
                         </div>
                     </div>
 
+                    <!-- Charts Section -->
                     <div class="reputation__charts">
                         <div class="chart__container">
-                            <h3 class="reputation__section-title">Evolución de Reputación</h3>
-                            <canvas id="reputation-evolution-chart"></canvas>
+                            <div class="chart__header">
+                                <h3>Evolución de Reputación</h3>
+                                <div class="chart__controls">
+                                    <select class="chart__period" id="chartPeriod">
+                                        <option value="30">Últimos 30 días</option>
+                                        <option value="90">Últimos 90 días</option>
+                                        <option value="180">Últimos 6 meses</option>
+                                        <option value="365">Último año</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <canvas id="reputationEvolutionChart"></canvas>
                         </div>
                         
                         <div class="chart__container">
-                            <h3 class="reputation__section-title">Distribución por Categorías</h3>
-                            <canvas id="stars-distribution-chart"></canvas>
+                            <div class="chart__header">
+                                <h3>Distribución de Estrellas</h3>
+                            </div>
+                            <canvas id="starsDistributionChart"></canvas>
                         </div>
                     </div>
                 </div>
 
-                <!-- Recent Achievements -->
+                <!-- Badges and Achievements -->
                 <div class="reputation__achievements">
-                    <h3 class="reputation__section-title">Logros Recientes</h3>
-                    <div class="achievements__list">
-                        <div class="achievement__item">
-                            <div class="achievement__icon">
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <div class="achievement__content">
-                                <h4 class="achievement__title">5 estrellas por "Optimización de base de datos"</h4>
-                                <p class="achievement__description">Tu solución mejoró el rendimiento en un 40%</p>
-                                <span class="achievement__date">Hace 2 días</span>
-                            </div>
-                            <div class="achievement__evidence">
-                                <button class="button button--small button--ghost">
-                                    <i class="fas fa-eye"></i>
-                                    Ver evidencia
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="achievement__item">
-                            <div class="achievement__icon">
-                                <i class="fas fa-trophy"></i>
-                            </div>
-                            <div class="achievement__content">
-                                <h4 class="achievement__title">Insignia "Top Performer" obtenida</h4>
-                                <p class="achievement__description">Has completado más de 100 tareas exitosamente</p>
-                                <span class="achievement__date">Hace 1 semana</span>
-                            </div>
-                            <div class="achievement__evidence">
-                                <button class="button button--small button--ghost">
-                                    <i class="fas fa-share"></i>
-                                    Compartir
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="achievement__item">
-                            <div class="achievement__icon">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div class="achievement__content">
-                                <h4 class="achievement__title">4 estrellas por liderazgo en grupo</h4>
-                                <p class="achievement__description">Excelente coordinación en el proyecto "App Mobile"</p>
-                                <span class="achievement__date">Hace 2 semanas</span>
-                            </div>
-                            <div class="achievement__evidence">
-                                <button class="button button--small button--ghost">
-                                    <i class="fas fa-eye"></i>
-                                    Ver evidencia
-                                </button>
-                            </div>
+                    <div class="achievements__header">
+                        <h3>Insignias y Logros</h3>
+                        <div class="achievements__tabs">
+                            <button class="tab-btn tab-btn--active" data-tab="badges">Insignias</button>
+                            <button class="tab-btn" data-tab="achievements">Logros</button>
+                            <button class="tab-btn" data-tab="milestones">Hitos</button>
                         </div>
                     </div>
                     
-                    <div class="achievements__footer">
-                        <button class="button button--ghost">
-                            <i class="fas fa-history"></i>
-                            Ver historial completo
+                    <div class="achievements__content">
+                        <!-- Badges Tab -->
+                        <div class="tab-content tab-content--active" id="badgesTab">
+                            <div class="badges__grid" id="badgesGrid">
+                                <!-- Badges will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Achievements Tab -->
+                        <div class="tab-content" id="achievementsTab">
+                            <div class="achievements__list" id="achievementsList">
+                                <!-- Achievements will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Milestones Tab -->
+                        <div class="tab-content" id="milestonesTab">
+                            <div class="milestones__list" id="milestonesList">
+                                <!-- Milestones will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="reputation__activity">
+                    <div class="activity__header">
+                        <h3>Actividad Reciente</h3>
+                        <div class="activity__filters">
+                            <button class="filter-btn filter-btn--active" data-filter="all">Todas</button>
+                            <button class="filter-btn" data-filter="tasks">Tareas</button>
+                            <button class="filter-btn" data-filter="groups">Grupos</button>
+                            <button class="filter-btn" data-filter="badges">Insignias</button>
+                        </div>
+                    </div>
+                    
+                    <div class="activity__list" id="activityList">
+                        <!-- Activity items will be populated by JavaScript -->
+                    </div>
+                    
+                    <div class="activity__footer">
+                        <button class="button button--ghost" id="loadMoreActivity">
+                            <i class="fas fa-plus"></i>
+                            Cargar más actividad
                         </button>
                     </div>
                 </div>
@@ -365,17 +276,17 @@
     </div>
 
     <!-- Evidence Modal -->
-    <div class="modal" id="evidence-modal">
+    <div class="modal" id="evidenceModal">
         <div class="modal-content modal-content--large">
             <div class="modal-header">
-                <h2>Evidencia de Logro</h2>
+                <h2 id="evidenceModalTitle">Evidencia de Logro</h2>
                 <button class="modal-close" onclick="closeEvidenceModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
             <div class="modal-body">
-                <div class="evidence__content" id="evidence-content">
+                <div class="evidence__content" id="evidenceContent">
                     <!-- Evidence content will be loaded here -->
                 </div>
             </div>
@@ -384,9 +295,33 @@
                 <button type="button" class="button button--ghost" onclick="closeEvidenceModal()">
                     Cerrar
                 </button>
-                <button type="button" class="button button--primary">
+                <button type="button" class="button button--primary" id="shareEvidence">
                     <i class="fas fa-share"></i>
                     Compartir Evidencia
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Badge Detail Modal -->
+    <div class="modal" id="badgeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="badgeModalTitle">Detalle de Insignia</h2>
+                <button class="modal-close" onclick="closeBadgeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="badge-detail__content" id="badgeDetailContent">
+                    <!-- Badge detail content will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="button button--ghost" onclick="closeBadgeModal()">
+                    Cerrar
                 </button>
             </div>
         </div>

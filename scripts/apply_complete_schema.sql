@@ -1,9 +1,9 @@
--- Script para crear la base de datos en Aiven
--- Versión: 0.0.6
-
-create database astren;
+-- Aplicar esquema completo de Astren con sistema de reputación
+DROP DATABASE IF EXISTS astren;
+CREATE DATABASE astren;
 USE astren;
 
+-- Tablas básicas
 CREATE TABLE usuarios (
     id INT NOT NULL AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
@@ -100,6 +100,7 @@ CREATE TABLE notificaciones (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
+-- Tabla TAREAS con sistema de reputación
 CREATE TABLE tareas (
     id INT NOT NULL AUTO_INCREMENT,
     usuario_id INT NOT NULL,
@@ -109,7 +110,7 @@ CREATE TABLE tareas (
     titulo VARCHAR(200) NOT NULL,
     descripcion TEXT,
     estado VARCHAR(20) DEFAULT 'pendiente',
-    estrellas TINYINT DEFAULT NULL,  -- Valor de 0 a 5 según evaluación de la tarea
+    estrellas TINYINT DEFAULT NULL,
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
     fecha_vencimiento DATETIME DEFAULT NULL,
     fecha_completada DATETIME DEFAULT NULL,
@@ -125,9 +126,7 @@ CREATE TABLE tareas (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- Checks (si el motor los soporta)
-ALTER TABLE tareas ADD CONSTRAINT chk_tareas_estrellas CHECK (estrellas BETWEEN 0 AND 5);
-
+-- Tablas de reputación
 CREATE TABLE reputacion_general (
     id INT NOT NULL AUTO_INCREMENT,
     usuario_id INT NOT NULL,
@@ -188,32 +187,7 @@ CREATE TABLE reputacion_grupo_general (
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-
--- =====================
--- ÍNDICES DE RENDIMIENTO
--- =====================
-
--- Tareas: acelerar consultas por usuario/asignado/grupo/área con orden por fecha/estado
-CREATE INDEX idx_tareas_usuario_estado_fecha ON tareas (usuario_id, estado, fecha_creacion);
-CREATE INDEX idx_tareas_usuario_estado_completada ON tareas (usuario_id, estado, fecha_completada);
-CREATE INDEX idx_tareas_area_estado_completada ON tareas (area_id, estado, fecha_completada);
-CREATE INDEX idx_tareas_asignado_estado_fecha ON tareas (asignado_a_id, estado, fecha_creacion);
-CREATE INDEX idx_tareas_grupo_estado_fecha ON tareas (grupo_id, estado, fecha_creacion);
-CREATE INDEX idx_tareas_area_estado ON tareas (area_id, estado);
-
--- Notificaciones: lecturas por usuario/estado de lectura
-CREATE INDEX idx_notif_usuario_leida ON notificaciones (usuario_id, leida);
-
--- Miembros de grupo: ya existe PK (grupo_id, usuario_id), añadimos el inverso para búsquedas por usuario
-CREATE INDEX idx_mg_usuario_grupo ON miembros_grupo (usuario_id, grupo_id);
-
--- Grupos: listas por estado y orden por nombre
-CREATE INDEX idx_grupos_estado_nombre ON grupos (estado, nombre);
-
--- =====================
--- Tablas de reputación adicionales
--- =====================
-
+-- Tablas adicionales del sistema de reputación
 CREATE TABLE historial_reputacion (
     id INT PRIMARY KEY AUTO_INCREMENT,
     usuario_id INT NOT NULL,
@@ -255,10 +229,6 @@ CREATE TABLE rate_limit_reputacion (
     INDEX idx_usuario_ventana (usuario_id, ventana_inicio)
 ) ENGINE=InnoDB;
 
--- =====================
--- Tablas para colaboración y dependencias (mínimas)
--- =====================
-
 CREATE TABLE tareas_asignadas (
     id INT PRIMARY KEY AUTO_INCREMENT,
     tarea_id INT NOT NULL,
@@ -283,3 +253,17 @@ CREATE TABLE tareas_dependencias (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
+-- Índices de rendimiento
+CREATE INDEX idx_tareas_usuario_estado_fecha ON tareas (usuario_id, estado, fecha_creacion);
+CREATE INDEX idx_tareas_usuario_estado_completada ON tareas (usuario_id, estado, fecha_completada);
+CREATE INDEX idx_tareas_area_estado_completada ON tareas (area_id, estado, fecha_completada);
+CREATE INDEX idx_tareas_asignado_estado_fecha ON tareas (asignado_a_id, estado, fecha_creacion);
+CREATE INDEX idx_tareas_grupo_estado_fecha ON tareas (grupo_id, estado, fecha_creacion);
+CREATE INDEX idx_tareas_area_estado ON tareas (area_id, estado);
+CREATE INDEX idx_notif_usuario_leida ON notificaciones (usuario_id, leida);
+CREATE INDEX idx_mg_usuario_grupo ON miembros_grupo (usuario_id, grupo_id);
+CREATE INDEX idx_grupos_estado_nombre ON grupos (estado, nombre);
+
+-- Verificar que todo se creó correctamente
+SHOW TABLES;
+SELECT 'VERIFICACION_COMPLETA' as status;
