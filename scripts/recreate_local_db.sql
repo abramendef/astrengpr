@@ -1,0 +1,3 @@
+DROP DATABASE IF EXISTS astren;
+CREATE DATABASE astren;
+USE astren;

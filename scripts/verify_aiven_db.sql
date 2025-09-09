@@ -1,0 +1,11 @@
+USE astrengpr;
+SHOW TABLES;
+DESCRIBE tareas;
+SHOW INDEX FROM tareas;
+DESCRIBE reputacion_general;
+SHOW INDEX FROM reputacion_general;
+DESCRIBE historial_reputacion;
+DESCRIBE evidencias_tarea;
+DESCRIBE rate_limit_reputacion;
+DESCRIBE tareas_asignadas;
+DESCRIBE tareas_dependencias;

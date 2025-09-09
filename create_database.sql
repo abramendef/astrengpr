@@ -1,8 +1,8 @@
 -- Script para crear la base de datos en Aiven
 -- Versión: 0.0.6
 
-create database astrengpr;
-USE astrengpr;
+create database astren;
+USE astren;
 
 CREATE TABLE usuarios (
     id INT NOT NULL AUTO_INCREMENT,
