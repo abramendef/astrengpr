@@ -27,7 +27,8 @@ class MobileMenuManager {
 
         // Show menu
         if (this.navToggle) {
-            this.navToggle.addEventListener('click', () => {
+            this.navToggle.addEventListener('click', (e) => {
+                e.preventDefault();
                 this.navMenu.classList.add('show-menu');
                 this.trapFocus();
             });
@@ -35,7 +36,8 @@ class MobileMenuManager {
 
         // Hide menu
         if (this.navClose) {
-            this.navClose.addEventListener('click', () => {
+            this.navClose.addEventListener('click', (e) => {
+                e.preventDefault();
                 this.hideMenu();
             });
         }
@@ -107,7 +109,7 @@ class MobileMenuManager {
 /*===== ACTIVE NAVIGATION LINK =====*/
 class NavigationManager {
     constructor() {
-        this.sections = document.querySelectorAll('section[id]');
+        this.sections = document.querySelectorAll('section[id], footer[id]');
         this.navLinks = document.querySelectorAll('.nav__menu a[href^="#"]');
         this.init();
     }
@@ -136,18 +138,23 @@ class NavigationManager {
     updateActiveLink() {
         const scrollY = window.pageYOffset;
         const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
 
         this.sections.forEach(current => {
             const sectionHeight = current.offsetHeight;
-            const sectionTop = current.offsetTop - 100;
+            const sectionTop = current.offsetTop;
             const sectionId = current.getAttribute('id');
             const sectionLink = document.querySelector(`.nav__menu a[href="#${sectionId}"]`);
 
             if (sectionLink) {
-                const isInView = scrollY > sectionTop && scrollY <= sectionTop + sectionHeight;
+                const isInView = scrollY > sectionTop - 100 && scrollY <= sectionTop + sectionHeight;
                 const isNearTop = scrollY < 100;
+                
+                // Para el footer (contacto), activar cuando esté cerca del final de la página
+                const isFooter = current.tagName.toLowerCase() === 'footer';
+                const isNearFooter = isFooter && (scrollY > sectionTop - 300 || scrollY > documentHeight - windowHeight - 100);
 
-                if (isInView || (isNearTop && sectionId === 'inicio')) {
+                if (isInView || (isNearTop && sectionId === 'inicio') || isNearFooter) {
                     this.setActiveLink(sectionLink);
                 }
             }
