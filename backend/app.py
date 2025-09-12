@@ -2620,9 +2620,11 @@ def aceptar_invitacion_grupo(invitacion_id, usuario_id, area_id=None):
         # Obtener información de la invitación (aceptar tanto pendientes como archivadas)
         cursor.execute("SELECT grupo_id, rol FROM invitaciones_grupo WHERE id = %s AND usuario_id = %s AND estado IN ('pendiente', 'archivada', 'aceptada')", (invitacion_id, usuario_id))
         invitacion = cursor.fetchone()
-        
+
         if not invitacion:
             print(f"❌ [ERROR] Invitación no encontrada o ya procesada")
+            cursor.close()
+            conn.close()
             return False
         
         grupo_id, rol = invitacion
