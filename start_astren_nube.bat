@@ -54,9 +54,9 @@ if /I "%PYTHON_EXE%"=="python" (
 )
 
 REM Configuracion de entorno (local + Aiven)
-REM Lanzar BACKEND (Aiven) y FRONTEND con scripts dedicados para evitar problemas de quoting
-start "Astren Backend (Aiven)" cmd /k "scripts\run_backend_aiven.cmd"
-start "Astren Frontend" cmd /k "scripts\run_frontend.cmd"
+REM Lanzar BACKEND (Aiven) y FRONTEND directamente
+start "Astren Backend (Aiven)" cmd /k "cd /d %BACKEND_DIR% && %PYTHON_EXE% app.py"
+start "Astren Frontend" cmd /k "cd /d %FRONTEND_DIR% && python -m http.server 5500"
 
 echo.
 echo ========================================

@@ -1,13 +1,11 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 
-title Astren - Local (BD local)
+title Astren - Sistema Completo
 echo.
 echo ========================================
-echo    ASTREN - MODO LOCAL (BASE DE DATOS LOCAL)
+echo    ASTREN - SISTEMA DE GESTION
 echo ========================================
-echo.
-echo Este script inicia el backend local usando la BD local.
 echo.
 
 REM Preparar rutas
@@ -28,10 +26,7 @@ if not exist "%FRONTEND_DIR%" (
   exit /b 1
 )
 
-REM (Sin verificacion adicional en raiz; ya validamos BACKEND_DIR)
-
-REM Activar entorno virtual si existe (.venv en raiz o venv en backend)
-REM Elegir interprete de Python
+REM Activar entorno virtual si existe
 set "PYTHON_EXE=python"
 if exist "%ROOT%\.venv\Scripts\python.exe" set "PYTHON_EXE=%ROOT%\.venv\Scripts\python.exe"
 if exist "%BACKEND_DIR%\venv\Scripts\python.exe" set "PYTHON_EXE=%BACKEND_DIR%\venv\Scripts\python.exe"
@@ -53,9 +48,11 @@ if /I "%PYTHON_EXE%"=="python" (
   )
 )
 
-REM Lanzar BACKEND (local) y FRONTEND con scripts dedicados para evitar problemas de quoting
-start "Astren Backend (Local)" cmd /k "scripts\run_backend_local.cmd"
-start "Astren Frontend" cmd /k "scripts\run_frontend.cmd"
+echo ✅ Iniciando Backend...
+start "Astren Backend" cmd /k "cd /d %BACKEND_DIR% && %PYTHON_EXE% app.py"
+
+echo ✅ Iniciando Frontend...
+start "Astren Frontend" cmd /k "cd /d %FRONTEND_DIR% && python -m http.server 5500"
 
 echo.
 echo ========================================

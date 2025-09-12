@@ -3,13 +3,13 @@
 /* Estilos globales para prevenir expansión horizontal */
 html, body {
   overflow-x: hidden !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 * {
-  box-sizing: border-box !important;
+  box-sizing: border-box;
 }
 
 /*===== DASHBOARD LAYOUT =====*/
@@ -17,20 +17,14 @@ html, body {
   margin: 0;
   padding: 0;
   background-color: hsl(var(--background));
-  overflow-x: hidden !important; /* Prevenir scroll horizontal */
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
+  /* Heredado de html, body - no necesario repetir */
 }
 
 .dashboard {
   display: flex;
   min-height: 100vh;
   position: relative;
-  overflow-x: hidden !important; /* Prevenir scroll horizontal */
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
+  /* Heredado de html, body - no necesario repetir */
 }
 
 /*===== SIDEBAR =====*/
