@@ -36,6 +36,8 @@
       ]
     }
   ],
+  "cleanUrls": true,
+  "trailingSlash": false,
   "redirects": [
     {
       "source": "/home",
