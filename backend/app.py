@@ -181,16 +181,34 @@ def get_db_connection():
         global db_pool
         if db_pool is None:
             print(f"[DEBUG] Inicializando pool de conexiones MySQL (size={pool_size})")
-            db_pool = mysql_pooling.MySQLConnectionPool(
-                pool_name="astren_pool",
-                pool_size=pool_size,
-                host=host,
-                user=user,
-                password=password,
-                database=database,
-                port=port,
-                connection_timeout=10
-            )
+            # Preparar kwargs para soportar conexión SSL si está configurada
+            conn_kwargs = {
+                'pool_name': "astren_pool",
+                'pool_size': pool_size,
+                'host': host,
+                'user': user,
+                'password': password,
+                'database': database,
+                'port': port,
+                'connection_timeout': 10
+            }
+
+            # Soporte SSL: Aiven y otros proveedores pueden requerir `ssl_ca`
+            ssl_mode = os.getenv('MYSQL_SSL_MODE') or os.getenv('DB_SSL_MODE')
+            ssl_ca = os.getenv('MYSQL_SSL_CA') or os.getenv('DB_SSL_CA')
+            if ssl_mode:
+                print(f"[DB] MYSQL_SSL_MODE={ssl_mode}")
+            if ssl_ca:
+                # Solo añadir si el fichero existe o si se proporciona un valor válido
+                if os.path.exists(ssl_ca):
+                    conn_kwargs['ssl_ca'] = ssl_ca
+                    print(f"[DB] Usando ssl_ca en {ssl_ca}")
+                else:
+                    # Si el path no existe, lo dejamos como valor crudo (a veces es una cadena PEM)
+                    conn_kwargs['ssl_ca'] = ssl_ca
+                    print(f"[DB] MYSQL_SSL_CA proporcionado pero el archivo no existe en el path: {ssl_ca}")
+
+            db_pool = mysql_pooling.MySQLConnectionPool(**conn_kwargs)
 
         conn = db_pool.get_connection()
         # Alinear zona horaria de la sesión MySQL en UTC para consistencia global
