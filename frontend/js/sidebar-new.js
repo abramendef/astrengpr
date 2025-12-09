@@ -82,7 +82,7 @@ class SidebarManager {
             <aside class="sidebar" id="sidebar" role="navigation" aria-label="Navegación principal">
                 <div class="sidebar__header">
                     <div class="sidebar__logo">
-                        <img src="images/Astren_logo_hor.svg" alt="Astren" class="sidebar__logo-img">
+                        <img src="images/astrengpr logo horizontal.svg" alt="AstrenGPR" class="sidebar__logo-img">
                     </div>
                     <button class="sidebar__toggle" id="sidebarToggle" aria-label="Cerrar menú">
                         <i class="fas fa-times"></i>
