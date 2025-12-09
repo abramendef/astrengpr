@@ -118,6 +118,14 @@ def add_performance_headers(response):
 tokens = {}
 db_pool = None
 
+# ⚠️ NOTA DE SEGURIDAD: SSL/TLS en Base de Datos
+# Por el momento, la conexión a MySQL (Aiven) se realiza SIN SSL para simplificar el despliegue demo.
+# ANTES DE PASAR A PRODUCCIÓN:
+# 1. Descargar el certificado CA de Aiven
+# 2. Configurar MYSQL_SSL_CA_CONTENT en variables de entorno de Render con el contenido del .pem
+# 3. Cambiar MYSQL_PORT a 18019 (puerto SSL obligatorio en Aiven)
+# Esto protegerá los datos en tránsito entre Render y Aiven.
+
 # Utilidad: normalizar strings de fecha de vencimiento a UTC 'YYYY-MM-DD HH:MM:SS'
 def _normalize_due_date_str(due_value):
     if not due_value:
