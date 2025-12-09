@@ -359,6 +359,44 @@
     </div>
 
     <!-- Scripts -->
+    <!-- Edit Task Modal -->
+    <div class="modal" id="editTaskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Tarea</h2>
+                <button class="modal-close" id="closeEditTaskModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form class="task-form" id="editTaskForm">
+                <div class="form-group">
+                    <label for="editTaskTitle">Título de la tarea</label>
+                    <input type="text" id="editTaskTitle" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="editTaskDescription">Descripción</label>
+                    <textarea id="editTaskDescription" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editTaskArea">Área</label>
+                        <select id="editTaskArea" name="area">
+                            <option value="">Seleccionar área</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editTaskDueDate">Fecha de vencimiento</label>
+                    <input type="datetime-local" id="editTaskDueDate" name="dueDate" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="button button--ghost" id="cancelEditTask">Cancelar</button>
+                    <button type="submit" class="button button--primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="js/config.js"></script>
     <script src="js/sidebar-new.js"></script>
     <script src="js/scripts.js"></script>
@@ -366,37 +404,5 @@
     <script src="js/tasks.js?v=12"></script>
     <script src="js/header-buttons.js"></script>
     <script src="js/notifications.js"></script>
-    
-    <!-- Test script -->
-    <script>
-        // Global test function
-        function testModalDirect() {
-            console.log('🧪 Test modal function called');
-            const modal = document.getElementById('newTaskModal');
-            if (modal) {
-                console.log('🧪 Opening test modal directly');
-                modal.style.display = 'flex';
-                modal.classList.add('active');
-                console.log('🧪 Modal classes:', modal.className);
-                console.log('🧪 Modal style display:', modal.style.display);
-            } else {
-                console.log('❌ Test modal not found');
-            }
-        }
-        
-        // Also test the original button
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🧪 DOM loaded in test script');
-            const originalBtn = document.getElementById('newTaskBtn');
-            console.log('🧪 Original button found:', !!originalBtn);
-            
-            if (originalBtn) {
-                originalBtn.addEventListener('click', function() {
-                    console.log('🧪 Original button clicked from test script');
-                    testModalDirect();
-                });
-            }
-        });
-    </script>
 </body>
 </html>
