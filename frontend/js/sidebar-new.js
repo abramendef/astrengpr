@@ -42,6 +42,7 @@ class SidebarManager {
         console.log('🔍 Detectando página desde:', filename);
         
         const pageMap = {
+            // Con extensión .html
             'dashboard.html': 'dashboard',
             'tasks.html': 'tasks',
             'areas.html': 'areas',
@@ -51,6 +52,15 @@ class SidebarManager {
             'profile.html': 'profile',
             'settings.html': 'settings',
             'index.html': 'dashboard',
+            // Sin extensión (Vercel rewrites)
+            'dashboard': 'dashboard',
+            'tasks': 'tasks',
+            'areas': 'areas',
+            'groups': 'groups',
+            'reputation': 'reputation',
+            'notifications': 'notifications',
+            'profile': 'profile',
+            'settings': 'settings',
             '': 'dashboard'
         };
 
