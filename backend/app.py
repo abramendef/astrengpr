@@ -24,6 +24,7 @@ from mysql.connector import pooling as mysql_pooling
 import re
 import bcrypt
 import logging
+import tempfile
 
 # Cargar variables de entorno
 # Nota: se usará el archivo .env creado por los scripts de inicio (local o nube)
@@ -196,8 +197,24 @@ def get_db_connection():
             # Soporte SSL: Aiven y otros proveedores pueden requerir `ssl_ca`
             ssl_mode = os.getenv('MYSQL_SSL_MODE') or os.getenv('DB_SSL_MODE')
             ssl_ca = os.getenv('MYSQL_SSL_CA') or os.getenv('DB_SSL_CA')
+            ssl_ca_content = os.getenv('MYSQL_SSL_CA_CONTENT') or os.getenv('DB_SSL_CA_CONTENT')
+            
             if ssl_mode:
                 print(f"[DB] MYSQL_SSL_MODE={ssl_mode}")
+            
+            # Si se proporciona contenido del certificado como variable de entorno, creamos un archivo temporal
+            if ssl_ca_content and not ssl_ca:
+                print("[DB] Detectado MYSQL_SSL_CA_CONTENT, creando archivo temporal para certificado CA")
+                try:
+                    temp_ca_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.pem')
+                    temp_ca_file.write(ssl_ca_content)
+                    temp_ca_file.close()
+                    ssl_ca = temp_ca_file.name
+                    print(f"[DB] Certificado CA guardado en archivo temporal: {ssl_ca}")
+                except Exception as e:
+                    print(f"[ERROR] No se pudo crear archivo temporal para el certificado CA: {e}")
+                    ssl_ca = None
+            
             if ssl_ca:
                 # Solo añadir si el fichero existe o si se proporciona un valor válido
                 if os.path.exists(ssl_ca):
