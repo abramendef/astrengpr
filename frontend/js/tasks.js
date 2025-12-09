@@ -127,6 +127,8 @@ class TasksManager {
                             t.estado === 'completada' ? 'completed' :
                             t.estado === 'vencida' ? 'overdue' : t.estado,
                     title: t.titulo || t.title,
+                    description: t.descripcion || t.description || '',
+                    area: t.area_id || t.area,
                     dueDate: t.fecha_vencimiento || t.dueDate
                 }));
 
