@@ -36,7 +36,9 @@ class SidebarManager {
 
     getCurrentPage() {
         const path = window.location.pathname;
-        const filename = path.split('/').pop() || 'index.html';
+        let filename = path.split('/').pop() || 'index.html';
+        // Remove query parameters if present
+        filename = filename.split('?')[0];
         console.log('🔍 Detectando página desde:', filename);
         
         const pageMap = {
@@ -46,9 +48,10 @@ class SidebarManager {
             'groups.html': 'groups',
             'reputation.html': 'reputation',
             'notifications.html': 'notifications',
-
             'profile.html': 'profile',
-            'settings.html': 'settings'
+            'settings.html': 'settings',
+            'index.html': 'dashboard',
+            '': 'dashboard'
         };
 
         const detectedPage = pageMap[filename] || 'dashboard';
