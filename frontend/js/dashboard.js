@@ -1700,18 +1700,20 @@ function populateAreaSelects() {
             fetch(buildApiUrl(CONFIG.API_ENDPOINTS.AREAS, `/${userId}`), { cache: 'no-store' })
         .then(response => response.json())
         .then(data => {
-            const areas = data.areas || [];
+            // El backend devuelve un array directo
+            const areas = Array.isArray(data) ? data : [];
             console.log('📝 Poblando selects con áreas:', areas.length);
             
             // Poblar select de área en el modal de nueva tarea
             const areaSelect = document.getElementById('taskArea');
             if (areaSelect) {
                 areaSelect.innerHTML = '<option value="">Seleccionar área</option>';
+                // Filtrar solo áreas activas
                 areas.forEach(area => {
-                    if (!area.archived) {
+                    if (area.estado === 'activa') {
                         const option = document.createElement('option');
                         option.value = area.id;
-                        option.textContent = area.name;
+                        option.textContent = area.nombre;
                         areaSelect.appendChild(option);
                     }
                 });
