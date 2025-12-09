@@ -1,5 +1,12 @@
 /*===== LOGIN SPECIFIC STYLES =====*/
 
+/*===== NAVIGATION LOGO =====*/
+.nav__logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
 /*===== LOGIN SECTION =====*/
 .login {
   min-height: 100vh;

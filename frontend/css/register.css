@@ -1,5 +1,12 @@
 /*===== REGISTER SPECIFIC STYLES =====*/
 
+/*===== NAVIGATION LOGO =====*/
+.nav__logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
 /*===== FORM LAYOUT =====*/
 .register .login__form-wrapper {
   max-width: 480px;
