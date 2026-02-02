@@ -1,102 +1,46 @@
 # 🌟 Astren - Sistema de Gestión de Productividad
 
-**Astren** es una plataforma completa de gestión de productividad que combina gestión de tareas, equipos, áreas personales y un **sistema de reputación basado en estrellas (planificado)**. Diseñado para ser el estándar global de medición de productividad.
+Plataforma de gestión de productividad con **tareas, equipos, áreas personales** y **sistema de reputación basado en estrellas**.
 
-## 🚀 Características Principales
+**[Live Demo](https://astren.vercel.app/)** | **[Documentación Completa](docs/ESTADO_ACTUAL_ASTREN.md)** | **[Sistema de Reputación](docs/SISTEMA_REPUTACION_ASTREN.md)**
 
-### 📊 **Dashboard Inteligente**
-- **Vista general** de tareas y estadísticas en tiempo real
-- **Navegación inteligente** a secciones específicas
-- **Progreso de reputación** visual con estrellas (planificado)
-- **Áreas y grupos** con scroll horizontal
-- **Contadores interactivos** que enlazan a secciones específicas
+## ⚡ Características
 
-### ✅ **Sistema de Tareas Avanzado**
-- **4 categorías principales**: Hoy, Pendientes, Completadas, Vencidas
-- **Gestión de evidencia** para tareas de trabajo/escuela
-- **Estados claros**: Pendiente, En Progreso, Completada, Vencida
-- **Filtros inteligentes** y navegación por hash
-- **Sistema de reputación** integrado por tarea (planificado)
+- ✅ **Dashboard inteligente** con vista general en tiempo real
+- ✅ **Sistema de tareas** con 4 categorías (Hoy, Pendientes, Completadas, Vencidas)
+- ✅ **Gestión de equipos** (Grupos) con roles y asignaciones
+- ✅ **Áreas personales** (Personal, Trabajo, Escuela)
+- ✅ **Notificaciones** en tiempo real
+- 🔄 **Sistema de reputación** (En desarrollo) - Ver [documentación](docs/SISTEMA_REPUTACION_ASTREN.md)
 
-### 👥 **Gestión de Equipos (Grupos)**
-- **Creación y gestión** de grupos con colores e iconos
-- **Sistema de roles**: Líder, Administrador, Miembro
-- **Invitar y gestionar** miembros
-- **Tareas grupales** con asignación
-- **Notificaciones** en tiempo real
-- **Archivado** de grupos
+## 🛠️ Stack Tecnológico
 
-### 🏆 **Sistema de Reputación por Estrellas (Planificado)**
-- **Reputación general** con decaimiento exponencial (promedio ponderado) - *No implementado*
-- **Reputación por área** independiente con decaimiento exponencial - *No implementado*
-- **Reputación por grupo** (Plan Empresarial) con modelos configurables - *No implementado*
-- **Reputación inicial** de 5 estrellas (sin período de prueba) - *No implementado*
-- **Nivel de consolidación** basado en antigüedad, racha y tareas cumplidas - *No implementado*
-- **Peso personalizado** de tareas en grupos empresariales - *No implementado*
-- **Calificación automática** (usuarios normales) y manual (empresariales) - *No implementado*
+- **Frontend**: HTML5, CSS3, JavaScript vanilla | Deployed en Vercel
+- **Backend**: Python Flask | Deployed en Render
+- **Database**: MySQL en Aiven
+- **API**: RESTful con soporte CORS
 
-### 🎯 **Áreas Personales**
-- **Organización** por contextos (Personal, Trabajo, Escuela)
-- **Colores e iconos** personalizables
-- **Reputación independiente** por área (planificado)
-- **Gestión visual** intuitiva
-
-### 🔔 **Sistema de Notificaciones**
-- **Notificaciones en tiempo real**
-- **Invitar a grupos**
-- **Cambios de rol**
-- **Tareas asignadas**
-- **Contador de no leídas**
-
-## 📁 Estructura del Proyecto
+## 📁 Estructura
 
 ```
-astren/
-├── frontend/                    # Interfaz de usuario
-│   ├── css/                    # Estilos CSS (12 archivos)
-│   │   ├── dashboard.css       # Dashboard principal
-│   │   ├── tasks.css          # Sistema de tareas
-│   │   ├── groups.css         # Gestión de grupos
-│   │   ├── areas.css          # Áreas personales
-│   │   ├── reputation.css     # Sistema de reputación (planificado)
-│   │   └── ...                # Otros estilos
-│   ├── js/                    # JavaScript (14 archivos)
-│   │   ├── dashboard.js       # Lógica del dashboard
-│   │   ├── tasks.js          # Gestión de tareas
-│   │   ├── groups.js         # Gestión de grupos
-│   │   ├── areas.js          # Áreas personales
-│   │   ├── reputation.js     # Sistema de reputación (planificado)
-│   │   └── ...               # Otros scripts
-│   ├── images/               # Assets visuales
-│   ├── index.html            # Página principal
-│   ├── dashboard.html        # Dashboard inteligente
-│   ├── tasks.html           # Gestión de tareas
-│   ├── groups.html          # Gestión de equipos
-│   ├── areas.html           # Áreas personales
-│   ├── reputation.html      # Sistema de reputación (planificado)
-│   ├── profile.html         # Perfil de usuario
-│   ├── settings.html        # Configuraciones
-│   ├── notifications.html   # Notificaciones
-│   ├── login.html           # Autenticación
-│   └── register.html        # Registro
-├── backend/                  # Servidor y API
-│   ├── app.py              # API principal (2,467 líneas)
-│   ├── requirements.txt    # Dependencias Python
-│   └── env.example        # Variables de entorno
-├── docs/                   # Documentación
-│   ├── SISTEMA_REPUTACION_ASTREN.md  # Sistema de reputación
-│   ├── TASK_MANAGEMENT_SYSTEM.md     # Sistema de tareas
-│   └── INICIAR_ASTREN.md            # Guía de inicio
-├── scripts/                # Scripts de configuración
-├── utils/                  # Utilidades
-└── README.md              # Este archivo
+frontend/          # Interfaz web
+├── css/           # Estilos
+├── js/            # Lógica
+└── *.html         # Páginas
+
+backend/           # API
+├── app.py         # Servidor principal
+└── requirements.txt
+
+docs/              # Documentación
+└── ESTADO_ACTUAL_ASTREN.md    # Estado completo del proyecto
 ```
 
 ## 🚀 Inicio Rápido
 
-### Opción 1: Inicio Automático (Recomendado)
+### Windows
 ```bash
-# Windows - Doble clic en:
+# Doble clic en:
 start_astren.bat
 
 # O desde PowerShell:
