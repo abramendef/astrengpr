@@ -19,9 +19,9 @@
 - **Backend (Render):** https://astren-backend.onrender.com
 - **Base de Datos (Aiven):** MySQL en Aiven
 
-### **Datos de Acceso Demo:**
-- **Email:** demo@example.com
-- **Contraseña:** DEMO_PASSWORD_HERE
+### **Credenciales de Acceso:**
+> ⚠️ **Demo Solo - No usar en Producción**
+> Usar credenciales propias. Contacta al administrador para acceso real.
 
 ### **Estado del Sistema:**
 - ✅ **Completamente Desplegado**
@@ -580,8 +580,8 @@ logger = logging.getLogger(__name__)
 - **Base de Datos**: Aiven MySQL
 
 ### **Credenciales de Acceso:**
-- **Email**: demo@example.com
-- **Contraseña**: DEMO_PASSWORD_HERE
+> ⚠️ **Demo Solo - No usar en Producción**
+> Usar credenciales propias. Contacta al administrador para acceso real.
 
 ### **Estado del Sistema:**
 - ✅ **Completamente Desplegado**

@@ -65,6 +65,7 @@ scripts/*.env
 scripts/schema/create_database.sql
 scripts/schema/migrate_*.sql
 scripts/*.sql
+scripts/migrations/*.sql
 
 logs/
 *.log

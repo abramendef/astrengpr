@@ -6,7 +6,7 @@ Uso:
   - Con archivo de entorno:
       python scripts/apply_indexes.py --env-file backend/env.production
   - Con parámetros explícitos:
-      python scripts/apply_indexes.py --host localhost --user root --password 1234 --database astren --port 3306
+      python scripts/apply_indexes.py --host localhost --user root --password YOUR_PASSWORD --database astren --port 3306
 
 Seguro: verifica existencia en information_schema antes de crear.
 """

@@ -31,7 +31,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'self' https://*.vercel.app https://*.astren.app http://localhost:8080 http://localhost:8081;"
+          "value": "frame-ancestors 'self' https://*.vercel.app https://*.astren.app;"
         }
       ]
     }
