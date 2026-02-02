@@ -12,7 +12,11 @@
 - [x] `backend/.env*` files ignorados
 - [x] `scripts/*.env` files ignorados
 - [x] Sin credenciales reales en el repositorio
-- [x] Git history limpio de contraseñas Aiven/Railway
+- [x] **Git history completamente limpio** - git-filter-repo aplicado
+  - Removido: `backend/.env` files con credenciales reales
+  - Removido: `scripts/start_local_aiven.bat` 
+  - Removido: `scripts/run_backend_aiven.cmd`
+  - Removido: `scripts/test_local.env`
 
 ### ✅ Archivos de Configuración Seguros
 - [x] `backend/env.production.example` creado como template
