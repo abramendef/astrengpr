@@ -6,7 +6,10 @@ AstrenGPR es una plataforma de productividad personal y colaborativa diseñada p
 
 ## Acerca de este repositorio
 
-Este snapshot contiene principalmente el **frontend** (interfaz de usuario HTML/CSS/JavaScript). Los archivos de configuración y referencias del backend (Flask + MySQL) se incluyen por completitud, pero el código del servidor no está presente en esta copia. Los scripts SQL están disponibles localmente pero no se publican por seguridad.
+Este repositorio contiene tanto el **frontend** (HTML/CSS/JavaScript) como el **backend** (Flask + MySQL):
+- **Frontend:** interfaz de usuario completa en `frontend/`
+- **Backend:** servidor Flask en `backend/app.py` con autenticación, procesamiento de IA, pooling de conexiones MySQL y optimizaciones de rendimiento
+- **Scripts SQL:** disponibles localmente en `scripts/` pero no publicados por seguridad (incluyen credenciales y datos sensibles)
 
 ### Documentación
 
