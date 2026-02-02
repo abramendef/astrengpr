@@ -355,11 +355,13 @@ Tipos de notificación:
 
 ### **Variables de Entorno**
 ```env
-MYSQL_HOST=yamabiko.proxy.rlwy.net
+# Base de datos local (para desarrollo)
+# IMPORTANTE: NO SUBIR CREDENCIALES REALES
+MYSQL_HOST=localhost
 MYSQL_USER=root
-MYSQL_PASSWORD=YOUR_RAILWAY_PASSWORD_HERE
+MYSQL_PASSWORD=YOUR_PASSWORD_HERE
 MYSQL_DATABASE=astren
-MYSQL_PORT=32615
+MYSQL_PORT=3306
 ```
 
 ### **Dependencias Python**
