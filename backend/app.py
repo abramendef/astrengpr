@@ -735,40 +735,58 @@ def obtener_usuario_por_id(usuario_id):
 
 @app.route('/login', methods=['POST'])
 def login_usuario():
-    data = request.json
-    if not data or not data.get('correo') or not data.get('contrasena'):
-        return jsonify({'error': 'Correo y contrasena son obligatorios'}), 400
-    correo = data['correo']
-    contrasena = data['contrasena']
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    # Seleccionar explícitamente campos esperados; algunos entornos antiguos pueden tener nombres distintos
-    cursor.execute("SELECT id, nombre, apellido, correo, contrasena FROM usuarios WHERE correo = %s", (correo,))
-    usuario = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    if not usuario:
-        return jsonify({'error': 'Usuario o contrasena incorrectos'}), 401
-    # Determinar el campo de contraseña disponible
-    hashed_key = None
-    for k in ['contrasena', 'password', 'contrasenia', 'contrasena_hash']:
-        if k in usuario and usuario[k] is not None:
-            hashed_key = k
-            break
-    if not hashed_key:
-        # Esquema inesperado en la tabla usuarios (entorno local desalineado)
-        return jsonify({
-            'error': 'Esquema de usuarios no compatible: falta columna de contraseña',
-            'campos_disponibles': list(usuario.keys())
-        }), 500
+    try:
+        data = request.json
+        if not data or not data.get('correo') or not data.get('contrasena'):
+            return jsonify({'error': 'Correo y contrasena son obligatorios'}), 400
+        correo = data['correo']
+        contrasena = data['contrasena']
+        
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            # Seleccionar explícitamente campos esperados; algunos entornos antiguos pueden tener nombres distintos
+            cursor.execute("SELECT id, nombre, apellido, correo, contrasena FROM usuarios WHERE correo = %s", (correo,))
+            usuario = cursor.fetchone()
+            cursor.close()
+            conn.close()
+        except mysql.connector.Error as db_err:
+            logger.error(f"[LOGIN] Error de conexión DB: {db_err}")
+            return jsonify({'error': 'Error de conexión a base de datos'}), 503
+        
+        if not usuario:
+            return jsonify({'error': 'Usuario o contrasena incorrectos'}), 401
+        
+        # Determinar el campo de contraseña disponible
+        hashed_key = None
+        for k in ['contrasena', 'password', 'contrasenia', 'contrasena_hash']:
+            if k in usuario and usuario[k] is not None:
+                hashed_key = k
+                break
+        
+        if not hashed_key:
+            # Esquema inesperado en la tabla usuarios (entorno local desalineado)
+            logger.error(f"[LOGIN] Esquema usuario incompleto. Campos: {list(usuario.keys())}")
+            return jsonify({
+                'error': 'Esquema de usuarios no compatible: falta columna de contraseña',
+                'campos_disponibles': list(usuario.keys())
+            }), 500
 
-    hashed_db = str(usuario[hashed_key])  # Asegura que es string
-    hashed = hashed_db.encode('utf-8')
-    if bcrypt.checkpw(contrasena.encode('utf-8'), hashed):
-        # Puedes devolver más datos del usuario si quieres, pero nunca la contraseña
-        return jsonify({'mensaje': 'Login exitoso', 'usuario_id': usuario['id'], 'nombre': usuario['nombre'], 'apellido': usuario['apellido'], 'correo': usuario['correo']}), 200
-    else:
-        return jsonify({'error': 'Usuario o contrasena incorrectos'}), 401
+        try:
+            hashed_db = str(usuario[hashed_key])  # Asegura que es string
+            hashed = hashed_db.encode('utf-8')
+            if bcrypt.checkpw(contrasena.encode('utf-8'), hashed):
+                # Puedes devolver más datos del usuario si quieres, pero nunca la contraseña
+                logger.info(f"[LOGIN] Login exitoso para {correo}")
+                return jsonify({'mensaje': 'Login exitoso', 'usuario_id': usuario['id'], 'nombre': usuario['nombre'], 'apellido': usuario['apellido'], 'correo': usuario['correo']}), 200
+            else:
+                return jsonify({'error': 'Usuario o contrasena incorrectos'}), 401
+        except ValueError as bcrypt_err:
+            logger.error(f"[LOGIN] Error bcrypt (hash inválido): {bcrypt_err}")
+            return jsonify({'error': 'Error de autenticación (hash inválido)'}), 401
+    except Exception as e:
+        logger.error(f"[LOGIN] Error inesperado: {e}", exc_info=True)
+        return jsonify({'error': 'Error interno del servidor'}), 500
 
 @app.route('/tareas', methods=['POST'])
 def registrar_tarea():
