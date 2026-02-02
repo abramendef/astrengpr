@@ -1,59 +1,103 @@
 # Astren
 
-Astren es una demo de plataforma de productividad con tareas, grupos y áreas personales.
+Astren es una plataforma de productividad personal y colaborativa diseñada para ayudarte a gestionar tareas, organizarlas en áreas de trabajo y colaborar en grupos. Incluye un sistema de reputación que mide consistencia y calidad basándose en evidencia real.
 
-- Demo: https://gpr.astren.app/
-- Estado del proyecto: docs/ESTADO_ACTUAL_ASTREN.md
-- Diseño del sistema de reputación: docs/SISTEMA_REPUTACION_ASTREN.md
+**Demo:** https://gpr.astren.app/
 
-## Alcance del repositorio
+## Acerca de este repositorio
 
-Este repositorio contiene principalmente el frontend (HTML/CSS/JS). Hay scripts y archivos de configuración para un backend en Flask, pero el código del servidor no forma parte de este snapshot.
+Este snapshot contiene principalmente el **frontend** (interfaz de usuario HTML/CSS/JavaScript). Los archivos de configuración y referencias del backend (Flask + MySQL) se incluyen por completitud, pero el código del servidor no está presente en esta copia. Los scripts SQL están disponibles localmente pero no se publican por seguridad.
 
-## Funcionalidad (frontend)
+### Documentación
 
-- Dashboard con contadores y navegación por secciones
-- Tareas por categorías (hoy, pendientes, completadas, vencidas)
-- Grupos con roles y asignación (interfaz)
-- Áreas personales (interfaz)
-- Notificaciones (interfaz)
+- [Estado actual del proyecto](docs/ESTADO_ACTUAL_ASTREN.md): arquitectura, alcance y funcionalidades
+- [Diseño del sistema de reputación](docs/SISTEMA_REPUTACION_ASTREN.md): modelo de cálculo, UX y próximos pasos
 
-## Stack
+## Características principales
 
-- Frontend: HTML5, CSS3, JavaScript (vanilla)
-- Backend (referencia): Python + Flask
-- Base de datos (referencia): MySQL
+### Frontend
+- **Dashboard:** resumen de tareas, contadores y navegación rápida
+- **Gestión de tareas:** crear, editar, categorizar (hoy, pendientes, completadas, vencidas)
+- **Áreas personales:** organizar trabajo por contexto (laboral, académico, personal)
+- **Grupos colaborativos:** asignar tareas, roles y visibilidad compartida
+- **Notificaciones:** alertas (interfaz lista, no integrada aún)
+- **Perfil y configuración:** personalización de cuenta (interfaz lista, no integrada aún)
 
-## Ejecutar en local (solo frontend)
+### Sistema de reputación
+El sistema de reputación mide consistencia y calidad de entrega mediante:
+- **Puntualidad:** recompensa cumplimiento de plazos
+- **Calidad:** valida descripción y evidencia en tareas
+- **Colaboración:** bonifica trabajo en grupo
+- **Decaimiento temporal:** da más peso a logros recientes (factor 0.9)
 
-En Windows:
+Estado: documentado y diseñado, no está implementado de punta a punta en este repositorio.
+
+## Stack tecnológico
+
+- **Frontend:** HTML5, CSS3, JavaScript (vanilla, sin frameworks)
+- **Backend (referencia):** Python + Flask
+- **Base de datos (referencia):** MySQL
+
+## Ejecutar en local
+
+### Solo frontend
+
+Requisitos: Python 3.7+ (incluido en Windows 10+)
 
 ```powershell
 cd frontend
 python -m http.server 5500
 ```
 
-Abrir `http://localhost:5500`.
+Abre el navegador en `http://localhost:5500/` y elige una página (index.html, login.html, dashboard.html, etc.).
 
-Nota: `start_astren.bat` y sus variantes asumen que existe un backend local (por ejemplo `backend/app.py`).
+**Nota:** Los scripts `start_astren.bat`, `start_astren_local.bat` y `start_astren_nube.bat` asumen un backend local funcional. Sin él, solo funcionarán las interfaces estáticas del frontend.
 
-## Estructura
+## Estructura del proyecto
 
 ```
-frontend/          Frontend estático
-	css/             Estilos
-	js/              Lógica
-	*.html           Páginas
+frontend/
+  ├── css/                Estilos (areas, dashboard, login, etc.)
+  ├── js/                 Lógica en JavaScript (vanilla)
+  ├── images/            Recursos gráficos
+  └── *.html             Páginas (index, login, register, dashboard, etc.)
 
-backend/           Archivos de soporte del backend
-	requirements.txt Dependencias
-	env.production.example  Plantilla de variables
+backend/
+  ├── requirements.txt   Dependencias Python
+  ├── env.production.example  Plantilla de configuración
+  └── [código no incluido en este snapshot]
 
-docs/              Documentación
-	ESTADO_ACTUAL_ASTREN.md
-	SISTEMA_REPUTACION_ASTREN.md
+docs/
+  ├── ESTADO_ACTUAL_ASTREN.md           Visión general y alcance
+  ├── SISTEMA_REPUTACION_ASTREN.md      Diseño del sistema de reputación
+  └── [otros documentos de referencia]
+
+scripts/
+  ├── *.sql               Migraciones y esquemas (ignorados en git, solo locales)
+  ├── *.py                Utilidades de configuración y migración
+  └── migrations/         Versionado de migraciones de BD
+
+create_database.sql      Script de creación de BD de referencia
+start_astren*.bat        Scripts para iniciar backend + frontend (Windows)
 ```
 
-## Reputación (estado)
+## Estado del proyecto
 
-El sistema de reputación está documentado a nivel de diseño, pero no está integrado en el backend dentro de este repositorio. La intención es medir consistencia y calidad de entrega con un modelo de decaimiento temporal.
+**Frontend:** funcional y con interfaz completa. Listo para usar como referencia o punto de partida.
+
+**Backend:** no incluido en este snapshot. Los ejemplos y referencias apuntan a Python + Flask + MySQL.
+
+**Sistema de reputación:** diseño exhaustivo documentado (ver `docs/SISTEMA_REPUTACION_ASTREN.md`), pero sin implementación de punta a punta en este repositorio.
+
+**Próximos pasos:** ver [documentación de reputación](docs/SISTEMA_REPUTACION_ASTREN.md) para roadmap de implementación.
+
+## Seguridad
+
+- Credenciales y variables sensibles están ignoradas en git (ver `.gitignore`)
+- Scripts SQL locales no se publican por defecto
+- El archivo `backend/env.production.example` es una plantilla; nunca subas credenciales reales
+- No hay tokens, llaves API ni secretos en el código fuente
+
+## Licencia
+
+Astren es un proyecto privado. Consulta con el equipo para detalles de distribución o contribución.
