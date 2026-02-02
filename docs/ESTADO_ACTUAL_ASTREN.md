@@ -14,8 +14,8 @@
 - **🗄️ Base de Datos (Aiven):** MySQL en Aiven
 
 ### **Credenciales de Acceso:**
-- **👤 Email:** demo@example.com
-- **🔑 Contraseña:** DEMO_PASSWORD_HERE
+> ⚠️ **Demo Solo - No usar en Producción**
+> Usar credenciales propias. Contacta al administrador para acceso real.
 
 ### **Estado del Sistema:**
 - ✅ **Completamente Desplegado**
