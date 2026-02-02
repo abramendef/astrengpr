@@ -1,16 +1,53 @@
-# Python venv and caches
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
 backend/venv/
-**/__pycache__/
-*.pyc
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # OS junk
 .DS_Store
 Thumbs.db
+.AppleDouble
+.LSOverride
+*.swp
+*.swo
 
-# Node/npm (future-proof)
+# Node/npm
 node_modules/
+npm-debug.log
+yarn-error.log
 
-# Env files (keep secrets local) - CRÍTICO PARA SEGURIDAD
+# Env files (CRÍTICO - KEEP SECRETS LOCAL)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.production.local
+.env.development
+.env.staging
 backend/.env
 backend/env.local
 backend/env.production
@@ -24,17 +61,40 @@ scripts/start_local_aiven.bat
 scripts/test_local.env
 scripts/*.env
 
-# Logs
+# Logs y temporales
 logs/
 *.log
+*.log.*
+tmp/
+temp/
+*.tmp
 
 # Editor settings
 .vscode/
 .idea/
+*.sublime-workspace
+*.sublime-project
 
-# Archivos de configuración sensibles
-*.env
-.env.*
+# IDE
+.vs/
+.vscode/settings.json
+.vscode/launch.json
+
+# Config sensibles
 config.json
 secrets.json
 credentials.json
+.env.json
+
+# Archivos compilados
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Base de datos local
+*.db
+*.sqlite
+*.sqlite3
