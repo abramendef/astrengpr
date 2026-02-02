@@ -61,7 +61,11 @@ scripts/start_local_aiven.bat
 scripts/test_local.env
 scripts/*.env
 
-# Logs y temporales
+# Database schemas (exponen estructura de datos)
+scripts/schema/create_database.sql
+scripts/schema/migrate_*.sql
+scripts/*.sql
+
 logs/
 *.log
 *.log.*
