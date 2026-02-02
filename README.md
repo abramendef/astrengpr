@@ -1,6 +1,6 @@
-# Astren
+# AstrenGPR
 
-Astren es una plataforma de productividad personal y colaborativa diseñada para ayudarte a gestionar tareas, organizarlas en áreas de trabajo y colaborar en grupos. Incluye un sistema de reputación que mide consistencia y calidad basándose en evidencia real.
+AstrenGPR es una plataforma de productividad personal y colaborativa diseñada para ayudarte a gestionar tareas, organizarlas en áreas de trabajo y colaborar en grupos. Incluye un sistema de reputación que mide consistencia y calidad basándose en evidencia real.
 
 **Demo:** https://gpr.astren.app/
 
@@ -100,4 +100,4 @@ start_astren*.bat        Scripts para iniciar backend + frontend (Windows)
 
 ## Licencia
 
-Astren es un proyecto privado. Consulta con el equipo para detalles de distribución o contribución.
+AstrenGPR es un proyecto privado. Consulta con el equipo para detalles de distribución o contribución.

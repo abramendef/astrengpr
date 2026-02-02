@@ -1,4 +1,4 @@
-# Estado actual del proyecto Astren
+# Estado actual del proyecto AstrenGPR
 
 Documento de referencia para entender qué incluye este repositorio y cuál es el alcance de la demo.
 
@@ -6,7 +6,7 @@ Actualizado: Febrero 2026
 
 ## Resumen
 
-Astren es una demo de plataforma de productividad con interfaz para tareas, grupos, áreas personales y notificaciones.
+AstrenGPR es una demo de plataforma de productividad con interfaz para tareas, grupos, áreas personales y notificaciones.
 
 En este repositorio se incluye principalmente el frontend. La documentación describe también un backend (Flask) y una base de datos (MySQL) como parte del sistema completo, pero el código del servidor no está presente en esta copia.
 
