@@ -66,9 +66,9 @@ frontend/
   └── *.html             Páginas (index, login, register, dashboard, etc.)
 
 backend/
+  ├── app.py             Servidor Flask con API REST
   ├── requirements.txt   Dependencias Python
-  ├── env.production.example  Plantilla de configuración
-  └── [código no incluido en este snapshot]
+  └── env.production.example  Plantilla de configuración
 
 docs/
   ├── ESTADO_ACTUAL_ASTREN.md           Visión general y alcance
@@ -88,7 +88,7 @@ start_astren*.bat        Scripts para iniciar backend + frontend (Windows)
 
 **Frontend:** funcional y con interfaz completa. Listo para usar como referencia o punto de partida.
 
-**Backend:** no incluido en este snapshot. Los ejemplos y referencias apuntan a Python + Flask + MySQL.
+**Backend:** incluido en `backend/app.py` con Flask + MySQL, autenticación, procesamiento de IA y optimizaciones de rendimiento.
 
 **Sistema de reputación:** diseño exhaustivo documentado (ver `docs/SISTEMA_REPUTACION_ASTREN.md`), pero sin implementación de punta a punta en este repositorio.
 
