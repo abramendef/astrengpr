@@ -8,7 +8,7 @@ const CONFIG = {
         window.location.port === '5500'
     )
         ? 'http://localhost:8000'
-        : 'https://astren-backend.onrender.com',
+        : 'https://astrengpr.onrender.com',
     
     // URLs específicas de la API
     API_ENDPOINTS: {
