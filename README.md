@@ -38,8 +38,8 @@ Estado: documentado y diseñado, no está implementado de punta a punta en este 
 ## Stack tecnológico
 
 - **Frontend:** HTML5, CSS3, JavaScript (vanilla, sin frameworks)
-- **Backend (referencia):** Python + Flask
-- **Base de datos (referencia):** MySQL
+- **Backend:** Python + Flask
+- **Base de datos:** MySQL
 
 ## Ejecutar en local
 
